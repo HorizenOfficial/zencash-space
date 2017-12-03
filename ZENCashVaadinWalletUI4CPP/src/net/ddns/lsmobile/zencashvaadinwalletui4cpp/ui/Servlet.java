@@ -28,30 +28,21 @@ import com.vaklinov.zcashui.ZCashInstallationObserver;
 import com.vaklinov.zcashui.ZCashInstallationObserver.DAEMON_STATUS;
 import com.vaklinov.zcashui.ZCashInstallationObserver.DaemonInfo;
 import com.vaklinov.zcashui.ZCashInstallationObserver.InstallationDetectionException;
-//import com.vaklinov.zcashui.ZCashUI;
-import com.xdev.communication.ClientInfo;
 import com.xdev.communication.XdevServlet;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop.DesktopUI;
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.phone.PhoneUI;
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.tablet.TabletUI;
 
 @WebServlet(value = "/*", asyncSupported = true)
 public class Servlet extends XdevServlet implements IConfig {
 
-	public final ZCashInstallationObserver installationObserver;
-	public final ZCashClientCaller         clientCaller;
-	public final StatusUpdateErrorReporter errorReporter;
+	public ZCashInstallationObserver installationObserver;
+	public ZCashClientCaller         clientCaller;
+	public StatusUpdateErrorReporter errorReporter = new StatusUpdateErrorReporter(/*this*/);
 
 	public Servlet() throws IOException {
 		super();
 		
-        this.errorReporter = new StatusUpdateErrorReporter(/*this*/);
-        this.installationObserver = new ZCashInstallationObserver(ZEN_DIRECTORY/*OSUtil.getProgramDirectory()*/); //LS TODO
-        this.clientCaller = new ZCashClientCaller(ZEN_DIRECTORY/*OSUtil.getProgramDirectory()*/); //LS TODO
-        
-
         try
         {
         	final OS_TYPE os = OSUtil.getOSType();
@@ -69,18 +60,17 @@ public class Servlet extends XdevServlet implements IConfig {
             
             // If zend is currently not running, do a startup of the daemon as a child process
             // It may be started but not ready - then also show dialog
-            ZCashInstallationObserver initialInstallationObserver =
+        	this.installationObserver =
             	new ZCashInstallationObserver(ZEN_DIRECTORY/*OSUtil.getProgramDirectory()*/);
-            final DaemonInfo zcashdInfo = initialInstallationObserver.getDaemonInfo();
-            initialInstallationObserver = null;
+            final DaemonInfo zcashdInfo = this.installationObserver.getDaemonInfo();
             
-            ZCashClientCaller initialClientCaller = new ZCashClientCaller(ZEN_DIRECTORY/*OSUtil.getProgramDirectory()*/);
+            this.clientCaller = new ZCashClientCaller(ZEN_DIRECTORY/*OSUtil.getProgramDirectory()*/);
             boolean daemonStartInProgress = false;
             try
             {
             	if (zcashdInfo.status == DAEMON_STATUS.RUNNING)
             	{
-            		final NetworkAndBlockchainInfo info = initialClientCaller.getNetworkAndBlockchainInfo();
+            		final NetworkAndBlockchainInfo info = this.clientCaller.getNetworkAndBlockchainInfo();
             		// If more than 20 minutes behind in the blockchain - startup in progress
             		if ((System.currentTimeMillis() - info.lastBlockDate.getTime()) > (20 * 60 * 1000))
             		{
@@ -104,11 +94,10 @@ public class Servlet extends XdevServlet implements IConfig {
             {
             	Log.info(
             		"zend is not runing at the moment or has not started/synchronized 100% - showing splash...");
-	            startupBar = new StartupProgressDialog(initialClientCaller);
+	            startupBar = new StartupProgressDialog(this.clientCaller);
 //	            startupBar.setVisible(true);
 	            startupBar.waitForStartup();
             }
-            initialClientCaller = null;
             
             // Main GUI is created here
 //            final ZCashUI ui = new ZCashUI(startupBar);
@@ -171,15 +160,15 @@ public class Servlet extends XdevServlet implements IConfig {
 	private static class ServletUIProvider extends UIProvider {
 		@Override
 		public Class<? extends UI> getUIClass(final UIClassSelectionEvent event) {
-			final ClientInfo client = ClientInfo.getCurrent();
-			if (client != null) {
-				if (client.isMobile()) {
-					return PhoneUI.class;
-				}
-				if (client.isTablet()) {
-					return TabletUI.class;
-				}
-			}
+//			final ClientInfo client = ClientInfo.getCurrent();
+//			if (client != null) {
+//				if (client.isMobile()) {
+//					return PhoneUI.class;
+//				}
+//				if (client.isTablet()) {
+//					return TabletUI.class;
+//				}
+//			}
 			return DesktopUI.class;
 		}
 	}
