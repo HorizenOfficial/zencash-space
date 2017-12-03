@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 
+import com.vaadin.ui.Grid;
+import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaklinov.zcashui.Log;
 import com.vaklinov.zcashui.OSUtil;
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
@@ -14,12 +16,14 @@ import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 import com.xdev.ui.XdevGridLayout;
 import com.xdev.ui.XdevMenuBar;
 import com.xdev.ui.XdevMenuBar.XdevMenuItem;
+import com.xdev.ui.XdevPanel;
 import com.xdev.ui.XdevTabSheet;
 import com.xdev.ui.XdevView;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 
-public class MainView extends XdevView {
+public class MainView extends XdevView implements IConfig{
 
 	/**
 	 * 
@@ -29,7 +33,36 @@ public class MainView extends XdevView {
 		this.initUI();
 		
 		try {
-			System.out.println(getTransactionsDataFromWallet());
+			final String[][] transactions = getTransactionsDataFromWallet();
+
+			final Grid gridTransactions = new Grid("Transactions:");
+//			final HeaderRow headerWallets = gridTransactions.prependHeaderRow();
+
+			// Formats
+//			final DecimalFormat formatUsd = new DecimalFormat(UsdToHtmlConverter.FORMAT_USD);
+
+			// Columns
+			gridTransactions.addColumn(TRANSACTIONS_COLUMN_TYPE, String.class).setRenderer(new HtmlRenderer())/*.setHeaderCaption("")*/;
+			gridTransactions.addColumn(TRANSACTIONS_COLUMN_DIRECTION, String.class).setRenderer(new HtmlRenderer());
+			gridTransactions.addColumn(TRANSACTIONS_COLUMN_CONFIRMED, String.class).setRenderer(new HtmlRenderer());
+			gridTransactions.addColumn(TRANSACTIONS_COLUMN_AMOUNT, String.class/*Double.class*/).setRenderer(new HtmlRenderer()/*NumberRenderer(formatUsd), new UsdToHtmlConverter()*/);
+			gridTransactions.addColumn(TRANSACTIONS_COLUMN_DATE, String.class/*Date.class*/).setRenderer(new HtmlRenderer/*DateRenderer*/());
+			gridTransactions.addColumn(TRANSACTIONS_COLUMN_DESTINATION_ADDRESS, String.class).setRenderer(new HtmlRenderer()).setSortable(false);
+			gridTransactions.addColumn(TRANSACTIONS_COLUMN_DESTINATION_TRANSACTION, String.class).setRenderer(new HtmlRenderer()).setSortable(false)/*.setWidth(0)*/;
+			
+//			gridTransactions.setFrozenColumnCount(2);
+
+			// Rows (Values)
+			for (final String[] transactionsRow : transactions) {
+					gridTransactions.addRow(transactionsRow);
+			}
+
+//			gridBalance.sort(Sort.by(COLUMN_SECURITY_DEGREE, SortDirection.ASCENDING)
+//			          .then(COLUMN_SUM, SortDirection.DESCENDING));;
+
+			gridTransactions.setSizeFull();
+			this.panelGridTransactions.setContent(gridTransactions);
+
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
@@ -183,6 +216,7 @@ public class MainView extends XdevView {
 		this.menuItemOptions = this.menuItemMessaging.addItem("Options...", null);
 		this.tabSheet = new XdevTabSheet();
 		this.tabOverview = new XdevGridLayout();
+		this.panelGridTransactions = new XdevPanel();
 		this.tabOwnAddresses = new XdevGridLayout();
 		this.tabSendCash = new XdevGridLayout();
 		this.tabAddressBook = new XdevGridLayout();
@@ -191,6 +225,12 @@ public class MainView extends XdevView {
 		this.menuItemEncrypt.setEnabled(false);
 		this.tabSheet.setStyleName("framed");
 	
+		this.tabOverview.setColumns(1);
+		this.tabOverview.setRows(1);
+		this.panelGridTransactions.setSizeFull();
+		this.tabOverview.addComponent(this.panelGridTransactions, 0, 0);
+		this.tabOverview.setColumnExpandRatio(0, 10.0F);
+		this.tabOverview.setRowExpandRatio(0, 10.0F);
 		this.tabOverview.setSizeFull();
 		this.tabSheet.addTab(this.tabOverview, "Overview", null);
 		this.tabOwnAddresses.setSizeFull();
@@ -223,6 +263,7 @@ public class MainView extends XdevView {
 			menuItemMessaging, menuItemOwnIdentity, menuItemExportOwnIdentity, menuItemAddMessagingGroup,
 			menuItemImportContactIdentity, menuItemRemoveContact, menuItemOptions;
 	private XdevTabSheet tabSheet;
+	private XdevPanel panelGridTransactions;
 	private XdevGridLayout gridLayout, tabOverview, tabOwnAddresses, tabSendCash, tabAddressBook, tabMessaging;
 	// </generated-code>
 
