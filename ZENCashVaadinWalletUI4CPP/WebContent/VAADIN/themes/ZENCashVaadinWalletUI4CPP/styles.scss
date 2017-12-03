@@ -1,0 +1,9 @@
+@import "addons.scss";
+@import "ZENCashVaadinWalletUI4CPP.scss";
+
+/* This file prefixes all rules with the theme name to avoid causing conflicts with other themes. */
+/* The actual styles should be defined in ZENCashVaadinWalletUI4CPP.scss */
+.ZENCashVaadinWalletUI4CPP {
+  @include addons;
+  @include ZENCashVaadinWalletUI4CPP;
+}

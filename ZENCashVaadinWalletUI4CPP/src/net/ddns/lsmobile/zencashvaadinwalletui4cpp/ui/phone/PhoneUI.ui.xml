@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+
+<?xdevuiml version="1.0"?>
+<?import com.xdev.ui.*?>
+<?import com.xdev.ui.navigation.*?>
+<?import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.phone.*?>
+<XdevUI xmlns:x="http://xml.xdev-software.com/xdevuiml" x:name="PhoneUI">
+    <x:constraints designWidth="600" zpos="0" designHeight="400" width="100%" height="100%" />
+    <XdevNavigator x:name="navigator" x:singleComponentContainer="PhoneUI">
+        <x:views>
+            <entry path="" class="MainView" />
+        </x:views>
+    </XdevNavigator>
+</XdevUI>
+<?template BROWSER_XGA?>
+
