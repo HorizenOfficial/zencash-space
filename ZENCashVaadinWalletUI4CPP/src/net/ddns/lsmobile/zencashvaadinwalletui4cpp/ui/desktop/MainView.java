@@ -7,61 +7,133 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 
+import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.renderers.HtmlRenderer;
+import com.vaklinov.zcashui.DataGatheringThread;
 import com.vaklinov.zcashui.Log;
 import com.vaklinov.zcashui.OSUtil;
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
+import com.vaklinov.zcashui.Util;
+import com.vaklinov.zcashui.ZCashClientCaller.WalletBalance;
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 import com.xdev.ui.XdevGridLayout;
+import com.xdev.ui.XdevLabel;
 import com.xdev.ui.XdevMenuBar;
 import com.xdev.ui.XdevMenuBar.XdevMenuItem;
 import com.xdev.ui.XdevPanel;
 import com.xdev.ui.XdevTabSheet;
 import com.xdev.ui.XdevView;
 
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IWallet;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 
-public class MainView extends XdevView implements IConfig{
+public class MainView extends XdevView implements IWallet {
+	
+	protected Servlet servlet;
 
-	/**
-	 * 
-	 */
+	private DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
+	
+	private Boolean walletIsEncrypted   = null;
+
+	private final String OSInfo              = null;
+
+	private String[][] lastTransactionsData = null;
+	private DataGatheringThread<String[][]> transactionGatheringThread = null;
+	
 	public MainView() {
 		super();
 		this.initUI();
 		
+		final Servlet servlet = (Servlet) Servlet.getCurrent();
+
 		try {
-			final String[][] transactions = getTransactionsDataFromWallet();
+			// Thread and timer to update the wallet balance
+			this.walletBalanceGatheringThread = new DataGatheringThread<>(
+				new DataGatheringThread.DataGatherer<WalletBalance>()
+				{
+					@Override
+					public WalletBalance gatherData()
+						throws Exception
+					{
+						final long start = System.currentTimeMillis();
+						final WalletBalance balance = servlet.clientCaller.getWalletInfo();
+						final long end = System.currentTimeMillis();
+						
+						// TODO: move this call to a dedicated one-off gathering thread - this is the wrong place
+						// it works but a better design is needed.
+						if (MainView.this.walletIsEncrypted == null)
+						{
+							MainView.this.walletIsEncrypted = servlet.clientCaller.isWalletEncrypted();
+						}
+						
+						Log.info("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
+						
+						return balance;
+					}
+				},
+				servlet.errorReporter, 8000, true);
+			threads.add(this.walletBalanceGatheringThread);
 
-			final Grid gridTransactions = new Grid("Transactions:");
-//			final HeaderRow headerWallets = gridTransactions.prependHeaderRow();
+			//LS TODO
+//			final ActionListener alWalletBalance = new ActionListener() {
+//				@Override
+//				public void actionPerformed(final ActionEvent e)
+//				{
+//					try
+//					{
+						MainView.this.updateWalletStatusLabel();
+//					} catch (final Exception ex)
+//					{
+//						Log.error("Unexpected error: ", ex);
+//						servlet.errorReporter.reportError(ex);
+//					}
+//				}
+//			};
+//			final Timer walletBalanceTimer =  new Timer(2000, alWalletBalance);
+//			walletBalanceTimer.setInitialDelay(1000);
+//			walletBalanceTimer.start();
+//			timers.add(walletBalanceTimer);
 
-			// Formats
-//			final DecimalFormat formatUsd = new DecimalFormat(UsdToHtmlConverter.FORMAT_USD);
-
-			// Columns
-			gridTransactions.addColumn(TRANSACTIONS_COLUMN_TYPE, String.class).setRenderer(new HtmlRenderer())/*.setHeaderCaption("")*/;
-			gridTransactions.addColumn(TRANSACTIONS_COLUMN_DIRECTION, String.class).setRenderer(new HtmlRenderer());
-			gridTransactions.addColumn(TRANSACTIONS_COLUMN_CONFIRMED, String.class).setRenderer(new HtmlRenderer());
-			gridTransactions.addColumn(TRANSACTIONS_COLUMN_AMOUNT, String.class/*Double.class*/).setRenderer(new HtmlRenderer()/*NumberRenderer(formatUsd), new UsdToHtmlConverter()*/);
-			gridTransactions.addColumn(TRANSACTIONS_COLUMN_DATE, String.class/*Date.class*/).setRenderer(new HtmlRenderer/*DateRenderer*/());
-			gridTransactions.addColumn(TRANSACTIONS_COLUMN_DESTINATION_ADDRESS, String.class).setRenderer(new HtmlRenderer()).setSortable(false);
-			gridTransactions.addColumn(TRANSACTIONS_COLUMN_DESTINATION_TRANSACTION, String.class).setRenderer(new HtmlRenderer()).setSortable(false)/*.setWidth(0)*/;
+			// Thread and timer to update the transactions table
+			this.transactionGatheringThread = new DataGatheringThread<>(
+				new DataGatheringThread.DataGatherer<String[][]>()
+				{
+					@Override
+					public String[][] gatherData()
+						throws Exception
+					{
+						final long start = System.currentTimeMillis();
+						final String[][] data =  MainView.this.getTransactionsDataFromWallet();
+						final long end = System.currentTimeMillis();
+						Log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
+						
+						return data;
+					}
+				},
+				servlet.errorReporter, 20000);
+			threads.add(this.transactionGatheringThread);
 			
-//			gridTransactions.setFrozenColumnCount(2);
+			//LS TODO
+//			final ActionListener alTransactions = new ActionListener() {
+//				@Override
+//				public void actionPerformed(final ActionEvent e)
+//				{
+//					try
+//					{
+						MainView.this.updateWalletTransactionsTable();
+//					} catch (final Exception ex)
+//					{
+//						Log.error("Unexpected error: ", ex);
+//						servlet.errorReporter.reportError(ex);
+//					}
+//				}
+//			};
+//			final Timer t = new Timer(5000, alTransactions);
+//			t.start();
+//			timers.add(t);
 
-			// Rows (Values)
-			for (final String[] transactionsRow : transactions) {
-					gridTransactions.addRow(transactionsRow);
-			}
 
-//			gridBalance.sort(Sort.by(COLUMN_SECURITY_DEGREE, SortDirection.ASCENDING)
-//			          .then(COLUMN_SUM, SortDirection.DESCENDING));;
-
-			gridTransactions.setSizeFull();
-			this.panelGridTransactions.setContent(gridTransactions);
 
 		} catch (final Exception e) {
 			e.printStackTrace();
@@ -189,6 +261,128 @@ public class MainView extends XdevView implements IConfig{
 
 			return allTransactions;
 		}
+	
+	private void updateWalletStatusLabel()
+			throws WalletCallException, IOException, InterruptedException
+		{
+			final WalletBalance balance = ((Servlet) Servlet.getCurrent()).clientCaller.getWalletInfo();
+			
+			// Format double numbers - else sometimes we get exponential notation 1E-4 ZEN
+			final DecimalFormat df = new DecimalFormat("########0.00###### ZEN");
+			
+			this.labelTransparentBalance.setValue(df.format(balance.transparentBalance));
+			this.labelPrivateBalance.setValue(df.format(balance.privateBalance));
+			this.labelTotalBalance.setValue(df.format(balance.totalBalance));
+			
+			/* LS TODO
+			
+			final WalletBalance balance = this.walletBalanceGatheringThread.getLastData();
+			
+			// It is possible there has been no gathering initially
+			if (balance == null)
+			{
+				return;
+			}
+			
+			// Format double numbers - else sometimes we get exponential notation 1E-4 ZEN
+			final DecimalFormat df = new DecimalFormat("########0.00######");
+			
+			final String transparentBalance = df.format(balance.transparentBalance);
+			final String privateBalance = df.format(balance.privateBalance);
+			final String totalBalance = df.format(balance.totalBalance);
+			
+			final String transparentUCBalance = df.format(balance.transparentUnconfirmedBalance);
+			final String privateUCBalance = df.format(balance.privateUnconfirmedBalance);
+			final String totalUCBalance = df.format(balance.totalUnconfirmedBalance);
+
+			final String color1 = transparentBalance.equals(transparentUCBalance) ? "" : "color:#cc3300;";
+			final String color2 = privateBalance.equals(privateUCBalance)         ? "" : "color:#cc3300;";
+			final String color3 = totalBalance.equals(totalUCBalance)             ? "" : "color:#cc3300;";
+			
+			final String text =
+				"<html>" +
+			    "<span style=\"font-family:monospace;font-size:1em;" + color1 + "\">Transparent balance: <span style=\"font-size:1.1em;\">" +
+					transparentUCBalance + " ZEN </span></span><br/> " +
+				"<span style=\"font-family:monospace;font-size:1em;" + color2 + "\">Private (Z) balance: <span style=\"font-weight:bold;font-size:1.1em;\">" +
+			    	privateUCBalance + " ZEN </span></span><br/> " +
+				"<span style=\"font-family:monospace;;font-size:1em;" + color3 + "\">Total (Z+T) balance: <span style=\"font-weight:bold;font-size:1.35em;\">" +
+			    	totalUCBalance + " ZEN </span></span>" +
+				"<br/>  </html>";
+			
+			this.labelTotalBalance.setValue(text);
+			
+			String toolTip = null;
+			if ((!transparentBalance.equals(transparentUCBalance)) ||
+			    (!privateBalance.equals(privateUCBalance))         ||
+			    (!totalBalance.equals(totalUCBalance)))
+			{
+				toolTip = "<html>" +
+						  "Unconfirmed (unspendable) balance is being shown due to an<br/>" +
+			              "ongoing transaction! Actual confirmed (spendable) balance is:<br/>" +
+			              "<span style=\"font-size:5px\"><br/></span>" +
+						  "Transparent: " + transparentBalance + " ZEN<br/>" +
+			              "Private ( Z ): <span style=\"font-weight:bold\">" + privateBalance + " ZEN</span><br/>" +
+						  "Total ( Z+T ): <span style=\"font-weight:bold\">" + totalBalance + " ZEN</span>" +
+						  "</html>";
+			}
+			
+			this.labelTotalBalance.setDescription(toolTip);
+			*/
+		}
+	
+	private void updateWalletTransactionsTable()
+			throws WalletCallException, IOException, InterruptedException
+		{
+		
+			final String[][] newTransactionsData = getTransactionsDataFromWallet();
+			// LS TODO this.transactionGatheringThread.getLastData();
+			
+			// May be null - not even gathered once
+			if (newTransactionsData == null)
+			{
+				return;
+			}
+				
+			if (Util.arraysAreDifferent(this.lastTransactionsData, newTransactionsData))
+			{
+				Log.info("Updating table of transactions...");
+//				this.remove(this.transactionsTablePane);
+//				this.add(this.transactionsTablePane = new JScrollPane(
+//				             this.transactionsTable = this.createTransactionsTable(newTransactionsData)),
+//				         BorderLayout.CENTER);
+				
+				final Grid gridTransactions = new Grid("Transactions:");
+		//		final HeaderRow headerWallets = gridTransactions.prependHeaderRow();
+		
+				// Formats
+		//		final DecimalFormat formatUsd = new DecimalFormat(UsdToHtmlConverter.FORMAT_USD);
+		
+				// Columns
+				gridTransactions.addColumn(TRANSACTIONS_COLUMN_TYPE, String.class).setRenderer(new HtmlRenderer())/*.setHeaderCaption("")*/;
+				gridTransactions.addColumn(TRANSACTIONS_COLUMN_DIRECTION, String.class).setRenderer(new HtmlRenderer());
+				gridTransactions.addColumn(TRANSACTIONS_COLUMN_CONFIRMED, String.class).setRenderer(new HtmlRenderer());
+				gridTransactions.addColumn(TRANSACTIONS_COLUMN_AMOUNT, String.class/*Double.class*/).setRenderer(new HtmlRenderer()/*NumberRenderer(formatUsd), new UsdToHtmlConverter()*/);
+				gridTransactions.addColumn(TRANSACTIONS_COLUMN_DATE, String.class/*Date.class*/).setRenderer(new HtmlRenderer/*DateRenderer*/());
+				gridTransactions.addColumn(TRANSACTIONS_COLUMN_DESTINATION_ADDRESS, String.class).setRenderer(new HtmlRenderer()).setSortable(false);
+				gridTransactions.addColumn(TRANSACTIONS_COLUMN_DESTINATION_TRANSACTION, String.class).setRenderer(new HtmlRenderer()).setSortable(false)/*.setWidth(0)*/;
+				
+		//		gridTransactions.setFrozenColumnCount(2);
+		
+				// Rows (Values)
+				for (final String[] transactionsRow : newTransactionsData) {
+						gridTransactions.addRow(transactionsRow);
+				}
+		
+		//		gridBalance.sort(Sort.by(COLUMN_SECURITY_DEGREE, SortDirection.ASCENDING)
+		//		          .then(COLUMN_SUM, SortDirection.DESCENDING));;
+		
+				gridTransactions.setSizeFull();
+				this.panelGridTransactions.setContent(gridTransactions);
+			}
+
+			this.lastTransactionsData = newTransactionsData;
+		}
+
 
 	/*
 	 * WARNING: Do NOT edit!<br>The content of this method is always regenerated by
@@ -216,6 +410,12 @@ public class MainView extends XdevView implements IConfig{
 		this.menuItemOptions = this.menuItemMessaging.addItem("Options...", null);
 		this.tabSheet = new XdevTabSheet();
 		this.tabOverview = new XdevGridLayout();
+		this.labelTransparentBalanceCaption = new XdevLabel();
+		this.labelTransparentBalance = new XdevLabel();
+		this.labelPrivateBalanceCaption = new XdevLabel();
+		this.labelPrivateBalance = new XdevLabel();
+		this.labelTotalBalanceCaption = new XdevLabel();
+		this.labelTotalBalance = new XdevLabel();
 		this.panelGridTransactions = new XdevPanel();
 		this.tabOwnAddresses = new XdevGridLayout();
 		this.tabSendCash = new XdevGridLayout();
@@ -224,13 +424,36 @@ public class MainView extends XdevView implements IConfig{
 	
 		this.menuItemEncrypt.setEnabled(false);
 		this.tabSheet.setStyleName("framed");
+		this.labelTransparentBalanceCaption.setValue("Transparent (T) balance:");
+		this.labelTransparentBalance.setValue("0");
+		this.labelPrivateBalanceCaption.setValue("Private (Z) balance:");
+		this.labelPrivateBalance.setValue("0");
+		this.labelTotalBalanceCaption.setValue("Total (T+Z) balance:");
+		this.labelTotalBalance.setStyleName("bold");
+		this.labelTotalBalance.setValue("0");
 	
-		this.tabOverview.setColumns(1);
-		this.tabOverview.setRows(1);
+		this.tabOverview.setColumns(2);
+		this.tabOverview.setRows(4);
+		this.labelTransparentBalanceCaption.setSizeUndefined();
+		this.tabOverview.addComponent(this.labelTransparentBalanceCaption, 0, 0);
+		this.tabOverview.setComponentAlignment(this.labelTransparentBalanceCaption, Alignment.TOP_RIGHT);
+		this.labelTransparentBalance.setSizeUndefined();
+		this.tabOverview.addComponent(this.labelTransparentBalance, 1, 0);
+		this.labelPrivateBalanceCaption.setSizeUndefined();
+		this.tabOverview.addComponent(this.labelPrivateBalanceCaption, 0, 1);
+		this.tabOverview.setComponentAlignment(this.labelPrivateBalanceCaption, Alignment.TOP_RIGHT);
+		this.labelPrivateBalance.setSizeUndefined();
+		this.tabOverview.addComponent(this.labelPrivateBalance, 1, 1);
+		this.labelTotalBalanceCaption.setSizeUndefined();
+		this.tabOverview.addComponent(this.labelTotalBalanceCaption, 0, 2);
+		this.tabOverview.setComponentAlignment(this.labelTotalBalanceCaption, Alignment.TOP_RIGHT);
+		this.labelTotalBalance.setSizeUndefined();
+		this.tabOverview.addComponent(this.labelTotalBalance, 1, 2);
 		this.panelGridTransactions.setSizeFull();
-		this.tabOverview.addComponent(this.panelGridTransactions, 0, 0);
+		this.tabOverview.addComponent(this.panelGridTransactions, 0, 3, 1, 3);
 		this.tabOverview.setColumnExpandRatio(0, 10.0F);
-		this.tabOverview.setRowExpandRatio(0, 10.0F);
+		this.tabOverview.setColumnExpandRatio(1, 10.0F);
+		this.tabOverview.setRowExpandRatio(3, 10.0F);
 		this.tabOverview.setSizeFull();
 		this.tabSheet.addTab(this.tabOverview, "Overview", null);
 		this.tabOwnAddresses.setSizeFull();
@@ -257,6 +480,7 @@ public class MainView extends XdevView implements IConfig{
 	} // </generated-code>
 
 	// <generated-code name="variables">
+	private XdevLabel labelTransparentBalanceCaption, labelTransparentBalance, labelPrivateBalanceCaption, labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance;
 	private XdevMenuBar menuBar;
 	private XdevMenuItem menuItemMain, menuItemAbout, menuItemWallet, menuItemBackup, menuItemEncrypt,
 			menuItemExportPrivateKeys, menuItemImportPrivateKeys, menuItemShowPrivateKey, menuItemImportOnePrivateKey,
