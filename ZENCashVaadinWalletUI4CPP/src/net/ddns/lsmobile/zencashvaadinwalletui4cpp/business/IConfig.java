@@ -13,5 +13,8 @@ public interface IConfig {
 	public final static String TRANSACTIONS_COLUMN_DATE = "Date";
 	public final static String TRANSACTIONS_COLUMN_DESTINATION_ADDRESS = "Destination Address";
 	public final static String TRANSACTIONS_COLUMN_DESTINATION_TRANSACTION = "Transaction";
-
+	
+	public final static String ADDRESSES_COLUMN_BALANCE = "Balance";
+	public final static String ADDRESSES_COLUMN_CONFIRMED = "Confirmed?";
+	public final static String ADDRESSES_COLUMN_ADDRESS = "Address";
 }

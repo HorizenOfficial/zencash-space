@@ -6,6 +6,8 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Grid;
@@ -17,6 +19,7 @@ import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 import com.vaklinov.zcashui.Util;
 import com.vaklinov.zcashui.ZCashClientCaller.WalletBalance;
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
+import com.xdev.ui.XdevButton;
 import com.xdev.ui.XdevGridLayout;
 import com.xdev.ui.XdevLabel;
 import com.xdev.ui.XdevMenuBar;
@@ -45,7 +48,7 @@ public class MainView extends XdevView implements IWallet {
 		super();
 		this.initUI();
 		
-		final Servlet servlet = (Servlet) Servlet.getCurrent();
+		this.servlet = (Servlet) Servlet.getCurrent();
 
 		try {
 			// Thread and timer to update the wallet balance
@@ -57,14 +60,14 @@ public class MainView extends XdevView implements IWallet {
 						throws Exception
 					{
 						final long start = System.currentTimeMillis();
-						final WalletBalance balance = servlet.clientCaller.getWalletInfo();
+						final WalletBalance balance = MainView.this.servlet.clientCaller.getWalletInfo();
 						final long end = System.currentTimeMillis();
 						
 						// TODO: move this call to a dedicated one-off gathering thread - this is the wrong place
 						// it works but a better design is needed.
 						if (MainView.this.walletIsEncrypted == null)
 						{
-							MainView.this.walletIsEncrypted = servlet.clientCaller.isWalletEncrypted();
+							MainView.this.walletIsEncrypted = MainView.this.servlet.clientCaller.isWalletEncrypted();
 						}
 						
 						Log.info("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
@@ -72,7 +75,7 @@ public class MainView extends XdevView implements IWallet {
 						return balance;
 					}
 				},
-				servlet.errorReporter, 8000, true);
+				this.servlet.errorReporter, 8000, true);
 			threads.add(this.walletBalanceGatheringThread);
 
 			//LS TODO
@@ -111,7 +114,7 @@ public class MainView extends XdevView implements IWallet {
 						return data;
 					}
 				},
-				servlet.errorReporter, 20000);
+				this.servlet.errorReporter, 20000);
 			threads.add(this.transactionGatheringThread);
 			
 			//LS TODO
@@ -133,6 +136,14 @@ public class MainView extends XdevView implements IWallet {
 //			t.start();
 //			timers.add(t);
 
+						
+			//AddressesPanel
+						this.lastInteractiveRefresh = System.currentTimeMillis();
+						
+						//this.lastAddressBalanceData = getAddressBalanceDataFromWallet();
+						
+						updateWalletAddressBalanceTableInteractive();
+
 
 
 		} catch (final Exception e) {
@@ -143,11 +154,9 @@ public class MainView extends XdevView implements IWallet {
 	private String[][] getTransactionsDataFromWallet()
 			throws WalletCallException, IOException, InterruptedException
 		{
-			final Servlet servlet = (Servlet) Servlet.getCurrent();
-		
 			// Get available public+private transactions and unify them.
-			final String[][] publicTransactions = servlet.clientCaller.getWalletPublicTransactions();
-			final String[][] zReceivedTransactions = servlet.clientCaller.getWalletZReceivedTransactions();
+			final String[][] publicTransactions = this.servlet.clientCaller.getWalletPublicTransactions();
+			final String[][] zReceivedTransactions = this.servlet.clientCaller.getWalletZReceivedTransactions();
 
 			final String[][] allTransactions = new String[publicTransactions.length + zReceivedTransactions.length][];
 
@@ -265,7 +274,7 @@ public class MainView extends XdevView implements IWallet {
 	private void updateWalletStatusLabel()
 			throws WalletCallException, IOException, InterruptedException
 		{
-			final WalletBalance balance = ((Servlet) Servlet.getCurrent()).clientCaller.getWalletInfo();
+			final WalletBalance balance = this.servlet.clientCaller.getWalletInfo();
 			
 			// Format double numbers - else sometimes we get exponential notation 1E-4 ZEN
 			final DecimalFormat df = new DecimalFormat("########0.00###### ZEN");
@@ -382,6 +391,234 @@ public class MainView extends XdevView implements IWallet {
 
 			this.lastTransactionsData = newTransactionsData;
 		}
+	
+	
+	
+	//AddressesPanel
+	
+	protected Grid addressBalanceTable = null;
+	
+	String[][] lastAddressBalanceData = null;
+	
+	private final DataGatheringThread<String[][]> balanceGatheringThread = null;
+	
+	private long lastInteractiveRefresh;
+	
+	// Null if not selected
+	public String getSelectedAddress()
+	{
+		final String address = null;
+		
+		final Object selectedRow = this.addressBalanceTable.getSelectedRow();
+		
+		if (selectedRow != null)
+		{
+//			address = this.addressBalanceTable.getModel().getValueAt(selectedRow, 2).toString();
+		}
+		
+		return address;
+	}
+
+	
+/*	private void createNewAddress(final boolean isZAddress)
+	{
+		try
+		{
+			// Check for encrypted wallet
+			final boolean bEncryptedWallet = this.servlet.clientCaller.isWalletEncrypted();
+			if (bEncryptedWallet && isZAddress)
+			{
+				final PasswordDialog pd = new PasswordDialog((JFrame)(this.getRootPane().getParent()));
+				pd.setVisible(true);
+				
+				if (!pd.isOKPressed())
+				{
+					return;
+				}
+				
+				this.servlet.clientCaller.unlockWallet(pd.getPassword());
+			}
+
+			final String address = this.servlet.clientCaller.createNewAddress(isZAddress);
+			
+			// Lock the wallet again
+			if (bEncryptedWallet && isZAddress)
+			{
+				this.servlet.clientCaller.lockWallet();
+			}
+
+			Notification.show("A new " + (isZAddress ? "Z (Private)" : "T (Transparent)")
+					+ " address has been created cuccessfully:\n" + address, Type.HUMANIZED_MESSAGE);
+
+			this.updateWalletAddressBalanceTableInteractive();
+		} catch (final Exception e)
+		{
+			Log.error("Unexpected error: ", e);
+			this.servlet.errorReporter.reportError(e, false);
+		}
+	}
+*/
+	// Interactive and non-interactive are mutually exclusive
+	private synchronized void updateWalletAddressBalanceTableInteractive()
+		throws WalletCallException, IOException, InterruptedException
+	{
+		this.lastInteractiveRefresh = System.currentTimeMillis();
+		
+		final String[][] newAddressBalanceData = this.getAddressBalanceDataFromWallet();
+
+		if (Util.arraysAreDifferent(this.lastAddressBalanceData, newAddressBalanceData))
+		{
+			Log.info("Updating table of addresses/balances I...");
+			this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(newAddressBalanceData));
+			this.lastAddressBalanceData = newAddressBalanceData;
+
+		}
+	}
+	
+
+	// Interactive and non-interactive are mutually exclusive
+	private synchronized void updateWalletAddressBalanceTableAutomated()
+		throws WalletCallException, IOException, InterruptedException
+	{
+		// Make sure it is > 1 min since the last interactive refresh
+		if ((System.currentTimeMillis() - this.lastInteractiveRefresh) < (60 * 1000))
+		{
+			return;
+		}
+		
+		final String[][] newAddressBalanceData = this.balanceGatheringThread.getLastData();
+		
+		if ((newAddressBalanceData != null) &&
+			Util.arraysAreDifferent(this.lastAddressBalanceData, newAddressBalanceData))
+		{
+			Log.info("Updating table of addresses/balances A...");
+			this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(newAddressBalanceData));
+			this.lastAddressBalanceData = newAddressBalanceData;
+		}
+	}
+
+
+	private Grid createAddressBalanceTable(final String rowData[][])
+		throws WalletCallException, IOException, InterruptedException
+	{
+		final Grid gridAddresses = new Grid(/*"Addresses:"*/);
+//		final HeaderRow headerWallets = gridTransactions.prependHeaderRow();
+
+		// Formats
+//		final DecimalFormat formatUsd = new DecimalFormat(UsdToHtmlConverter.FORMAT_USD);
+
+		// Columns
+		gridAddresses.addColumn(ADDRESSES_COLUMN_BALANCE, String.class/*Double.class*/).setRenderer(new HtmlRenderer()/*NumberRenderer(formatUsd), new UsdToHtmlConverter()*/)/*.setHeaderCaption("")*/;
+		gridAddresses.addColumn(ADDRESSES_COLUMN_CONFIRMED, String.class).setRenderer(new HtmlRenderer());
+		gridAddresses.addColumn(ADDRESSES_COLUMN_ADDRESS, String.class).setRenderer(new HtmlRenderer()).setSortable(false)/*.setWidth(0)*/;
+		
+//		gridTransactions.setFrozenColumnCount(2);
+
+		// Rows (Values)
+		for (final String[] row : rowData) {
+				gridAddresses.addRow(row);
+		}
+
+//		gridBalance.sort(Sort.by(COLUMN_SECURITY_DEGREE, SortDirection.ASCENDING)
+//		          .then(COLUMN_SUM, SortDirection.DESCENDING));;
+
+		gridAddresses.setSizeFull();
+		this.panelGridOwnAddresses.setContent(gridAddresses);
+
+		
+//		final String columnNames[] = { "Balance", "Confirmed?", "Address" };
+//        final JTable table = new AddressTable(rowData, columnNames, this.clientCaller);
+//        table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+//        table.getColumnModel().getColumn(0).setPreferredWidth(160);
+//        table.getColumnModel().getColumn(1).setPreferredWidth(140);
+//        table.getColumnModel().getColumn(2).setPreferredWidth(1000);
+
+        return gridAddresses;
+	}
+
+
+	private String[][] getAddressBalanceDataFromWallet()
+		throws WalletCallException, IOException, InterruptedException
+	{
+		// Z Addresses - they are OK
+		final String[] zAddresses = this.servlet.clientCaller.getWalletZAddresses();
+		
+		// T Addresses listed with the list received by addr comamnd
+		final String[] tAddresses = this.servlet.clientCaller.getWalletAllPublicAddresses();
+		final Set<String> tStoredAddressSet = new HashSet<>();
+		for (final String address : tAddresses)
+		{
+			tStoredAddressSet.add(address);
+		}
+		
+		// T addresses with unspent outputs - just in case they are different
+		final String[] tAddressesWithUnspentOuts = this.servlet.clientCaller.getWalletPublicAddressesWithUnspentOutputs();
+		final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
+		for (final String address : tAddressesWithUnspentOuts)
+		{
+			tAddressSetWithUnspentOuts.add(address);
+		}
+		
+		// Combine all known T addresses
+		final Set<String> tAddressesCombined = new HashSet<>();
+		tAddressesCombined.addAll(tStoredAddressSet);
+		tAddressesCombined.addAll(tAddressSetWithUnspentOuts);
+		
+		final String[][] addressBalances = new String[zAddresses.length + tAddressesCombined.size()][];
+		
+		// Format double numbers - else sometimes we get exponential notation 1E-4 ZEN
+		final DecimalFormat df = new DecimalFormat("########0.00######");
+		
+		String confirmed    = "\u2690";
+		String notConfirmed = "\u2691";
+		
+		// Windows does not support the flag symbol (Windows 7 by default)
+		// TODO: isolate OS-specific symbol codes in a separate class
+		final OS_TYPE os = OSUtil.getOSType();
+		if (os == OS_TYPE.WINDOWS)
+		{
+			confirmed = " \u25B7";
+			notConfirmed = " \u25B6";
+		}
+		
+		int i = 0;
+
+		for (final String address : tAddressesCombined)
+		{
+			final String confirmedBalance = this.servlet.clientCaller.getBalanceForAddress(address);
+			final String unconfirmedBalance = this.servlet.clientCaller.getUnconfirmedBalanceForAddress(address);
+			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
+			final String balanceToShow = df.format(Double.valueOf(
+				isConfirmed ? confirmedBalance : unconfirmedBalance));
+			
+			addressBalances[i++] = new String[]
+			{
+				balanceToShow,
+				isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
+				address
+			};
+		}
+		
+		for (final String address : zAddresses)
+		{
+			final String confirmedBalance = this.servlet.clientCaller.getBalanceForAddress(address);
+			final String unconfirmedBalance = this.servlet.clientCaller.getUnconfirmedBalanceForAddress(address);
+			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
+			final String balanceToShow = df.format(Double.valueOf(
+				isConfirmed ? confirmedBalance : unconfirmedBalance));
+			
+			addressBalances[i++] = new String[]
+			{
+				balanceToShow,
+				isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
+				address
+			};
+		}
+
+		return addressBalances;
+	}
+
+
 
 
 	/*
@@ -418,6 +655,10 @@ public class MainView extends XdevView implements IWallet {
 		this.labelTotalBalance = new XdevLabel();
 		this.panelGridTransactions = new XdevPanel();
 		this.tabOwnAddresses = new XdevGridLayout();
+		this.panelGridOwnAddresses = new XdevPanel();
+		this.buttonNewTAddress = new XdevButton();
+		this.buttonNewZAddress = new XdevButton();
+		this.buttonrefresh = new XdevButton();
 		this.tabSendCash = new XdevGridLayout();
 		this.tabAddressBook = new XdevGridLayout();
 		this.tabMessaging = new XdevGridLayout();
@@ -431,6 +672,9 @@ public class MainView extends XdevView implements IWallet {
 		this.labelTotalBalanceCaption.setValue("Total (T+Z) balance:");
 		this.labelTotalBalance.setStyleName("bold");
 		this.labelTotalBalance.setValue("0");
+		this.buttonNewTAddress.setCaption("New T (Transparent) address");
+		this.buttonNewZAddress.setCaption("New Z (Private) address");
+		this.buttonrefresh.setCaption("Refresh");
 	
 		this.tabOverview.setColumns(2);
 		this.tabOverview.setRows(4);
@@ -454,6 +698,21 @@ public class MainView extends XdevView implements IWallet {
 		this.tabOverview.setColumnExpandRatio(0, 10.0F);
 		this.tabOverview.setColumnExpandRatio(1, 10.0F);
 		this.tabOverview.setRowExpandRatio(3, 10.0F);
+		this.tabOwnAddresses.setColumns(3);
+		this.tabOwnAddresses.setRows(2);
+		this.panelGridOwnAddresses.setSizeFull();
+		this.tabOwnAddresses.addComponent(this.panelGridOwnAddresses, 0, 0, 2, 0);
+		this.buttonNewTAddress.setSizeUndefined();
+		this.tabOwnAddresses.addComponent(this.buttonNewTAddress, 0, 1);
+		this.tabOwnAddresses.setComponentAlignment(this.buttonNewTAddress, Alignment.TOP_RIGHT);
+		this.buttonNewZAddress.setSizeUndefined();
+		this.tabOwnAddresses.addComponent(this.buttonNewZAddress, 1, 1);
+		this.buttonrefresh.setSizeUndefined();
+		this.tabOwnAddresses.addComponent(this.buttonrefresh, 2, 1);
+		this.tabOwnAddresses.setComponentAlignment(this.buttonrefresh, Alignment.TOP_CENTER);
+		this.tabOwnAddresses.setColumnExpandRatio(0, 10.0F);
+		this.tabOwnAddresses.setColumnExpandRatio(2, 10.0F);
+		this.tabOwnAddresses.setRowExpandRatio(0, 10.0F);
 		this.tabOverview.setSizeFull();
 		this.tabSheet.addTab(this.tabOverview, "Overview", null);
 		this.tabOwnAddresses.setSizeFull();
@@ -464,7 +723,7 @@ public class MainView extends XdevView implements IWallet {
 		this.tabSheet.addTab(this.tabAddressBook, "Address book", null);
 		this.tabMessaging.setSizeFull();
 		this.tabSheet.addTab(this.tabMessaging, "Messaging", null);
-		this.tabSheet.setSelectedTab(this.tabOverview);
+		this.tabSheet.setSelectedTab(this.tabOwnAddresses);
 		this.gridLayout.setColumns(1);
 		this.gridLayout.setRows(2);
 		this.menuBar.setWidth(100, Unit.PERCENTAGE);
@@ -479,15 +738,19 @@ public class MainView extends XdevView implements IWallet {
 		this.setSizeFull();
 	} // </generated-code>
 
+
+
 	// <generated-code name="variables">
-	private XdevLabel labelTransparentBalanceCaption, labelTransparentBalance, labelPrivateBalanceCaption, labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance;
+	private XdevLabel labelTransparentBalanceCaption, labelTransparentBalance, labelPrivateBalanceCaption,
+			labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance;
+	private XdevButton buttonNewTAddress, buttonNewZAddress, buttonrefresh;
 	private XdevMenuBar menuBar;
 	private XdevMenuItem menuItemMain, menuItemAbout, menuItemWallet, menuItemBackup, menuItemEncrypt,
 			menuItemExportPrivateKeys, menuItemImportPrivateKeys, menuItemShowPrivateKey, menuItemImportOnePrivateKey,
 			menuItemMessaging, menuItemOwnIdentity, menuItemExportOwnIdentity, menuItemAddMessagingGroup,
 			menuItemImportContactIdentity, menuItemRemoveContact, menuItemOptions;
 	private XdevTabSheet tabSheet;
-	private XdevPanel panelGridTransactions;
+	private XdevPanel panelGridTransactions, panelGridOwnAddresses;
 	private XdevGridLayout gridLayout, tabOverview, tabOwnAddresses, tabSendCash, tabAddressBook, tabMessaging;
 	// </generated-code>
 
