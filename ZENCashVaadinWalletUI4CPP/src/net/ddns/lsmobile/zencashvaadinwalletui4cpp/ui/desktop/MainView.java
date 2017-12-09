@@ -10,7 +10,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.vaadin.shared.ui.MarginInfo;
+import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
+import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaklinov.zcashui.DataGatheringThread;
@@ -26,8 +28,12 @@ import com.xdev.ui.XdevLabel;
 import com.xdev.ui.XdevMenuBar;
 import com.xdev.ui.XdevMenuBar.XdevMenuItem;
 import com.xdev.ui.XdevPanel;
+import com.xdev.ui.XdevProgressBar;
 import com.xdev.ui.XdevTabSheet;
+import com.xdev.ui.XdevTextField;
 import com.xdev.ui.XdevView;
+import com.xdev.ui.entitycomponent.combobox.XdevComboBox;
+import com.xdev.util.ConverterBuilder;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IWallet;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
@@ -661,6 +667,19 @@ public class MainView extends XdevView implements IWallet {
 		this.buttonNewZAddress = new XdevButton();
 		this.buttonrefresh = new XdevButton();
 		this.tabSendCash = new XdevGridLayout();
+		this.comboBox = new XdevComboBox<>();
+		this.label = new XdevLabel();
+		this.textField = new XdevTextField();
+		this.textField2 = new XdevTextField();
+		this.label2 = new XdevLabel();
+		this.textField3 = new XdevTextField();
+		this.label3 = new XdevLabel();
+		this.textField4 = new XdevTextField();
+		this.label4 = new XdevLabel();
+		this.button = new XdevButton();
+		this.progressBar = new XdevProgressBar();
+		this.label6 = new XdevLabel();
+		this.label5 = new XdevLabel();
 		this.tabAddressBook = new XdevGridLayout();
 		this.tabMessaging = new XdevGridLayout();
 	
@@ -677,6 +696,31 @@ public class MainView extends XdevView implements IWallet {
 		this.buttonNewTAddress.setCaption("New T (Transparent) address");
 		this.buttonNewZAddress.setCaption("New Z (Private) address");
 		this.buttonrefresh.setCaption("Refresh");
+		this.comboBox.setTextInputAllowed(false);
+		this.comboBox.setCaption("Send cash from:");
+		this.label.setStyleName("tiny");
+		this.label.setValue("* Only addresses with a confirmed balance are shown as sources for sending!");
+		this.textField.setCaption("Destination address:");
+		this.textField2.setCaption("Memo (optional):");
+		this.label2.setStyleName("tiny");
+		this.label2.setValue("* Memo may be specified only if the destination is a Z (Private) address!");
+		this.textField3.setConverter(ConverterBuilder.stringToDouble().build());
+		this.textField3.setCaption("Amount to send:");
+		this.textField3.setStyleName("align-right");
+		this.label3.setValue("ZEN");
+		this.textField4.setConverter(ConverterBuilder.stringToDouble().build());
+		this.textField4.setCaption("Transaction fee:");
+		this.textField4.setStyleName("align-right");
+		this.textField4.setValue("0.0001");
+		this.label4.setValue("ZEN");
+		this.button.setCaption("Send");
+		this.progressBar.setCaption("Progress:");
+		this.label6.setCaption("Last operation status: ");
+		this.label6.setValue("N/A");
+		this.label5.setStyleName("tiny");
+		this.label5.setValue(
+				" * When sending cash from a T (Transparent) address, the remining unspent balance is sent to another auto-generated T address.<br>When sending from a Z (Private) address, the remining unspent balance remains with the Z address. In both cases the original sending <br>address cannot be used for sending again until the transaction is confirmed. The address is temporarily removed from the list! <br>Freshly mined coins may only be sent to a Z (Private) address.");
+		this.label5.setContentMode(ContentMode.HTML);
 	
 		this.tabOverview.setColumns(2);
 		this.tabOverview.setRows(4);
@@ -715,6 +759,52 @@ public class MainView extends XdevView implements IWallet {
 		this.tabOwnAddresses.setColumnExpandRatio(0, 10.0F);
 		this.tabOwnAddresses.setColumnExpandRatio(2, 10.0F);
 		this.tabOwnAddresses.setRowExpandRatio(0, 10.0F);
+		this.tabSendCash.setColumns(4);
+		this.tabSendCash.setRows(9);
+		this.comboBox.setWidth(100, Unit.PERCENTAGE);
+		this.comboBox.setHeight(-1, Unit.PIXELS);
+		this.tabSendCash.addComponent(this.comboBox, 0, 0, 3, 0);
+		this.label.setWidth(100, Unit.PERCENTAGE);
+		this.label.setHeight(-1, Unit.PIXELS);
+		this.tabSendCash.addComponent(this.label, 0, 1, 3, 1);
+		this.textField.setWidth(100, Unit.PERCENTAGE);
+		this.textField.setHeight(-1, Unit.PIXELS);
+		this.tabSendCash.addComponent(this.textField, 0, 2, 3, 2);
+		this.textField2.setWidth(100, Unit.PERCENTAGE);
+		this.textField2.setHeight(-1, Unit.PIXELS);
+		this.tabSendCash.addComponent(this.textField2, 0, 3, 3, 3);
+		this.label2.setWidth(100, Unit.PERCENTAGE);
+		this.label2.setHeight(-1, Unit.PIXELS);
+		this.tabSendCash.addComponent(this.label2, 0, 4, 3, 4);
+		this.textField3.setWidth(100, Unit.PERCENTAGE);
+		this.textField3.setHeight(-1, Unit.PIXELS);
+		this.tabSendCash.addComponent(this.textField3, 0, 5);
+		this.label3.setSizeUndefined();
+		this.tabSendCash.addComponent(this.label3, 1, 5);
+		this.tabSendCash.setComponentAlignment(this.label3, Alignment.BOTTOM_LEFT);
+		this.textField4.setWidth(100, Unit.PERCENTAGE);
+		this.textField4.setHeight(-1, Unit.PIXELS);
+		this.tabSendCash.addComponent(this.textField4, 2, 5);
+		this.label4.setSizeUndefined();
+		this.tabSendCash.addComponent(this.label4, 3, 5);
+		this.tabSendCash.setComponentAlignment(this.label4, Alignment.BOTTOM_LEFT);
+		this.button.setWidth(100, Unit.PERCENTAGE);
+		this.button.setHeight(-1, Unit.PIXELS);
+		this.tabSendCash.addComponent(this.button, 0, 6, 1, 6);
+		this.progressBar.setWidth(100, Unit.PERCENTAGE);
+		this.progressBar.setHeight(-1, Unit.PIXELS);
+		this.tabSendCash.addComponent(this.progressBar, 2, 6);
+		this.label6.setSizeUndefined();
+		this.tabSendCash.addComponent(this.label6, 3, 6);
+		this.label5.setWidth(100, Unit.PERCENTAGE);
+		this.label5.setHeight(-1, Unit.PIXELS);
+		this.tabSendCash.addComponent(this.label5, 0, 7, 3, 7);
+		this.tabSendCash.setColumnExpandRatio(0, 20.0F);
+		this.tabSendCash.setColumnExpandRatio(2, 10.0F);
+		final CustomComponent tabSendCash_vSpacer = new CustomComponent();
+		tabSendCash_vSpacer.setSizeFull();
+		this.tabSendCash.addComponent(tabSendCash_vSpacer, 0, 8, 3, 8);
+		this.tabSendCash.setRowExpandRatio(8, 1.0F);
 		this.tabOverview.setSizeFull();
 		this.tabSheet.addTab(this.tabOverview, "Overview", null);
 		this.tabOwnAddresses.setSizeFull();
@@ -725,7 +815,7 @@ public class MainView extends XdevView implements IWallet {
 		this.tabSheet.addTab(this.tabAddressBook, "Address book", null);
 		this.tabMessaging.setSizeFull();
 		this.tabSheet.addTab(this.tabMessaging, "Messaging", null);
-		this.tabSheet.setSelectedTab(this.tabOverview);
+		this.tabSheet.setSelectedTab(this.tabSendCash);
 		this.gridLayout.setColumns(1);
 		this.gridLayout.setRows(2);
 		this.menuBar.setWidth(100, Unit.PERCENTAGE);
@@ -744,16 +834,19 @@ public class MainView extends XdevView implements IWallet {
 
 	// <generated-code name="variables">
 	private XdevLabel labelTransparentBalanceCaption, labelTransparentBalance, labelPrivateBalanceCaption,
-			labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance;
-	private XdevButton buttonNewTAddress, buttonNewZAddress, buttonrefresh;
+			labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance, label, label2, label3, label4, label6, label5;
+	private XdevButton buttonNewTAddress, buttonNewZAddress, buttonrefresh, button;
 	private XdevMenuBar menuBar;
 	private XdevMenuItem menuItemMain, menuItemAbout, menuItemWallet, menuItemBackup, menuItemEncrypt,
 			menuItemExportPrivateKeys, menuItemImportPrivateKeys, menuItemShowPrivateKey, menuItemImportOnePrivateKey,
 			menuItemMessaging, menuItemOwnIdentity, menuItemExportOwnIdentity, menuItemAddMessagingGroup,
 			menuItemImportContactIdentity, menuItemRemoveContact, menuItemOptions;
+	private XdevProgressBar progressBar;
+	private XdevComboBox<?> comboBox;
 	private XdevTabSheet tabSheet;
 	private XdevPanel panelGridTransactions, panelGridOwnAddresses;
 	private XdevGridLayout gridLayout, tabOverview, tabOwnAddresses, tabSendCash, tabAddressBook, tabMessaging;
+	private XdevTextField textField, textField2, textField3, textField4;
 	// </generated-code>
 
 }
