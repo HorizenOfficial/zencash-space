@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.renderers.HtmlRenderer;
@@ -35,14 +36,14 @@ public class MainView extends XdevView implements IWallet {
 	
 	protected Servlet servlet;
 
-	private DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
+	private final DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
 	
-	private Boolean walletIsEncrypted   = null;
+	private final Boolean walletIsEncrypted   = null;
 
 	private final String OSInfo              = null;
 
 	private String[][] lastTransactionsData = null;
-	private DataGatheringThread<String[][]> transactionGatheringThread = null;
+	private final DataGatheringThread<String[][]> transactionGatheringThread = null;
 	
 	public MainView() {
 		super();
@@ -51,7 +52,7 @@ public class MainView extends XdevView implements IWallet {
 		this.servlet = (Servlet) Servlet.getCurrent();
 
 		try {
-			// Thread and timer to update the wallet balance
+/*			// Thread and timer to update the wallet balance
 			this.walletBalanceGatheringThread = new DataGatheringThread<>(
 				new DataGatheringThread.DataGatherer<WalletBalance>()
 				{
@@ -116,7 +117,7 @@ public class MainView extends XdevView implements IWallet {
 				},
 				this.servlet.errorReporter, 20000);
 			threads.add(this.transactionGatheringThread);
-			
+*/
 			//LS TODO
 //			final ActionListener alTransactions = new ActionListener() {
 //				@Override
@@ -663,6 +664,7 @@ public class MainView extends XdevView implements IWallet {
 		this.tabAddressBook = new XdevGridLayout();
 		this.tabMessaging = new XdevGridLayout();
 	
+		this.gridLayout.setMargin(new MarginInfo(false));
 		this.menuItemEncrypt.setEnabled(false);
 		this.tabSheet.setStyleName("framed");
 		this.labelTransparentBalanceCaption.setValue("Transparent (T) balance:");
@@ -723,7 +725,7 @@ public class MainView extends XdevView implements IWallet {
 		this.tabSheet.addTab(this.tabAddressBook, "Address book", null);
 		this.tabMessaging.setSizeFull();
 		this.tabSheet.addTab(this.tabMessaging, "Messaging", null);
-		this.tabSheet.setSelectedTab(this.tabOwnAddresses);
+		this.tabSheet.setSelectedTab(this.tabOverview);
 		this.gridLayout.setColumns(1);
 		this.gridLayout.setRows(2);
 		this.menuBar.setWidth(100, Unit.PERCENTAGE);
