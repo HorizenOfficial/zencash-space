@@ -13,8 +13,6 @@ import javax.servlet.annotation.WebServlet;
 import com.vaadin.server.SessionInitEvent;
 import com.vaadin.server.UIClassSelectionEvent;
 import com.vaadin.server.UIProvider;
-import com.vaadin.ui.Notification;
-import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.UI;
 import com.vaklinov.zcashui.OSUtil;
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
@@ -39,7 +37,7 @@ public class Servlet extends XdevServlet implements IConfig {
 	public ZCashClientCaller         clientCaller;
 	public StatusUpdateErrorReporter errorReporter = new StatusUpdateErrorReporter(/*this*/);
 
-	public Servlet() throws IOException {
+	public Servlet() throws Exception {
 		super();
 		
         try
@@ -105,11 +103,12 @@ public class Servlet extends XdevServlet implements IConfig {
         } catch (final InstallationDetectionException ide)
         {
         	log.error("Unexpected error: ", ide);
-        	Notification.show("Installation error",
-        			"This program was started in directory: " + OSUtil.getProgramDirectory() + "\n" +
-                    ide.getMessage() + "\n" +
-                    "See the console output for more detailed error information!",
-                     Type.ERROR_MESSAGE);
+//        	Notification.show("Installation error",
+//        			"This program was started in directory: " + OSUtil.getProgramDirectory() + "\n" +
+//                    ide.getMessage() + "\n" +
+//                    "See the console output for more detailed error information!",
+//                     Type.ERROR_MESSAGE);
+        	throw ide;
 //            System.exit(1);
         } catch (final WalletCallException wce)
         {
@@ -118,30 +117,42 @@ public class Servlet extends XdevServlet implements IConfig {
             if ((wce.getMessage().indexOf("{\"code\":-28,\"message\"") != -1) ||
             	(wce.getMessage().indexOf("error code: -28") != -1))
             {
-            	Notification.show("Wallet communication error", "It appears that zend has been started but is not ready to accept wallet\n" +
-                        "connections. It is still loading the wallet and blockchain. Please try to \n" +
-                        "start the GUI wallet later...", Type.ERROR_MESSAGE);
+            	log.error("Wallet communication error. It appears that zend has been started but is not ready to accept wallet " +
+                        "connections. It is still loading the wallet and blockchain. Please try to " +
+                        "start the GUI wallet later...");
+//            	Notification.show("Wallet communication error", "It appears that zend has been started but is not ready to accept wallet\n" +
+//                        "connections. It is still loading the wallet and blockchain. Please try to \n" +
+//                        "start the GUI wallet later...", Type.ERROR_MESSAGE);
             } else
             {
-            	Notification.show("Wallet communication error", "There was a problem communicating with the ZENCash daemon/wallet. \n" +
-                        "Please ensure that the ZENCash server zend is started (e.g. via \n" +
-                        "command  \"zend --daemon\"). Error message is: \n" +
+            	log.error("Wallet communication error, There was a problem communicating with the ZENCash daemon/wallet. " +
+                        "Please ensure that the ZENCash server zend is started (e.g. via " +
+                        "command  \"zend --daemon\"). Error message is: " +
                          wce.getMessage() +
-                        "See the console output for more detailed error information!", Type.ERROR_MESSAGE);
+                        "See the console output for more detailed error information!");
+//            	Notification.show("Wallet communication error", "There was a problem communicating with the ZENCash daemon/wallet. \n" +
+//                        "Please ensure that the ZENCash server zend is started (e.g. via \n" +
+//                        "command  \"zend --daemon\"). Error message is: \n" +
+//                         wce.getMessage() +
+//                        "See the console output for more detailed error information!", Type.ERROR_MESSAGE);
             }
+            throw wce;
 //            System.exit(2);
         } catch (final Exception e)
         {
         	log.error("Unexpected error: ", e);
-        	Notification.show("Error", "A general unexpected critical error has occurred: \n" + e.getMessage() + "\n" +
-                    "See the console output for more detailed error information!", Type.ERROR_MESSAGE);
+//        	Notification.show("Error", "A general unexpected critical error has occurred: \n" + e.getMessage() + "\n" +
+//                    "See the console output for more detailed error information!", Type.ERROR_MESSAGE);
+        	throw e;
 //            System.exit(3);
         } catch (final Error err)
         {
         	// Last resort catch for unexpected problems - just to inform the user
+        	log.error("Unexpected error: ", err);
             err.printStackTrace();
-            Notification.show("Error", "A general unexpected critical/unrecoverable error has occurred: \n" + err.getMessage() + "\n" +
-                    "See the console output for more detailed error information!", Type.ERROR_MESSAGE);
+//            Notification.show("Error", "A general unexpected critical/unrecoverable error has occurred: \n" + err.getMessage() + "\n" +
+//                    "See the console output for more detailed error information!", Type.ERROR_MESSAGE);
+            throw err;
 //            System.exit(4);
         }
     
