@@ -9,8 +9,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.swing.JComboBox;
-
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
@@ -27,6 +25,7 @@ import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 import com.vaklinov.zcashui.Util;
 import com.vaklinov.zcashui.ZCashClientCaller.WalletBalance;
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
+import com.xdev.communication.RunnableAccessWrapper;
 import com.xdev.ui.XdevButton;
 import com.xdev.ui.XdevGridLayout;
 import com.xdev.ui.XdevLabel;
@@ -155,6 +154,97 @@ public class MainView extends XdevView implements IWallet {
 						//this.lastAddressBalanceData = getAddressBalanceDataFromWallet();
 						
 						updateWalletAddressBalanceTableInteractive();
+						
+			//SendCashPanel
+						
+						// Update the balances via timer and data gathering thread
+						this.addressBalanceGatheringThread = new DataGatheringThread<>(
+							new DataGatheringThread.DataGatherer<String[][]>()
+							{
+								@Override
+								public String[][] gatherData()
+									throws Exception
+								{
+									final long start = System.currentTimeMillis();
+									final String[][] data = getAddressPositiveBalanceDataFromWallet();
+									final long end = System.currentTimeMillis();
+									Log.info("Gathering of address/balance table data done in " + (end - start) + "ms." );
+
+									return data;
+								}
+							},
+							this.servlet.errorReporter, 10000, true);
+						threads.add(this.addressBalanceGatheringThread);
+//
+//						final ActionListener alBalancesUpdater = new ActionListener()
+//						{
+//							@Override
+//							public void actionPerformed(final ActionEvent e)
+//							{
+//								try
+//								{
+//									// TODO: if the user has opened the combo box - this closes it (maybe fix)
+									updateWalletAddressPositiveBalanceComboBox();
+//								} catch (final Exception ex)
+//								{
+//									Log.error("Unexpected error: ", ex);
+//									SendCashPanel.this.errorReporter.reportError(ex);
+//								}
+//							}
+//						};
+//						final Timer timerBalancesUpdater = new Timer(15000, alBalancesUpdater);
+//						timerBalancesUpdater.setInitialDelay(3000);
+//						timerBalancesUpdater.start();
+//						this.timers.add(timerBalancesUpdater);
+//
+//						// Add a popup menu to the destination address field - for convenience
+//						final JMenuItem paste = new JMenuItem("Paste address");
+//						final JPopupMenu popupMenu = new JPopupMenu();
+//				        popupMenu.add(paste);
+//				        paste.addActionListener(new ActionListener()
+//				        {
+//							@Override
+//							public void actionPerformed(final ActionEvent e)
+//							{
+//								try
+//								{
+//									final String address = (String)Toolkit.getDefaultToolkit().getSystemClipboard().
+//											         getData(DataFlavor.stringFlavor);
+//									if ((address != null) && (address.trim().length() > 0))
+//									{
+//										SendCashPanel.this.destinationAddressField.setText(address);
+//									}
+//								} catch (final Exception ex)
+//								{
+//									Log.error("Unexpected error", ex);
+//									// TODO: clipboard exception handling - do it better
+//									// java.awt.datatransfer.UnsupportedFlavorException: Unicode String
+//									//SendCashPanel.this.errorReporter.reportError(ex);
+//								}
+//							}
+//						});
+//
+//				        this.destinationAddressField.addMouseListener(new MouseAdapter()
+//				        {
+//				        	@Override
+//							public void mousePressed(final MouseEvent e)
+//				        	{
+//				                if ((!e.isConsumed()) && e.isPopupTrigger())
+//				                {
+//				                    popupMenu.show(e.getComponent(), e.getPoint().x, e.getPoint().y);
+//				                    e.consume();
+//				                };
+//				        	}
+//
+//				            @Override
+//							public void mouseReleased(final MouseEvent e)
+//				            {
+//				            	if ((!e.isConsumed()) && e.isPopupTrigger())
+//				            	{
+//				            		mousePressed(e);
+//				            	}
+//				            }
+//				        });
 
 
 
@@ -635,11 +725,11 @@ public class MainView extends XdevView implements IWallet {
 	
 //	private String[][] lastAddressBalanceData  = null;
 	private String[]   comboBoxItems           = null;
-	private final DataGatheringThread<String[][]> addressBalanceGatheringThread = null;
+	private DataGatheringThread<String[][]> addressBalanceGatheringThread = null;
 	
 //	private Timer        operationStatusTimer        = null;
 	private String       operationStatusID           = null;
-	private int          operationStatusCounter      = 0;
+	private float        operationStatusCounter      = 0;
 
 	/**
 	 * Event handler delegate method for the {@link XdevButton} {@link #buttonSend}.
@@ -690,7 +780,7 @@ public class MainView extends XdevView implements IWallet {
 				return;
 			}
 			
-			final String sourceAddress = this.lastAddressBalanceData[this.balanceAddressCombo.getSelectedIndex()][1];
+			final String sourceAddress = this.lastAddressBalanceData[0 /* LS TODO this.comboBoxBalanceAddress.getSelectedItem()*/][1];
 			final String destinationAddress = this.textFieldDestinationAddress.getValue();
 			final String memo = this.textFieldDestinationMemo.getValue();
 			final String amount = this.textFieldDestinationAmount.getValue();
@@ -802,93 +892,92 @@ public class MainView extends XdevView implements IWallet {
 				},
 				this.servlet.errorReporter, 2000, true);
 			
-			// Start a timer to update the progress of the operation
+			// Start a new thread on the serverside to update the progress of the operation
 			this.operationStatusCounter = 0;
-			operationStatusTimer = new Timer(2000, new ActionListener()
-			{
-				@Override
-				public void actionPerformed(final ActionEvent e)
-				{
-					try
-					{
+			 final Thread operationStatusTimer = new Thread(new RunnableAccessWrapper(() -> {
+				 Boolean opComplete_ = null;
+				while (!((opComplete_ != null) && opComplete_.booleanValue())) {
+					try {
 						// TODO: Handle errors in case of restarted server while wallet is sending ...
-						final Boolean opComplete = opFollowingThread.getLastData();
+						final Boolean opComplete = opComplete_ = opFollowingThread.getLastData();
 						
-						if ((opComplete != null) && opComplete.booleanValue())
-						{
-							// End the special thread used to follow the operation
-							opFollowingThread.setSuspended(true);
-							
-							if (MainView.this.servlet.clientCaller.isCompletedOperationSuccessful(MainView.this.operationStatusID))
-							{
-								MainView.this.labelOperationStatus.setValue(
-									"<html><span style=\"color:green;font-weight:bold\">SUCCESSFUL</span></html>");
-								//"Cash sent successfully"
-								Notification.show("Succesfully sent " + amount + " ZEN from address: \n" +
-										sourceAddress + "\n" +
-										"to address: \n" +
-										destinationAddress, Type.HUMANIZED_MESSAGE);
-							} else
-							{
-								final String errorMessage = MainView.this.servlet.clientCaller.getOperationFinalErrorMessage(MainView.this.operationStatusID);
-								MainView.this.labelOperationStatus.setValue(
-									"<html><span style=\"color:red;font-weight:bold\">ERROR: " + errorMessage + "</span></html>");
+						getUI().access(() -> {
+							try {
+								if ((opComplete != null) && opComplete.booleanValue()) {
+									// End the special thread used to follow the
+									// operation
+									opFollowingThread.setSuspended(true);
 
-								//"Error in sending cash"
-								Notification.show(
-										"An error occurred when sending cash. Error message is:\n" +
-										errorMessage + "\n\n" +
-										"Please ensure that sending parameters are correct. You may try again later...\n",
-										Type.HUMANIZED_MESSAGE);
+									if (MainView.this.servlet.clientCaller
+											.isCompletedOperationSuccessful(MainView.this.operationStatusID)) {
+										MainView.this.labelOperationStatus.setValue(
+												"<html><span style=\"color:green;font-weight:bold\">SUCCESSFUL</span></html>");
+										// "Cash sent successfully"
+										Notification.show("Succesfully sent " + amount + " ZEN from address: \n" + sourceAddress
+												+ "\n" + "to address: \n" + destinationAddress, Type.HUMANIZED_MESSAGE);
+									} else {
+										final String errorMessage2 = MainView.this.servlet.clientCaller
+												.getOperationFinalErrorMessage(MainView.this.operationStatusID);
+										MainView.this.labelOperationStatus
+												.setValue("<html><span style=\"color:red;font-weight:bold\">ERROR: "
+														+ errorMessage2 + "</span></html>");
 
+										// "Error in sending cash"
+										Notification.show(
+												"An error occurred when sending cash. Error message is:\n" + errorMessage2
+														+ "\n\n"
+														+ "Please ensure that sending parameters are correct. You may try again later...\n",
+												Type.HUMANIZED_MESSAGE);
+									}
+
+									// Lock the wallet again
+									if (bEncryptedWallet) {
+										MainView.this.servlet.clientCaller.lockWallet();
+									}
+
+									// Restore controls etc.
+									MainView.this.operationStatusCounter = 0;
+									MainView.this.operationStatusID = null;
+									MainView.this.prohgressBarOperationStatus.setValue(0F);
+
+									MainView.this.buttonSend.setEnabled(true);
+									MainView.this.comboBoxBalanceAddress.setEnabled(true);
+									MainView.this.textFieldDestinationAddress.setEnabled(true);
+									MainView.this.textFieldDestinationAmount.setEnabled(true);
+									MainView.this.textFieldTransactionFee.setEnabled(true);
+									MainView.this.textFieldDestinationMemo.setEnabled(true);
+
+								} else {
+									// Update the progress
+									getUI().access(() -> MainView.this.labelOperationStatus.setValue(
+											"<html><span style=\"color:orange;font-weight:bold\">IN PROGRESS</span></html>"));
+									MainView.this.operationStatusCounter += 0.02;
+									float progress = 0;
+									if (MainView.this.operationStatusCounter <= 1) {
+										progress = MainView.this.operationStatusCounter;
+									} else {
+										progress = 1 + (((MainView.this.operationStatusCounter - 1) * 6) / 10);
+									}
+									// Server Push to update in the ProgressBar in the
+									// Browser
+									MainView.this.prohgressBarOperationStatus.setValue(progress);
+								}
+
+								// SendCashPanel.this.repaint();
+							} catch (final Exception e) {
+								Log.error("Unexpected error: ", e);
+								MainView.this.servlet.errorReporter.reportError(e);
 							}
-							
-							// Lock the wallet again
-							if (bEncryptedWallet)
-							{
-								MainView.this.servlet.clientCaller.lockWallet();
-							}
-							
-							// Restore controls etc.
-							MainView.this.operationStatusCounter = 0;
-							MainView.this.operationStatusID      = null;
-							operationStatusTimer.stop();
-							operationStatusTimer = null;
-							MainView.this.prohgressBarOperationStatus.setValue(0F);
-							
-							MainView.this.buttonSend.setEnabled(true);
-							MainView.this.comboBoxBalanceAddress.setEnabled(true);
-							MainView.this.textFieldDestinationAddress.setEnabled(true);
-							MainView.this.textFieldDestinationAmount.setEnabled(true);
-							MainView.this.textFieldTransactionFee.setEnabled(true);
-							MainView.this.textFieldDestinationMemo.setEnabled(true);
-						} else
-						{
-							// Update the progress
-							MainView.this.labelOperationStatus.setValue(
-								"<html><span style=\"color:orange;font-weight:bold\">IN PROGRESS</span></html>");
-							MainView.this.operationStatusCounter += 2;
-							int progress = 0;
-							if (MainView.this.operationStatusCounter <= 100)
-							{
-								progress = MainView.this.operationStatusCounter;
-							} else
-							{
-								progress = 100 + (((MainView.this.operationStatusCounter - 100) * 6) / 10);
-							}
-							MainView.this.prohgressBarOperationStatus.setValue(progress);
-						}
+						});
 						
-						//SendCashPanel.this.repaint();
-					} catch (final Exception ex)
-					{
+						Thread.sleep(2000);
+					} catch (final Exception ex) {
 						Log.error("Unexpected error: ", ex);
 						MainView.this.servlet.errorReporter.reportError(ex);
 					}
 				}
-			});
-			operationStatusTimer.setInitialDelay(0);
-			operationStatusTimer.start();
+			}));
+	        operationStatusTimer.start();
 		}
 
 	public void prepareForSending(final String address)
@@ -919,6 +1008,10 @@ public class MainView extends XdevView implements IWallet {
 				" - " + this.lastAddressBalanceData[i][1];
 		}
 		
+		this.comboBoxBalanceAddress.removeAllItems();
+		this.comboBoxBalanceAddress.addItems(Arrays.asList(this.comboBoxItems));
+
+		/* LS TODO
 		final int selectedIndex = this.comboBoxBalanceAddress.getSelectedIndex();
 		final boolean isEnabled = this.comboBoxBalanceAddress.isEnabled();
 		this.comboBoxParentPanel.remove(balanceAddressCombo);
@@ -934,6 +1027,7 @@ public class MainView extends XdevView implements IWallet {
 
 		this.validate();
 		this.repaint();
+		*/
 	}
 
 
@@ -1070,19 +1164,23 @@ public class MainView extends XdevView implements IWallet {
 		this.buttonrefresh.setCaption("Refresh");
 		this.comboBoxBalanceAddress.setTextInputAllowed(false);
 		this.comboBoxBalanceAddress.setCaption("Send cash from:");
+		this.comboBoxBalanceAddress.setRequired(true);
 		this.label.setStyleName("tiny");
 		this.label.setValue("* Only addresses with a confirmed balance are shown as sources for sending!");
 		this.textFieldDestinationAddress.setCaption("Destination address:");
+		this.textFieldDestinationAddress.setRequired(true);
 		this.textFieldDestinationMemo.setCaption("Memo (optional):");
 		this.label2.setStyleName("tiny");
 		this.label2.setValue("* Memo may be specified only if the destination is a Z (Private) address!");
 		this.textFieldDestinationAmount.setConverter(ConverterBuilder.stringToDouble().build());
 		this.textFieldDestinationAmount.setCaption("Amount to send:");
 		this.textFieldDestinationAmount.setStyleName("align-right");
+		this.textFieldDestinationAmount.setRequired(true);
 		this.label3.setValue("ZEN");
 		this.textFieldTransactionFee.setConverter(ConverterBuilder.stringToDouble().build());
 		this.textFieldTransactionFee.setCaption("Transaction fee:");
 		this.textFieldTransactionFee.setStyleName("align-right");
+		this.textFieldTransactionFee.setRequired(true);
 		this.textFieldTransactionFee.setValue("0.0001");
 		this.label4.setValue("ZEN");
 		this.buttonSend.setCaption("Send");
@@ -1208,19 +1306,21 @@ public class MainView extends XdevView implements IWallet {
 
 	// <generated-code name="variables">
 	private XdevLabel labelTransparentBalanceCaption, labelTransparentBalance, labelPrivateBalanceCaption,
-			labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance, label, label2, label3, label4, labelOperationStatus, label5;
+			labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance, label, label2, label3, label4,
+			labelOperationStatus, label5;
 	private XdevButton buttonNewTAddress, buttonNewZAddress, buttonrefresh, buttonSend;
 	private XdevMenuBar menuBar;
+	private XdevComboBox<String> comboBoxBalanceAddress;
 	private XdevMenuItem menuItemMain, menuItemAbout, menuItemWallet, menuItemBackup, menuItemEncrypt,
 			menuItemExportPrivateKeys, menuItemImportPrivateKeys, menuItemShowPrivateKey, menuItemImportOnePrivateKey,
 			menuItemMessaging, menuItemOwnIdentity, menuItemExportOwnIdentity, menuItemAddMessagingGroup,
 			menuItemImportContactIdentity, menuItemRemoveContact, menuItemOptions;
 	private XdevProgressBar prohgressBarOperationStatus;
-	private XdevComboBox<?> comboBoxBalanceAddress;
 	private XdevTabSheet tabSheet;
 	private XdevPanel panelGridTransactions, panelGridOwnAddresses;
 	private XdevGridLayout gridLayout, tabOverview, tabOwnAddresses, tabSendCash, tabAddressBook, tabMessaging;
-	private XdevTextField textFieldDestinationAddress, textFieldDestinationMemo, textFieldDestinationAmount, textFieldTransactionFee;
+	private XdevTextField textFieldDestinationAddress, textFieldDestinationMemo, textFieldDestinationAmount,
+			textFieldTransactionFee;
 	// </generated-code>
 
 }
