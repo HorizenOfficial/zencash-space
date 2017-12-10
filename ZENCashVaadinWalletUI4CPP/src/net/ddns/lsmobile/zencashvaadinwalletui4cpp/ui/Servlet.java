@@ -17,7 +17,6 @@ import com.vaadin.ui.UI;
 import com.vaklinov.zcashui.OSUtil;
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 import com.vaklinov.zcashui.StartupProgressDialog;
-import com.vaklinov.zcashui.StatusUpdateErrorReporter;
 import com.vaklinov.zcashui.ZCashClientCaller;
 import com.vaklinov.zcashui.ZCashClientCaller.NetworkAndBlockchainInfo;
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
@@ -35,7 +34,6 @@ public class Servlet extends XdevServlet implements IConfig {
 
 	public ZCashInstallationObserver installationObserver;
 	public ZCashClientCaller         clientCaller;
-	public StatusUpdateErrorReporter errorReporter = new StatusUpdateErrorReporter(/*this*/);
 
 	public Servlet() throws Exception {
 		super();

@@ -63,8 +63,6 @@ public class DataGatheringThread<T>
 	private int interval;
 	// Fag to run immediately - no wait
 	boolean doAFirstGatehring;
-	// Error reporter
-	private StatusUpdateErrorReporter errorReporter;
 	// Flag allowing the thread to be suspended
 	private boolean suspended;
 
@@ -75,9 +73,9 @@ public class DataGatheringThread<T>
 	 * @param errorReporter Error reporter - may be null
 	 * @param interval Interval in ms for gathering
 	 */
-	public DataGatheringThread(final DataGatherer<T> gatherer, final StatusUpdateErrorReporter errorReporter, final int interval)
+	public DataGatheringThread(final DataGatherer<T> gatherer, final int interval)
 	{
-		this(gatherer, errorReporter, interval, false);
+		this(gatherer, interval, false);
 	}
 	
 	/**
@@ -87,12 +85,11 @@ public class DataGatheringThread<T>
 	 * @param errorReporter Error reporter - may be null
 	 * @param interval Interval in ms for gathering
 	 */
-	public DataGatheringThread(final DataGatherer<T> gatherer, final StatusUpdateErrorReporter errorReporter,
+	public DataGatheringThread(final DataGatherer<T> gatherer,
 			                   final int interval, final boolean doAFirstGatehring)
 	{
 		this.suspended = false;
 		this.gatherer = gatherer;
-		this.errorReporter = errorReporter;
 		this.interval = interval;
 		this.doAFirstGatehring = doAFirstGatehring;
 		
@@ -196,10 +193,6 @@ public class DataGatheringThread<T>
 			if (!this.suspended)
 			{
 				log.error("Unexpected error: ", e);
-				if (this.errorReporter != null)
-				{
-					this.errorReporter.reportError(e);
-				}
 			} else
 			{
 				log.info("DataGatheringThread: ignoring " + e.getClass().getName() + " due to suspension!");

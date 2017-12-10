@@ -77,7 +77,6 @@ public class SendCashPanel
 	extends WalletTabPanel implements IConfig
 {
 	private ZCashClientCaller clientCaller;
-	private StatusUpdateErrorReporter errorReporter;
 	
 	private JComboBox  balanceAddressCombo     = null;
 	private JPanel     comboBoxParentPanel     = null;
@@ -100,14 +99,13 @@ public class SendCashPanel
 	private int          operationStatusCounter      = 0;
 	
 
-	public SendCashPanel(final ZCashClientCaller clientCaller,  final StatusUpdateErrorReporter errorReporter)
+	public SendCashPanel(final ZCashClientCaller clientCaller)
 		throws IOException, InterruptedException, WalletCallException
 	{
 		this.timers = new ArrayList<>();
 		this.threads = new ArrayList<>();
 		
 		this.clientCaller = clientCaller;
-		this.errorReporter = errorReporter;
 
 		// Build content
 		this.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -286,7 +284,7 @@ public class SendCashPanel
 					return data;
 				}
 			},
-			this.errorReporter, 10000, true);
+			10000, true);
 		this.threads.add(this.addressBalanceGatheringThread);
 		
 		final ActionListener alBalancesUpdater = new ActionListener()
@@ -301,7 +299,6 @@ public class SendCashPanel
 				} catch (final Exception ex)
 				{
 					log.error("Unexpected error: ", ex);
-					SendCashPanel.this.errorReporter.reportError(ex);
 				}
 			}
 		};
@@ -494,7 +491,7 @@ public class SendCashPanel
 					return result;
 				}
 			},
-			this.errorReporter, 2000, true);
+			2000, true);
 		
 		// Start a timer to update the progress of the operation
 		this.operationStatusCounter = 0;
@@ -579,7 +576,6 @@ public class SendCashPanel
 				} catch (final Exception ex)
 				{
 					log.error("Unexpected error: ", ex);
-					SendCashPanel.this.errorReporter.reportError(ex);
 				}
 			}
 		});

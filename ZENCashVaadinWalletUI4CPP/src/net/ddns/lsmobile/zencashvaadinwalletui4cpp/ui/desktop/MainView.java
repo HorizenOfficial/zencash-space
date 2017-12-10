@@ -183,7 +183,7 @@ public class MainView extends XdevView implements IWallet {
 									return data;
 								}
 							},
-							this.servlet.errorReporter, 10000, true);
+							10000, true);
 						threads.add(this.addressBalanceGatheringThread);
 						
 //						getUI().access(() -> {});
@@ -196,7 +196,6 @@ public class MainView extends XdevView implements IWallet {
 									updateWalletAddressPositiveBalanceComboBox();
 								} catch (final Exception e) {
 									log.error("Unexpected error: ", e);
-									MainView.this.servlet.errorReporter.reportError(e);
 								}
 							}
 						}), 3000, 5000 /*15000*/, TimeUnit.MILLISECONDS);
@@ -897,7 +896,7 @@ public class MainView extends XdevView implements IWallet {
 						return result;
 					}
 				},
-				this.servlet.errorReporter, 2000, true);
+				2000, true);
 			
 			// Start a new thread on the serverside to update the progress of the operation
 			this.operationStatusCounter = 0;
@@ -972,14 +971,12 @@ public class MainView extends XdevView implements IWallet {
 								// SendCashPanel.this.repaint();
 							} catch (final Exception e) {
 								log.error("Unexpected error: ", e);
-								MainView.this.servlet.errorReporter.reportError(e);
 							}
 						});
 						
 						Thread.sleep(2000);
 					} catch (final Exception ex) {
 						log.error("Unexpected error: ", ex);
-						MainView.this.servlet.errorReporter.reportError(ex);
 					}
 				}
 			}));

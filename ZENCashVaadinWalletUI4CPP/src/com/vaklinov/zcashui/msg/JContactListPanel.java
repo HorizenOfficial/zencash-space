@@ -66,8 +66,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import com.vaklinov.zcashui.StatusUpdateErrorReporter;
-
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 
 
@@ -82,15 +80,13 @@ public class JContactListPanel
 	private MessagingPanel   parent;
 	private MessagingStorage mesagingStorage;
 	private ContactList      list;
-	private StatusUpdateErrorReporter errorReporter;
 	private JFrame           parentFrame;
 	
 	private JPopupMenu popupMenu;
 	
 	public JContactListPanel(final MessagingPanel parent,
 			                 final JFrame parentFrame,
-			                 final MessagingStorage messagingStorage,
-			                 final StatusUpdateErrorReporter errorReporter)
+			                 final MessagingStorage messagingStorage)
 		throws IOException
 	{
 		super();
@@ -98,7 +94,6 @@ public class JContactListPanel
 		this.parent = parent;
 		this.parentFrame     = parentFrame;
 		this.mesagingStorage = messagingStorage;
-		this.errorReporter   = errorReporter;
 		
 		this.setLayout(new BorderLayout(0, 0));
 		
@@ -196,7 +191,6 @@ public class JContactListPanel
 				} catch (final IOException ioe)
 				{
 					log.error("Unexpected error: ", ioe);
-					JContactListPanel.this.errorReporter.reportError(ioe, false);
 				}
 			}
 		});
@@ -314,7 +308,6 @@ public class JContactListPanel
 		} catch (final Exception ioe)
 		{
 			log.error("Unexpected error: ", ioe);
-			JContactListPanel.this.errorReporter.reportError(ioe, false);
 		}
 	}
 	

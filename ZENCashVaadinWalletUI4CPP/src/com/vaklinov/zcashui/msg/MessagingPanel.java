@@ -81,7 +81,6 @@ import com.eclipsesource.json.WriterConfig;
 import com.vaklinov.zcashui.DataGatheringThread;
 import com.vaklinov.zcashui.OSUtil;
 import com.vaklinov.zcashui.SendCashPanel;
-import com.vaklinov.zcashui.StatusUpdateErrorReporter;
 import com.vaklinov.zcashui.Util;
 import com.vaklinov.zcashui.WalletTabPanel;
 import com.vaklinov.zcashui.ZCashClientCaller;
@@ -106,7 +105,6 @@ public class MessagingPanel
 	private JTabbedPane parentTabs;
 	
 	private ZCashClientCaller clientCaller;
-	private StatusUpdateErrorReporter errorReporter;
 	
 	private MessagingStorage messagingStorage;
 	
@@ -133,7 +131,7 @@ public class MessagingPanel
 	
 	
 	public MessagingPanel(final JFrame parentFrame, final SendCashPanel sendCashPanel, final JTabbedPane parentTabs,
-			              final ZCashClientCaller clientCaller, final StatusUpdateErrorReporter errorReporter)
+			              final ZCashClientCaller clientCaller)
 		throws IOException, InterruptedException, WalletCallException
 	{
 		super();
@@ -143,7 +141,6 @@ public class MessagingPanel
 		this.parentTabs       = parentTabs;
 		
 		this.clientCaller     = clientCaller;
-		this.errorReporter    = errorReporter;
 		this.messagingStorage = new MessagingStorage();
 		
 		
@@ -155,7 +152,7 @@ public class MessagingPanel
 		this.add(textAndContactsPane, BorderLayout.CENTER);
 		
 		this.contactList = new JContactListPanel(
-			this, this.parentFrame, this.messagingStorage, this.errorReporter);
+			this, this.parentFrame, this.messagingStorage);
 		textAndContactsPane.setRightComponent(this.contactList);
 		
 		final JPanel conversationPanel = new JPanel(new BorderLayout(0, 0));
@@ -268,7 +265,7 @@ public class MessagingPanel
 					return null;
 				}
 			},
-			this.errorReporter, 45 * 1000, true);
+			45 * 1000, true);
 		this.threads.add(this.receivedMesagesGatheringThread);
 	}
 	
@@ -287,7 +284,7 @@ public class MessagingPanel
 					handleURL(e.getURL());
 				} catch (final Exception ex)
 				{
-					MessagingPanel.this.errorReporter.reportError(ex, false);
+					log.error(ex);
 				}
 			}
 		}
@@ -612,7 +609,6 @@ public class MessagingPanel
 		} catch (final Exception ex)
 		{
 			log.error("Unexpected error in messagign TAB selection processing", ex);
-			this.errorReporter.reportError(ex, false);
 		}
 	}
 	
@@ -622,13 +618,12 @@ public class MessagingPanel
 		try
 		{
 			final MessagingOptionsEditDialog optionsDialog = new MessagingOptionsEditDialog(
-				this.parentFrame, this.messagingStorage, this.errorReporter);
+				this.parentFrame, this.messagingStorage);
 			optionsDialog.setVisible(true);
 			
 		} catch (final Exception ex)
 		{
 			log.error("Unexpected error in editing options!", ex);
-			this.errorReporter.reportError(ex, false);
 		}
 		
 	}
@@ -683,7 +678,7 @@ public class MessagingPanel
 			
 			// Dialog will automatically save the identity if the user chooses so
 			final OwnIdentityEditDialog ownIdentityDialog = new OwnIdentityEditDialog(
-				this.parentFrame, ownIdentity, this.messagingStorage, this.errorReporter, identityIsBeingCreated);
+				this.parentFrame, ownIdentity, this.messagingStorage, identityIsBeingCreated);
 			ownIdentityDialog.setVisible(true);
 			
 			return identityIsBeingCreated;
@@ -691,7 +686,6 @@ public class MessagingPanel
 		} catch (final Exception ex)
 		{
 			log.error("Unexpected error in editing own messaging identity!", ex);
-			this.errorReporter.reportError(ex, false);
 			
 			return false;
 		}
@@ -772,7 +766,6 @@ public class MessagingPanel
 		} catch (final Exception ex)
 		{
 			log.error("Unexpected error in exporting own messaging identity to file!", ex);
-			this.errorReporter.reportError(ex, false);
 		}
 	}
 	
@@ -917,7 +910,6 @@ public class MessagingPanel
 		} catch (final Exception ex)
 		{
 			log.error("Unexpected error in importing contact messaging identity from file!", ex);
-			this.errorReporter.reportError(ex, false);
 		}
 	}
 	
@@ -1002,7 +994,6 @@ public class MessagingPanel
 		} catch (final Exception ex)
 		{
 			log.error("Unexpected error in removing contact!", ex);
-			this.errorReporter.reportError(ex, false);
 		}
 	}
 
@@ -1015,7 +1006,6 @@ public class MessagingPanel
 		} catch (final Exception e)
 		{
 			log.error("Unexpected error in sending message (wrapper): ", e);
-			this.errorReporter.reportError(e);
 		}
 	}
 	
@@ -1360,7 +1350,7 @@ public class MessagingPanel
 					return result;
 				}
 			},
-			this.errorReporter, 2000, true);
+			2000, true);
 
 		// Start a timer to update the progress of the operation
 		this.operationStatusTimer = new Timer(2000, new ActionListener()
@@ -1444,7 +1434,6 @@ public class MessagingPanel
 				} catch (final Exception ex)
 				{
 					log.error("Unexpected error in sending message: ", ex);
-					MessagingPanel.this.errorReporter.reportError(ex);
 				}
 			}
 		}); // End timer operation
@@ -1496,7 +1485,6 @@ public class MessagingPanel
 			}
 			
 			log.error("Unexpected error in gathering received messages (wrapper): ", e);
-			this.errorReporter.reportError(e);
 		}
 	}
 	
@@ -1769,7 +1757,6 @@ public class MessagingPanel
 					} catch (final Exception e)
 					{
 						log.error("Unexpected error in reloading contacts after gathering messages: ", e);
-						MessagingPanel.this.errorReporter.reportError(e);
 					}
 				}
 			});
@@ -1792,7 +1779,6 @@ public class MessagingPanel
 				} catch (final Exception e)
 				{
 					log.error("Unexpected error in updating message pane after gathering messages: ", e);
-					MessagingPanel.this.errorReporter.reportError(e);
 				}
 			}
 		});
@@ -1893,7 +1879,7 @@ public class MessagingPanel
 		try
 		{
 			final CreateGroupDialog cgd = new CreateGroupDialog(
-				this, this.parentFrame, this.messagingStorage, this.errorReporter, this.clientCaller);
+				this, this.parentFrame, this.messagingStorage, this.clientCaller);
 			cgd.setVisible(true);
 			
 			if (!cgd.isOKPressed())
@@ -1943,7 +1929,7 @@ public class MessagingPanel
 			}
 		} catch (final Exception ex)
 		{
-			this.errorReporter.reportError(ex, false);
+			log.error(ex);
 		}
 	}
 	

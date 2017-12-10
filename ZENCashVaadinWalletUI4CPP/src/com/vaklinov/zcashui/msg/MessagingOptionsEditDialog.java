@@ -53,7 +53,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
 
-import com.vaklinov.zcashui.StatusUpdateErrorReporter;
 import com.vaklinov.zcashui.Util;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
@@ -69,7 +68,6 @@ public class MessagingOptionsEditDialog
 {
 	protected JFrame parentFrame;
 	protected MessagingStorage storage;
-	protected StatusUpdateErrorReporter errorReporter;
 	
 	protected JLabel infoLabel;
 	protected JPanel buttonPanel;
@@ -78,12 +76,11 @@ public class MessagingOptionsEditDialog
 	protected JTextField transactionFeeTextField;
 	protected JCheckBox  automaticallyAddUsers;
 	
-	public MessagingOptionsEditDialog(final JFrame parentFrame, final MessagingStorage storage, final StatusUpdateErrorReporter errorReporter)
+	public MessagingOptionsEditDialog(final JFrame parentFrame, final MessagingStorage storage)
 		throws IOException
 	{
 		this.parentFrame   = parentFrame;
 		this.storage       = storage;
-		this.errorReporter = errorReporter;
 		
 		this.setTitle("Messaging options");
 		this.setModal(true);
@@ -169,7 +166,6 @@ public class MessagingOptionsEditDialog
 				} catch (final Exception ex)
 				{
 					log.error("Unexpected error in editing own messaging identity!", ex);
-					MessagingOptionsEditDialog.this.errorReporter.reportError(ex, false);
 				}
 			}
 		});

@@ -74,7 +74,6 @@ public class DashboardPanel
 	private JFrame parentFrame;
 	private ZCashInstallationObserver installationObserver;
 	private ZCashClientCaller clientCaller;
-	private StatusUpdateErrorReporter errorReporter;
 	
 	private JLabel networkAndBlockchainLabel = null;
 	private DataGatheringThread<NetworkAndBlockchainInfo> netInfoGatheringThread = null;
@@ -97,14 +96,12 @@ public class DashboardPanel
 
 	public DashboardPanel(final JFrame parentFrame,
 			              final ZCashInstallationObserver installationObserver,
-			              final ZCashClientCaller clientCaller,
-			              final StatusUpdateErrorReporter errorReporter)
+			              final ZCashClientCaller clientCaller)
 		throws IOException, InterruptedException, WalletCallException
 	{
 		this.parentFrame = parentFrame;
 		this.installationObserver = installationObserver;
 		this.clientCaller = clientCaller;
-		this.errorReporter = errorReporter;
 		
 		this.timers = new ArrayList<>();
 		this.threads = new ArrayList<>();
@@ -180,7 +177,7 @@ public class DashboardPanel
 					return daemonInfo;
 				}
 			},
-			this.errorReporter, 2000, true);
+			2000, true);
 		this.threads.add(this.daemonInfoGatheringThread);
 		
 		final ActionListener alDeamonStatus = new ActionListener() {
@@ -193,7 +190,6 @@ public class DashboardPanel
 				} catch (final Exception ex)
 				{
 					log.error("Unexpected error: ", ex);
-					DashboardPanel.this.errorReporter.reportError(ex);
 				}
 			}
 		};
@@ -225,7 +221,7 @@ public class DashboardPanel
 					return balance;
 				}
 			},
-			this.errorReporter, 8000, true);
+			8000, true);
 		this.threads.add(this.walletBalanceGatheringThread);
 		
 		final ActionListener alWalletBalance = new ActionListener() {
@@ -238,7 +234,6 @@ public class DashboardPanel
 				} catch (final Exception ex)
 				{
 					log.error("Unexpected error: ", ex);
-					DashboardPanel.this.errorReporter.reportError(ex);
 				}
 			}
 		};
@@ -263,7 +258,7 @@ public class DashboardPanel
 					return data;
 				}
 			},
-			this.errorReporter, 20000);
+			20000);
 		this.threads.add(this.transactionGatheringThread);
 		
 		final ActionListener alTransactions = new ActionListener() {
@@ -276,7 +271,6 @@ public class DashboardPanel
 				} catch (final Exception ex)
 				{
 					log.error("Unexpected error: ", ex);
-					DashboardPanel.this.errorReporter.reportError(ex);
 				}
 			}
 		};
@@ -300,7 +294,7 @@ public class DashboardPanel
 					return data;
 				}
 			},
-			this.errorReporter, 10000, true);
+			10000, true);
 		this.threads.add(this.netInfoGatheringThread);
 		
 		final ActionListener alNetAndBlockchain = new ActionListener() {
@@ -313,7 +307,6 @@ public class DashboardPanel
 				} catch (final Exception ex)
 				{
 					log.error("Unexpected error: ", ex);
-					DashboardPanel.this.errorReporter.reportError(ex);
 				}
 			}
 		};

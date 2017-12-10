@@ -67,7 +67,6 @@ public class AddressesPanel
 	extends WalletTabPanel implements IConfig
 {
 	private ZCashClientCaller clientCaller;
-	private StatusUpdateErrorReporter errorReporter;
 
 	private JTable addressBalanceTable   = null;
 	private JScrollPane addressBalanceTablePane  = null;
@@ -79,11 +78,10 @@ public class AddressesPanel
 	private long lastInteractiveRefresh;
 	
 
-	public AddressesPanel(final ZCashClientCaller clientCaller, final StatusUpdateErrorReporter errorReporter)
+	public AddressesPanel(final ZCashClientCaller clientCaller)
 		throws IOException, InterruptedException, WalletCallException
 	{
 		this.clientCaller = clientCaller;
-		this.errorReporter = errorReporter;
 		
 		this.lastInteractiveRefresh = System.currentTimeMillis();
 
@@ -143,7 +141,7 @@ public class AddressesPanel
 				    return data;
 				}
 			},
-			this.errorReporter, 25000);
+			25000);
 		this.threads.add(this.balanceGatheringThread);
 		
 		final ActionListener alBalances = new ActionListener()
@@ -157,7 +155,6 @@ public class AddressesPanel
 				} catch (final Exception ex)
 				{
 					log.error("Unexpected error: ", ex);
-					AddressesPanel.this.errorReporter.reportError(ex);
 				}
 			}
 		};
@@ -189,7 +186,6 @@ public class AddressesPanel
 					}
 					
 					log.error("Unexpected error: ", ex);
-					AddressesPanel.this.errorReporter.reportError(ex, false);
 				}
 			}
 		});
@@ -268,7 +264,6 @@ public class AddressesPanel
 		} catch (final Exception e)
 		{
 			log.error("Unexpected error: ", e);
-			AddressesPanel.this.errorReporter.reportError(e, false);
 		}
 	}
 	

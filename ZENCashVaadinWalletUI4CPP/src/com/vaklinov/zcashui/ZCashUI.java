@@ -75,7 +75,6 @@ public class ZCashUI
 {
     private ZCashInstallationObserver installationObserver;
     private ZCashClientCaller         clientCaller;
-    private StatusUpdateErrorReporter errorReporter;
 
     private WalletOperations walletOps;
 
@@ -118,7 +117,6 @@ public class ZCashUI
 
 //        final Container contentPane = this.getContentPane();
 
-        this.errorReporter = new StatusUpdateErrorReporter(/*this*/);
         this.installationObserver = new ZCashInstallationObserver(OSUtil.getProgramDirectory());
         this.clientCaller = new ZCashClientCaller(OSUtil.getProgramDirectory());
         
@@ -239,7 +237,6 @@ public class ZCashUI
                 	} catch (final UnsupportedEncodingException uee)
                 	{
                 		log.error("Unexpected error: ", uee);
-                		ZCashUI.this.errorReporter.reportError(uee);
                 	}
                 }
             }

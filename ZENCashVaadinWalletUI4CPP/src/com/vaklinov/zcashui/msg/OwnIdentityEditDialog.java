@@ -38,8 +38,6 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import com.vaklinov.zcashui.StatusUpdateErrorReporter;
-
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 
 
@@ -52,15 +50,13 @@ public class OwnIdentityEditDialog
 	extends IdentityInfoDialog implements IConfig
 {
 	private MessagingStorage storage;
-	private StatusUpdateErrorReporter errorReporter;
 	
 	public OwnIdentityEditDialog(final JFrame parent, final MessagingIdentity identity,
-			                     final MessagingStorage storage, final StatusUpdateErrorReporter errorReporter, final boolean identityIsBeingCreated)
+			                     final MessagingStorage storage, final boolean identityIsBeingCreated)
 	{
 		super(parent, identity);
 
 		this.storage       = storage;
-		this.errorReporter = errorReporter;
 		
 		this.setTitle("Own messaging identity - edit...");
 		
@@ -128,7 +124,6 @@ public class OwnIdentityEditDialog
 				} catch (final Exception ex)
 				{
 					log.error("Unexpected error in editing own messaging identity!", ex);
-					OwnIdentityEditDialog.this.errorReporter.reportError(ex, false);
 				}
 			}
 		});

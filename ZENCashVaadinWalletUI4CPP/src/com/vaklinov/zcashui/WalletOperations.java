@@ -59,7 +59,6 @@ public class WalletOperations implements IConfig
 	
 	private final ZCashInstallationObserver installationObserver;
 	private final ZCashClientCaller         clientCaller;
-	private final StatusUpdateErrorReporter errorReporter;
 
 
 	public WalletOperations(final ZCashUI parent,
@@ -69,8 +68,7 @@ public class WalletOperations implements IConfig
 			                final SendCashPanel  sendCash,
 			                
 			                final ZCashInstallationObserver installationObserver,
-			                final ZCashClientCaller clientCaller,
-			                final StatusUpdateErrorReporter errorReporter)
+			                final ZCashClientCaller clientCaller)
         throws IOException, InterruptedException, WalletCallException
 	{
 		this.parent    = parent;
@@ -81,7 +79,6 @@ public class WalletOperations implements IConfig
 		
 		this.installationObserver = installationObserver;
 		this.clientCaller = clientCaller;
-		this.errorReporter = errorReporter;
 	}
 
 	
@@ -148,7 +145,7 @@ public class WalletOperations implements IConfig
 			
 		} catch (final Exception e)
 		{
-			this.errorReporter.reportError(e, false);
+			log.error(e);
 		}
 	}
 	
@@ -204,7 +201,7 @@ public class WalletOperations implements IConfig
 			
 		} catch (final Exception e)
 		{
-			this.errorReporter.reportError(e, false);
+			log.error(e);
 		}
 	}
 	
@@ -265,7 +262,7 @@ public class WalletOperations implements IConfig
 			
 		} catch (final Exception e)
 		{
-			this.errorReporter.reportError(e, false);
+			log.error(e);
 		}
 	}
 
@@ -332,7 +329,7 @@ public class WalletOperations implements IConfig
 			
 		} catch (final Exception e)
 		{
-			this.errorReporter.reportError(e, false);
+			log.error(e);
 		}
 	}
 	
@@ -403,7 +400,7 @@ public class WalletOperations implements IConfig
 				"Private key information", JOptionPane.INFORMATION_MESSAGE);
 		} catch (final Exception ex)
 		{
-			this.errorReporter.reportError(ex, false);
+			log.error(ex);
 		}
 	}
 	
@@ -417,7 +414,7 @@ public class WalletOperations implements IConfig
 			
 		} catch (final Exception ex)
 		{
-			this.errorReporter.reportError(ex, false);
+			log.error(ex);
 		}
 	}
 	

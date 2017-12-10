@@ -14,7 +14,7 @@
 <?import com.xdev.ui.XdevTextField?>
 <?import com.xdev.ui.XdevView?>
 <?import com.xdev.ui.entitycomponent.combobox.XdevComboBox?>
-<?import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop.MainView$AddressWithBalance?>
+<?import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop.MainView.AddressWithBalance?>
 <XdevView xmlns:x="http://xml.xdev-software.com/xdevuiml" x:name="MainView">
     <x:constraints zpos="0" width="100%" height="100%" />
     <XdevGridLayout x:name="gridLayout" margin="">
@@ -87,7 +87,7 @@
                 <XdevComboBox textInputAllowed="false" caption="Send cash from:" required="true" x:name="comboBoxBalanceAddress">
                     <x:constraints gridx="1" gridy="1" weighty="0.0" weightx="0.2" width="100%" gridWidth="4" />
                     <x:typeArguments>
-                        <typeArgument type="MainView$AddressWithBalance" />
+                        <typeArgument type="AddressWithBalance" />
                     </x:typeArguments>
                 </XdevComboBox>
                 <XdevLabel styleName="tiny" x:name="label" value="* Only addresses with a confirmed balance are shown as sources for sending!">

@@ -51,7 +51,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import com.vaklinov.zcashui.StatusUpdateErrorReporter;
 import com.vaklinov.zcashui.Util;
 import com.vaklinov.zcashui.ZCashClientCaller;
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
@@ -70,7 +69,6 @@ public class CreateGroupDialog
 	protected MessagingPanel msgPanel;
 	protected JFrame parentFrame;
 	protected MessagingStorage storage;
-	protected StatusUpdateErrorReporter errorReporter;
 	protected ZCashClientCaller caller;
 	
 	protected boolean isOKPressed = false;
@@ -89,7 +87,7 @@ public class CreateGroupDialog
 	
 	protected MessagingIdentity createdGroup = null;
 	
-	public CreateGroupDialog(final MessagingPanel msgPanel, final JFrame parentFrame, final MessagingStorage storage, final StatusUpdateErrorReporter errorReporter, final ZCashClientCaller caller)
+	public CreateGroupDialog(final MessagingPanel msgPanel, final JFrame parentFrame, final MessagingStorage storage, final ZCashClientCaller caller)
 		throws IOException
 	{
 		super(parentFrame);
@@ -97,7 +95,6 @@ public class CreateGroupDialog
 		this.msgPanel      = msgPanel;
 		this.parentFrame   = parentFrame;
 		this.storage       = storage;
-		this.errorReporter = errorReporter;
 		this.caller = caller;
 		
 		this.setTitle("Add messaging group...");
@@ -343,7 +340,6 @@ public class CreateGroupDialog
 				} catch (final Exception e)
 				{
 					log.error("Unexpected error in reloading contacts after gathering messages: ", e);
-					CreateGroupDialog.this.errorReporter.reportError(e);
 				}
 			}
 		});
