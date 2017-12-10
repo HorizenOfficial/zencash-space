@@ -54,7 +54,7 @@ public class Servlet extends XdevServlet implements IConfig {
         	
         	Log.info("Starting ZENCash Swing Wallet ...");
         	Log.info("OS: " + System.getProperty("os.name") + " = " + os);
-        	Log.info("Current directory: " + new File(".").getCanonicalPath());//LS TODO --C:\Program Files\XDEV Software\RapidClipse
+        	Log.info("Current directory: " + new File(".").getCanonicalPath());//TODO LS --C:\Program Files\XDEV Software\RapidClipse
         	Log.info("Class path: " + System.getProperty("java.class.path"));
         	Log.info("Environment PATH: " + System.getenv("PATH"));
             
@@ -106,10 +106,11 @@ public class Servlet extends XdevServlet implements IConfig {
         } catch (final InstallationDetectionException ide)
         {
         	Log.error("Unexpected error: ", ide);
-        	Notification.show("This program was started in directory: " + OSUtil.getProgramDirectory() + "\n" +
+        	Notification.show("Installation error",
+        			"This program was started in directory: " + OSUtil.getProgramDirectory() + "\n" +
                     ide.getMessage() + "\n" +
                     "See the console output for more detailed error information!",
-                    "Installation error", Type.HUMANIZED_MESSAGE);
+                     Type.HUMANIZED_MESSAGE);
 //            System.exit(1);
         } catch (final WalletCallException wce)
         {

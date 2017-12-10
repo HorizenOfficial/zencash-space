@@ -3,10 +3,13 @@ package net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +50,10 @@ import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 public class MainView extends XdevView implements IWallet {
 	
 	protected Servlet servlet;
+	
+	private final NumberFormat defaultNumberFormat = NumberFormat.getNumberInstance();
+	private final NumberFormat usNumberFormat = java.text.NumberFormat.getNumberInstance(Locale.US);
+
 
 	private final DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
 	
@@ -62,6 +69,8 @@ public class MainView extends XdevView implements IWallet {
 		this.initUI();
 		
 		this.servlet = (Servlet) Servlet.getCurrent();
+		this.defaultNumberFormat.setMaximumFractionDigits(10);
+		this.usNumberFormat.setMaximumFractionDigits(10);
 
 		try {
 /*			// Thread and timer to update the wallet balance
@@ -91,7 +100,7 @@ public class MainView extends XdevView implements IWallet {
 				this.servlet.errorReporter, 8000, true);
 			threads.add(this.walletBalanceGatheringThread);
 
-			//LS TODO
+			//TODO LS
 //			final ActionListener alWalletBalance = new ActionListener() {
 //				@Override
 //				public void actionPerformed(final ActionEvent e)
@@ -130,7 +139,7 @@ public class MainView extends XdevView implements IWallet {
 				this.servlet.errorReporter, 20000);
 			threads.add(this.transactionGatheringThread);
 */
-			//LS TODO
+			//TODO LS
 //			final ActionListener alTransactions = new ActionListener() {
 //				@Override
 //				public void actionPerformed(final ActionEvent e)
@@ -192,7 +201,7 @@ public class MainView extends XdevView implements IWallet {
 								}
 							}
 						}), 3000, 5000 /*15000*/, TimeUnit.MILLISECONDS);
-//						this.timers.add(timerBalancesUpdater); LS TODO
+//						this.timers.add(timerBalancesUpdater); TODO LS
 //
 //						// Add a popup menu to the destination address field - for convenience
 //						final JMenuItem paste = new JMenuItem("Paste address");
@@ -312,8 +321,6 @@ public class MainView extends XdevView implements IWallet {
 				notConfirmed = " \u25B6";
 			}
 
-			final DecimalFormat df = new DecimalFormat("########0.00######");
-			
 			// Change the direction and date etc. attributes for presentation purposes
 			for (final String[] trans : allTransactions)
 			{
@@ -346,7 +353,7 @@ public class MainView extends XdevView implements IWallet {
 					{
 						amount = -amount;
 					}
-					trans[3] = df.format(amount);
+					trans[3] = decimalFormat.format(amount);
 				} catch (final NumberFormatException nfe)
 				{
 					Log.error("Error occurred while formatting amount: " + trans[3] +
@@ -382,7 +389,7 @@ public class MainView extends XdevView implements IWallet {
 			this.labelPrivateBalance.setValue(df.format(balance.privateBalance));
 			this.labelTotalBalance.setValue(df.format(balance.totalBalance));
 			
-			/* LS TODO
+			/* TODO LS
 			
 			final WalletBalance balance = this.walletBalanceGatheringThread.getLastData();
 			
@@ -443,7 +450,7 @@ public class MainView extends XdevView implements IWallet {
 		{
 		
 			final String[][] newTransactionsData = getTransactionsDataFromWallet();
-			// LS TODO this.transactionGatheringThread.getLastData();
+			// TODO LS this.transactionGatheringThread.getLastData();
 			
 			// May be null - not even gathered once
 			if (newTransactionsData == null)
@@ -497,7 +504,7 @@ public class MainView extends XdevView implements IWallet {
 	
 	protected Grid addressBalanceTable = null;
 	
-	String[][] lastAddressBalanceData = null;
+	String[][] lastAddressBalanceFullData = null;
 	
 	private final DataGatheringThread<String[][]> balanceGatheringThread = null;
 	
@@ -565,11 +572,11 @@ public class MainView extends XdevView implements IWallet {
 		
 		final String[][] newAddressBalanceData = this.getAddressBalanceDataFromWallet();
 
-		if (Util.arraysAreDifferent(this.lastAddressBalanceData, newAddressBalanceData))
+		if (Util.arraysAreDifferent(this.lastAddressBalanceFullData, newAddressBalanceData))
 		{
 			Log.info("Updating table of addresses/balances I...");
 			this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(newAddressBalanceData));
-			this.lastAddressBalanceData = newAddressBalanceData;
+			this.lastAddressBalanceFullData = newAddressBalanceData;
 
 		}
 	}
@@ -588,11 +595,11 @@ public class MainView extends XdevView implements IWallet {
 		final String[][] newAddressBalanceData = this.balanceGatheringThread.getLastData();
 		
 		if ((newAddressBalanceData != null) &&
-			Util.arraysAreDifferent(this.lastAddressBalanceData, newAddressBalanceData))
+			Util.arraysAreDifferent(this.lastAddressBalanceFullData, newAddressBalanceData))
 		{
 			Log.info("Updating table of addresses/balances A...");
 			this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(newAddressBalanceData));
-			this.lastAddressBalanceData = newAddressBalanceData;
+			this.lastAddressBalanceFullData = newAddressBalanceData;
 		}
 	}
 
@@ -665,9 +672,6 @@ public class MainView extends XdevView implements IWallet {
 		
 		final String[][] addressBalances = new String[zAddresses.length + tAddressesCombined.size()][];
 		
-		// Format double numbers - else sometimes we get exponential notation 1E-4 ZEN
-		final DecimalFormat df = new DecimalFormat("########0.00######");
-		
 		String confirmed    = "\u2690";
 		String notConfirmed = "\u2691";
 		
@@ -687,7 +691,7 @@ public class MainView extends XdevView implements IWallet {
 			final String confirmedBalance = this.servlet.clientCaller.getBalanceForAddress(address);
 			final String unconfirmedBalance = this.servlet.clientCaller.getUnconfirmedBalanceForAddress(address);
 			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
-			final String balanceToShow = df.format(Double.valueOf(
+			final String balanceToShow = decimalFormat.format(Double.valueOf(
 				isConfirmed ? confirmedBalance : unconfirmedBalance));
 			
 			addressBalances[i++] = new String[]
@@ -703,7 +707,7 @@ public class MainView extends XdevView implements IWallet {
 			final String confirmedBalance = this.servlet.clientCaller.getBalanceForAddress(address);
 			final String unconfirmedBalance = this.servlet.clientCaller.getUnconfirmedBalanceForAddress(address);
 			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
-			final String balanceToShow = df.format(Double.valueOf(
+			final String balanceToShow = decimalFormat.format(Double.valueOf(
 				isConfirmed ? confirmedBalance : unconfirmedBalance));
 			
 			addressBalances[i++] = new String[]
@@ -720,8 +724,8 @@ public class MainView extends XdevView implements IWallet {
 
 	// SendCashPanel
 	
-//	private String[][] lastAddressBalanceData  = null;
-	private String[]   comboBoxItems           = null;
+	private String[][] lastAddressBalanceData  = null;
+	private AddressWithBalance[]   comboBoxItems           = null;
 	private DataGatheringThread<String[][]> addressBalanceGatheringThread = null;
 	
 //	private Timer        operationStatusTimer        = null;
@@ -769,7 +773,7 @@ public class MainView extends XdevView implements IWallet {
 				return;
 			}
 			
-			if (this.comboBoxBalanceAddress.getSelectedItem() == null)
+			if (this.comboBoxBalanceAddress.getValue() == null)
 			{
 				//"Please select source address"
 				Notification.show("Please select a source address with a current positive\n" +
@@ -777,11 +781,11 @@ public class MainView extends XdevView implements IWallet {
 				return;
 			}
 			
-			final String sourceAddress = this.lastAddressBalanceData[0 /* LS TODO this.comboBoxBalanceAddress.getSelectedItem()*/][1];
+			final String sourceAddress = ((AddressWithBalance)this.comboBoxBalanceAddress.getValue()).address;
 			final String destinationAddress = this.textFieldDestinationAddress.getValue();
 			final String memo = this.textFieldDestinationMemo.getValue();
-			final String amount = this.textFieldDestinationAmount.getValue();
-			final String fee = this.textFieldTransactionFee.getValue();
+			String amount = this.textFieldDestinationAmount.getValue();
+			String fee = this.textFieldTransactionFee.getValue();
 
 			// Verify general correctness.
 			String errorMessage = null;
@@ -814,9 +818,14 @@ public class MainView extends XdevView implements IWallet {
 				try
 				{
 					final double d = Double.valueOf(amount);
-				} catch (final NumberFormatException nfe)
+				} catch (final Exception nfe)
 				{
-					errorMessage = "Amount to send is invalid; it is not a number.";
+					try {
+						amount = this.usNumberFormat.format(this.defaultNumberFormat.parse(amount));
+						final double d = Double.valueOf(amount);
+					} catch (final ParseException e) {
+						errorMessage = "Amount to send is invalid; it is not a number.";
+					}
 				}
 			}
 			
@@ -828,9 +837,14 @@ public class MainView extends XdevView implements IWallet {
 				try
 				{
 					final double d = Double.valueOf(fee);
-				} catch (final NumberFormatException nfe)
+				} catch (final Exception nfe)
 				{
-					errorMessage = "Transaction fee is invalid; it is not a number.";
+					try {
+						fee = this.usNumberFormat.format(this.defaultNumberFormat.parse(fee));
+						final double d = Double.valueOf(fee);
+					} catch (final ParseException e) {
+						errorMessage = "Transaction fee is invalid; it is not a number.";
+					}
 				}
 			}
 
@@ -844,7 +858,7 @@ public class MainView extends XdevView implements IWallet {
 
 			// Check for encrypted wallet
 			final boolean bEncryptedWallet = this.servlet.clientCaller.isWalletEncrypted();
-			/*LS TODO
+			/*TODO LS
 			if (bEncryptedWallet)
 			{
 				final PasswordDialog pd = new PasswordDialog((JFrame)(SendCashPanel.this.getRootPane().getParent()));
@@ -891,6 +905,7 @@ public class MainView extends XdevView implements IWallet {
 			
 			// Start a new thread on the serverside to update the progress of the operation
 			this.operationStatusCounter = 0;
+			final String amountFinal = amount;
 			 final Thread operationStatusTimer = new Thread(new RunnableAccessWrapper(() -> {
 				 Boolean opComplete_ = null;
 				while (!((opComplete_ != null) && opComplete_.booleanValue())) {
@@ -910,7 +925,7 @@ public class MainView extends XdevView implements IWallet {
 										MainView.this.labelOperationStatus.setValue(
 												"<html><span style=\"color:green;font-weight:bold\">SUCCESSFUL</span></html>");
 										// "Cash sent successfully"
-										Notification.show("Succesfully sent " + amount + " ZEN from address: \n" + sourceAddress
+										Notification.show("Succesfully sent " + amountFinal + " ZEN from address: \n" + sourceAddress
 												+ "\n" + "to address: \n" + destinationAddress, Type.HUMANIZED_MESSAGE);
 									} else {
 										final String errorMessage2 = MainView.this.servlet.clientCaller
@@ -982,33 +997,63 @@ public class MainView extends XdevView implements IWallet {
 	    this.textFieldDestinationAddress.setValue(address);
 	}
 	
+	public static class AddressWithBalance {
+		String address;
+		String balance;
+		public AddressWithBalance(final String address, final String balance) {
+			super();
+			this.address = address;
+			this.balance = balance;
+		}
+	    @Override
+		public String toString() {
+	    	return decimalFormat.format(Double.valueOf(this.balance))  +
+					" - " + this.address;
+	    }
+	}
+	
 	
 	private void updateWalletAddressPositiveBalanceComboBox()
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final String[][] newAddressBalanceData = this.addressBalanceGatheringThread.getLastData();
 		
+		boolean notChanged = true;
 		// The data may be null if nothing is yet obtained
-		if (newAddressBalanceData == null)
-		{
+		if (newAddressBalanceData == null) {
+		}
+		else if (this.lastAddressBalanceData == null) {
+			notChanged = false;
+		}
+		else if (this.lastAddressBalanceData.length != newAddressBalanceData.length) {
+			notChanged = false;
+		}
+		else {
+			for (int i = 0; i < newAddressBalanceData.length; i++) {
+				if (!Arrays.equals(newAddressBalanceData[i], this.lastAddressBalanceData[i])) {
+					notChanged = false;
+					break;
+				}
+			}
+		}
+		
+		if (notChanged) {
 			return;
 		}
 		
 		this.lastAddressBalanceData = newAddressBalanceData;
 		
-		this.comboBoxItems = new String[this.lastAddressBalanceData.length];
+		this.comboBoxItems = new AddressWithBalance[this.lastAddressBalanceData.length];
 		for (int i = 0; i < this.lastAddressBalanceData.length; i++)
 		{
 			// Do numeric formatting or else we may get 1.1111E-5
-			this.comboBoxItems[i] =
-				new DecimalFormat("########0.00######").format(Double.valueOf(this.lastAddressBalanceData[i][0]))  +
-				" - " + this.lastAddressBalanceData[i][1];
+			this.comboBoxItems[i] = new AddressWithBalance (this.lastAddressBalanceData[i][1], this.lastAddressBalanceData[i][0]);
 		}
 		
 		this.comboBoxBalanceAddress.removeAllItems();
 		this.comboBoxBalanceAddress.addItems(Arrays.asList(this.comboBoxItems));
 
-		/* LS TODO
+		/* TODO LS
 		final int selectedIndex = this.comboBoxBalanceAddress.getSelectedIndex();
 		final boolean isEnabled = this.comboBoxBalanceAddress.isEnabled();
 		this.comboBoxParentPanel.remove(balanceAddressCombo);
@@ -1169,12 +1214,14 @@ public class MainView extends XdevView implements IWallet {
 		this.textFieldDestinationMemo.setCaption("Memo (optional):");
 		this.label2.setStyleName("tiny");
 		this.label2.setValue("* Memo may be specified only if the destination is a Z (Private) address!");
-		this.textFieldDestinationAmount.setConverter(ConverterBuilder.stringToDouble().build());
+		this.textFieldDestinationAmount
+				.setConverter(ConverterBuilder.stringToDouble().minimumFractionDigits(0).maximumFractionDigits(10).build());
 		this.textFieldDestinationAmount.setCaption("Amount to send:");
 		this.textFieldDestinationAmount.setStyleName("align-right");
 		this.textFieldDestinationAmount.setRequired(true);
 		this.label3.setValue("ZEN");
-		this.textFieldTransactionFee.setConverter(ConverterBuilder.stringToDouble().build());
+		this.textFieldTransactionFee
+				.setConverter(ConverterBuilder.stringToDouble().minimumFractionDigits(0).maximumFractionDigits(10).build());
 		this.textFieldTransactionFee.setCaption("Transaction fee:");
 		this.textFieldTransactionFee.setStyleName("align-right");
 		this.textFieldTransactionFee.setRequired(true);
@@ -1307,7 +1354,6 @@ public class MainView extends XdevView implements IWallet {
 			labelOperationStatus, label5;
 	private XdevButton buttonNewTAddress, buttonNewZAddress, buttonrefresh, buttonSend;
 	private XdevMenuBar menuBar;
-	private XdevComboBox<String> comboBoxBalanceAddress;
 	private XdevMenuItem menuItemMain, menuItemAbout, menuItemWallet, menuItemBackup, menuItemEncrypt,
 			menuItemExportPrivateKeys, menuItemImportPrivateKeys, menuItemShowPrivateKey, menuItemImportOnePrivateKey,
 			menuItemMessaging, menuItemOwnIdentity, menuItemExportOwnIdentity, menuItemAddMessagingGroup,
@@ -1318,6 +1364,7 @@ public class MainView extends XdevView implements IWallet {
 	private XdevGridLayout gridLayout, tabOverview, tabOwnAddresses, tabSendCash, tabAddressBook, tabMessaging;
 	private XdevTextField textFieldDestinationAddress, textFieldDestinationMemo, textFieldDestinationAmount,
 			textFieldTransactionFee;
+	private XdevComboBox<AddressWithBalance> comboBoxBalanceAddress;
 	// </generated-code>
 
 }

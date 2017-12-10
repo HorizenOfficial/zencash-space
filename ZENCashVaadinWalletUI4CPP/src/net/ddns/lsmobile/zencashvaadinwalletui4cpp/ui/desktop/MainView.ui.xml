@@ -14,7 +14,7 @@
 <?import com.xdev.ui.XdevTextField?>
 <?import com.xdev.ui.XdevView?>
 <?import com.xdev.ui.entitycomponent.combobox.XdevComboBox?>
-<?import java.lang.String?>
+<?import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop.MainView$AddressWithBalance?>
 <XdevView xmlns:x="http://xml.xdev-software.com/xdevuiml" x:name="MainView">
     <x:constraints zpos="0" width="100%" height="100%" />
     <XdevGridLayout x:name="gridLayout" margin="">
@@ -87,7 +87,7 @@
                 <XdevComboBox textInputAllowed="false" caption="Send cash from:" required="true" x:name="comboBoxBalanceAddress">
                     <x:constraints gridx="1" gridy="1" weighty="0.0" weightx="0.2" width="100%" gridWidth="4" />
                     <x:typeArguments>
-                        <typeArgument type="String" />
+                        <typeArgument type="MainView$AddressWithBalance" />
                     </x:typeArguments>
                 </XdevComboBox>
                 <XdevLabel styleName="tiny" x:name="label" value="* Only addresses with a confirmed balance are shown as sources for sending!">
@@ -103,14 +103,14 @@
                     <x:constraints gridx="1" gridy="5" weighty="0.0" weightx="0.2" width="100%" gridWidth="4" />
                 </XdevLabel>
                 <XdevTextField columns="5" caption="Amount to send:" styleName="align-right" required="true" x:name="textFieldDestinationAmount">
-                    <converter numberType="Double" numberFormatType="number" currency="default" converterType="STRING_TO_NUMBER" locale="default" />
+                    <converter maximumFractionDigits="10" numberType="Double" numberFormatType="number" minimumFractionDigits="0" currency="default" converterType="STRING_TO_NUMBER" locale="default" />
                     <x:constraints gridx="1" gridy="6" weighty="0.0" weightx="0.2" width="100%" />
                 </XdevTextField>
                 <XdevLabel x:name="label3" value="ZEN">
                     <x:constraints gridx="2" gridy="6" weighty="0.0" weightx="0.0" alignment="BOTTOM_LEFT" />
                 </XdevLabel>
                 <XdevTextField columns="5" caption="Transaction fee:" styleName="align-right" required="true" x:name="textFieldTransactionFee" value="0.0001">
-                    <converter numberType="Double" numberFormatType="number" currency="default" converterType="STRING_TO_NUMBER" locale="default" />
+                    <converter maximumFractionDigits="10" numberType="Double" numberFormatType="number" minimumFractionDigits="0" currency="default" converterType="STRING_TO_NUMBER" locale="default" />
                     <x:constraints gridx="3" gridy="6" weighty="0.0" weightx="0.1" width="100%" />
                 </XdevTextField>
                 <XdevLabel x:name="label4" value="ZEN">
