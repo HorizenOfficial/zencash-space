@@ -8,6 +8,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.shared.ui.label.ContentMode;
@@ -175,27 +177,22 @@ public class MainView extends XdevView implements IWallet {
 							},
 							this.servlet.errorReporter, 10000, true);
 						threads.add(this.addressBalanceGatheringThread);
-//
-//						final ActionListener alBalancesUpdater = new ActionListener()
-//						{
-//							@Override
-//							public void actionPerformed(final ActionEvent e)
-//							{
-//								try
-//								{
-//									// TODO: if the user has opened the combo box - this closes it (maybe fix)
+						
+//						getUI().access(() -> {});
+						Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new RunnableAccessWrapper(new Runnable() {
+							@Override
+							public void run() {
+								try {
+									// TODO: if the user has opened the combo box - this
+									// closes it (maybe fix)
 									updateWalletAddressPositiveBalanceComboBox();
-//								} catch (final Exception ex)
-//								{
-//									Log.error("Unexpected error: ", ex);
-//									SendCashPanel.this.errorReporter.reportError(ex);
-//								}
-//							}
-//						};
-//						final Timer timerBalancesUpdater = new Timer(15000, alBalancesUpdater);
-//						timerBalancesUpdater.setInitialDelay(3000);
-//						timerBalancesUpdater.start();
-//						this.timers.add(timerBalancesUpdater);
+								} catch (final Exception e) {
+									Log.error("Unexpected error: ", e);
+									MainView.this.servlet.errorReporter.reportError(e);
+								}
+							}
+						}), 3000, 5000 /*15000*/, TimeUnit.MILLISECONDS);
+//						this.timers.add(timerBalancesUpdater); LS TODO
 //
 //						// Add a popup menu to the destination address field - for convenience
 //						final JMenuItem paste = new JMenuItem("Paste address");
