@@ -29,6 +29,8 @@
 package com.vaklinov.zcashui;
 
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -60,6 +62,8 @@ import com.vaklinov.zcashui.ZCashInstallationObserver.DaemonInfo;
 import com.vaklinov.zcashui.ZCashInstallationObserver.InstallationDetectionException;
 import com.vaklinov.zcashui.msg.MessagingPanel;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 /**
  * Main ZENCash Window.
@@ -67,7 +71,7 @@ import com.vaklinov.zcashui.msg.MessagingPanel;
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
 public class ZCashUI
-    extends JFrame
+    extends JFrame implements IConfig
 {
     private ZCashInstallationObserver installationObserver;
     private ZCashClientCaller         clientCaller;
@@ -234,7 +238,7 @@ public class ZCashUI
                 		ad.setVisible(true);
                 	} catch (final UnsupportedEncodingException uee)
                 	{
-                		Log.error("Unexpected error: ", uee);
+                		log.error("Unexpected error: ", uee);
                 		ZCashUI.this.errorReporter.reportError(uee);
                 	}
                 }
@@ -407,7 +411,7 @@ public class ZCashUI
                 } catch (final IOException ioe)
                 {
                     /* TODO: report exceptions to the user */
-                	Log.error("Unexpected error: ", ioe);
+                	log.error("Unexpected error: ", ioe);
                 }
 
                 JOptionPane.showMessageDialog(
@@ -453,7 +457,7 @@ public class ZCashUI
 
     public void exitProgram()
     {
-    	Log.info("Exiting ...");
+    	log.info("Exiting ...");
 
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         
@@ -480,11 +484,11 @@ public class ZCashUI
         		possiblyCreateZENConfigFile();
         	}
         	
-        	Log.info("Starting ZENCash Swing Wallet ...");
-        	Log.info("OS: " + System.getProperty("os.name") + " = " + os);
-        	Log.info("Current directory: " + new File(".").getCanonicalPath());
-        	Log.info("Class path: " + System.getProperty("java.class.path"));
-        	Log.info("Environment PATH: " + System.getenv("PATH"));
+        	log.info("Starting ZENCash Swing Wallet ...");
+        	log.info("OS: " + System.getProperty("os.name") + " = " + os);
+        	log.info("Current directory: " + new File(".").getCanonicalPath());
+        	log.info("Class path: " + System.getProperty("java.class.path"));
+        	log.info("Environment PATH: " + System.getenv("PATH"));
 
             // Look and feel settings - a custom OS-look and feel is set for Windows
             if (os == OS_TYPE.WINDOWS)
@@ -504,10 +508,10 @@ public class ZCashUI
             {
 	            for (final LookAndFeelInfo ui : UIManager.getInstalledLookAndFeels())
 	            {
-	            	Log.info("Available look and feel: " + ui.getName() + " " + ui.getClassName());
+	            	log.info("Available look and feel: " + ui.getName() + " " + ui.getClassName());
 	                if (ui.getName().equals("Nimbus"))
 	                {
-	                	Log.info("Setting look and feel: {0}", ui.getClassName());
+	                	log.info("Setting look and feel: " + ui.getClassName());
 	                    UIManager.setLookAndFeel(ui.getClassName());
 	                    break;
 	                };
@@ -531,7 +535,7 @@ public class ZCashUI
             		// If more than 20 minutes behind in the blockchain - startup in progress
             		if ((System.currentTimeMillis() - info.lastBlockDate.getTime()) > (20 * 60 * 1000))
             		{
-            			Log.info("Current blockchain synchronization date is "  +
+            			log.info("Current blockchain synchronization date is "  +
             		                       new Date(info.lastBlockDate.getTime()));
             			daemonStartInProgress = true;
             		}
@@ -541,7 +545,7 @@ public class ZCashUI
                 if ((wce.getMessage().indexOf("{\"code\":-28") != -1) || // Started but not ready
                 	(wce.getMessage().indexOf("error code: -28") != -1))
                 {
-                	Log.info("zend is currently starting...");
+                	log.info("zend is currently starting...");
                 	daemonStartInProgress = true;
                 }
             }
@@ -549,7 +553,7 @@ public class ZCashUI
             StartupProgressDialog startupBar = null;
             if ((zcashdInfo.status != DAEMON_STATUS.RUNNING) || (daemonStartInProgress))
             {
-            	Log.info(
+            	log.info(
             		"zend is not runing at the moment or has not started/synchronized 100% - showing splash...");
 	            startupBar = new StartupProgressDialog(initialClientCaller);
 //	            startupBar.setVisible(true);
@@ -563,7 +567,7 @@ public class ZCashUI
 
         } catch (final InstallationDetectionException ide)
         {
-        	Log.error("Unexpected error: ", ide);
+        	log.error("Unexpected error: ", ide);
             JOptionPane.showMessageDialog(
                 null,
                 "This program was started in directory: " + OSUtil.getProgramDirectory() + "\n" +
@@ -574,7 +578,7 @@ public class ZCashUI
             System.exit(1);
         } catch (final WalletCallException wce)
         {
-        	Log.error("Unexpected error: ", wce);
+        	log.error("Unexpected error: ", wce);
 
             if ((wce.getMessage().indexOf("{\"code\":-28,\"message\"") != -1) ||
             	(wce.getMessage().indexOf("error code: -28") != -1))
@@ -602,7 +606,7 @@ public class ZCashUI
             System.exit(2);
         } catch (final Exception e)
         {
-        	Log.error("Unexpected error: ", e);
+        	log.error("Unexpected error: ", e);
             JOptionPane.showMessageDialog(
                 null,
                 "A general unexpected critical error has occurred: \n" + e.getMessage() + "\n" +
@@ -635,7 +639,7 @@ public class ZCashUI
 		{
 			if (!dir.mkdirs())
 			{
-				Log.error("ERROR: Could not create settings directory: " + dir.getCanonicalPath());
+				log.error("ERROR: Could not create settings directory: " + dir.getCanonicalPath());
 				throw new IOException("Could not create settings directory: " + dir.getCanonicalPath());
 			}
 		}
@@ -644,7 +648,7 @@ public class ZCashUI
 		
 		if (!zenConfigFile.exists())
 		{
-			Log.info("ZEN configuration file " + zenConfigFile.getCanonicalPath() +
+			log.info("ZEN configuration file " + zenConfigFile.getCanonicalPath() +
 					 " does not exist. It will be created with default settings.");
 			
 			final Random r = new Random(System.currentTimeMillis());

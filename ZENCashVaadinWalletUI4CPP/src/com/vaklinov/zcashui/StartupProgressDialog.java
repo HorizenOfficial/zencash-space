@@ -11,8 +11,10 @@ import com.eclipsesource.json.JsonValue;
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 
-public class StartupProgressDialog /*extends JFrame*/ {
+
+public class StartupProgressDialog /*extends JFrame*/  implements IConfig {
     
 
     private static final int POLL_PERIOD = 1500;
@@ -71,7 +73,7 @@ public class StartupProgressDialog /*extends JFrame*/ {
             keyFetcher.fetchIfMissing(/*this*/);
         }
         
-        Log.info("Splash: checking if zend is already running...");
+        log.info("Splash: checking if zend is already running...");
         boolean shouldStartZCashd = false;
         try {
             this.clientCaller.getDaemonRawRuntimeInfo();
@@ -86,13 +88,13 @@ public class StartupProgressDialog /*extends JFrame*/ {
         }
         
         if (!shouldStartZCashd) {
-        	Log.info("Splash: zend already running...");
+        	log.info("Splash: zend already running...");
             // What if started by hand but taking long to initialize???
 //            doDispose();
 //            return;
         } else
         {
-        	Log.info("Splash: zend will be started...");
+        	log.info("Splash: zend will be started...");
         }
         
         final Process daemonProcess =
@@ -136,7 +138,7 @@ public class StartupProgressDialog /*extends JFrame*/ {
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 			    @Override
 				public void run() {
-			    	Log.info("Stopping zend because we started it - now it is alive: " +
+			    	log.info("Stopping zend because we started it - now it is alive: " +
 			        		           StartupProgressDialog.this.isAlive(daemonProcess));
 			        try
 			        {
@@ -146,7 +148,7 @@ public class StartupProgressDialog /*extends JFrame*/ {
 			            while (!StartupProgressDialog.this.waitFor(daemonProcess, 3000))
 			            {
 			            	final long end = System.currentTimeMillis();
-			            	Log.info("Waiting for " + ((end - start) / 1000) + " seconds for zend to exit...");
+			            	log.info("Waiting for " + ((end - start) / 1000) + " seconds for zend to exit...");
 			            	
 			            	if (end - start > 10 * 1000)
 			            	{
@@ -161,15 +163,15 @@ public class StartupProgressDialog /*extends JFrame*/ {
 			            }
 			        
 			            if (StartupProgressDialog.this.isAlive(daemonProcess)) {
-			            	Log.info("zend is still alive although we tried to stop it. " +
+			            	log.info("zend is still alive although we tried to stop it. " +
 			                                       "Hopefully it will stop later!");
 			                    //System.out.println("zend is still alive, killing forcefully");
 			                    //daemonProcess.destroyForcibly();
 			                } else {
-							Log.info("zend shut down successfully");
+							log.info("zend shut down successfully");
 						}
 			        } catch (final Exception bad) {
-			        	Log.error("Couldn't stop zend!", bad);
+			        	log.error("Couldn't stop zend!", bad);
 			        }
 			    }
 			});
@@ -239,7 +241,7 @@ public class StartupProgressDialog /*extends JFrame*/ {
 				} catch (final InterruptedException ie)
 				{
 					// One of the rare cases where we do nothing
-					Log.error("Unexpected error: ", ie);
+					log.error("Unexpected error: ", ie);
 				}
 				
 				endWait = System.currentTimeMillis();

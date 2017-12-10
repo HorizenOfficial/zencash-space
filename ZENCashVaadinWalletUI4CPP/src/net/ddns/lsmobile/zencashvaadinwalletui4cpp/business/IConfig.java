@@ -2,7 +2,13 @@ package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
 import java.text.DecimalFormat;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 public interface IConfig {
+	
+	final Logger log = LogManager.getLogger(IConfig.class);
+
 	
 	//TODO LS: in config file
 	

@@ -6,7 +6,6 @@ import java.util.List;
 import javax.swing.Timer;
 
 import com.vaklinov.zcashui.DataGatheringThread;
-import com.vaklinov.zcashui.Log;
 
 public interface IWallet extends IConfig {
 	// Lists of threads and timers that may be stopped if necessary
@@ -57,7 +56,7 @@ public interface IWallet extends IConfig {
 				} catch (final InterruptedException ie)
 				{
 					// One of the rare cases where we do nothing
-					Log.error("Unexpected error: ", ie);
+					log.error("Unexpected error: ", ie);
 				}
 				
 				endWait = System.currentTimeMillis();

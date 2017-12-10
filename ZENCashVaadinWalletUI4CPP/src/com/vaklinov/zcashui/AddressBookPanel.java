@@ -2,6 +2,8 @@
 // Taken from repository https://github.com/zlatinb/zcash-swing-wallet-ui under an MIT licemse
 package com.vaklinov.zcashui;
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
@@ -42,7 +44,9 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
-public class AddressBookPanel extends JPanel {
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
+public class AddressBookPanel extends JPanel  implements IConfig{
     
     private static class AddressBookEntry {
         final String name,address;
@@ -144,11 +148,11 @@ public class AddressBookPanel extends JPanel {
             }
         }
         
-        Log.info("loaded "+this.entries.size()+" address book entries");
+        log.info("loaded "+this.entries.size()+" address book entries");
     }
     
     private void saveEntriesToDisk() {
-    	Log.info("Saving "+this.entries.size()+" addresses");
+    	log.info("Saving "+this.entries.size()+" addresses");
         try {
             final File addressBookFile = new File(OSUtil.getSettingsDirectory(),"addressBook.csv");
             try (PrintWriter printWriter = new PrintWriter(new FileWriter(addressBookFile))) {
@@ -158,7 +162,7 @@ public class AddressBookPanel extends JPanel {
             }
         } catch (final IOException bad) {
         	// TODO: report error to the user!
-        	Log.error("Saving Address Book Failed!!!!", bad);
+        	log.error("Saving Address Book Failed!!!!", bad);
         }
     }
     

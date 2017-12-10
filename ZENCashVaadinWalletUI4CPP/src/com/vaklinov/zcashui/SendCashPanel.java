@@ -29,6 +29,8 @@
 package com.vaklinov.zcashui;
 
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -63,6 +65,8 @@ import javax.swing.border.EtchedBorder;
 
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 /**
  * Provides the functionality for sending cash
@@ -70,7 +74,7 @@ import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
 public class SendCashPanel
-	extends WalletTabPanel
+	extends WalletTabPanel implements IConfig
 {
 	private ZCashClientCaller clientCaller;
 	private StatusUpdateErrorReporter errorReporter;
@@ -247,7 +251,7 @@ public class SendCashPanel
 					SendCashPanel.this.sendCash();
 				} catch (final Exception ex)
 				{
-					Log.error("Unexpected error: ", ex);
+					log.error("Unexpected error: ", ex);
 					
 					String errMessage = "";
 					if (ex instanceof WalletCallException)
@@ -277,7 +281,7 @@ public class SendCashPanel
 					final long start = System.currentTimeMillis();
 					final String[][] data = SendCashPanel.this.getAddressPositiveBalanceDataFromWallet();
 					final long end = System.currentTimeMillis();
-					Log.info("Gathering of address/balance table data done in " + (end - start) + "ms." );
+					log.info("Gathering of address/balance table data done in " + (end - start) + "ms." );
 					
 					return data;
 				}
@@ -296,7 +300,7 @@ public class SendCashPanel
 					SendCashPanel.this.updateWalletAddressPositiveBalanceComboBox();
 				} catch (final Exception ex)
 				{
-					Log.error("Unexpected error: ", ex);
+					log.error("Unexpected error: ", ex);
 					SendCashPanel.this.errorReporter.reportError(ex);
 				}
 			}
@@ -325,7 +329,7 @@ public class SendCashPanel
 					}
 				} catch (final Exception ex)
 				{
-					Log.error("Unexpected error", ex);
+					log.error("Unexpected error", ex);
 					// TODO: clipboard exception handling - do it better
 					// java.awt.datatransfer.UnsupportedFlavorException: Unicode String
 					//SendCashPanel.this.errorReporter.reportError(ex);
@@ -485,7 +489,7 @@ public class SendCashPanel
 					final long start = System.currentTimeMillis();
 					final Boolean result = SendCashPanel.this.clientCaller.isSendingOperationComplete(SendCashPanel.this.operationStatusID);
 					final long end = System.currentTimeMillis();
-					Log.info("Checking for operation " + SendCashPanel.this.operationStatusID + " status done in " + (end - start) + "ms." );
+					log.info("Checking for operation " + SendCashPanel.this.operationStatusID + " status done in " + (end - start) + "ms." );
 					
 					return result;
 				}
@@ -574,7 +578,7 @@ public class SendCashPanel
 					SendCashPanel.this.repaint();
 				} catch (final Exception ex)
 				{
-					Log.error("Unexpected error: ", ex);
+					log.error("Unexpected error: ", ex);
 					SendCashPanel.this.errorReporter.reportError(ex);
 				}
 			}

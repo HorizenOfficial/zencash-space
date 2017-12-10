@@ -39,13 +39,15 @@ import java.util.StringTokenizer;
 
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 /**
  * Observes the daemon - running etc.
  *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class ZCashInstallationObserver
+public class ZCashInstallationObserver implements IConfig
 {
 	public static class DaemonInfo
 	{
@@ -66,11 +68,11 @@ public class ZCashInstallationObserver
 	
 	private Boolean isOnTestNet = null;
 
-	public ZCashInstallationObserver(String installDir)
+	public ZCashInstallationObserver(final String installDir)
 		throws IOException
 	{
 		// Detect daemon and client tools installation
-		File dir = new File(installDir);
+		final File dir = new File(installDir);
 
 		if (!dir.exists() || dir.isFile())
 		{
@@ -88,7 +90,7 @@ public class ZCashInstallationObserver
 			zcashcli = OSUtil.findZCashCommand(OSUtil.getZCashCli());
 		}
 
-		Log.info("Using ZENCash utilities: " +
+		log.info("Using ZENCash utilities: " +
 		                   "zend: "    + ((zcashd != null) ? zcashd.getCanonicalPath() : "<MISSING>") + ", " +
 		                   "zen-cli: " + ((zcashcli != null) ? zcashcli.getCanonicalPath() : "<MISSING>"));
 
@@ -97,7 +99,7 @@ public class ZCashInstallationObserver
 			throw new InstallationDetectionException(
 				"The ZENCash GUI Wallet installation directory " + installDir + " needs\nto contain " +
 				"the command line utilities zend and zen-cli. At least one of them is missing! \n" +
-				"Please place files ZENCashSwingWalletUI.jar, " + OSUtil.getZCashCli() + ", " + 
+				"Please place files ZENCashSwingWalletUI.jar, " + OSUtil.getZCashCli() + ", " +
 				OSUtil.getZCashd() + " in the same directory.");
 		}
 	}
@@ -106,7 +108,7 @@ public class ZCashInstallationObserver
 	public synchronized DaemonInfo getDaemonInfo()
 			throws IOException, InterruptedException
 	{
-		OS_TYPE os = OSUtil.getOSType();
+		final OS_TYPE os = OSUtil.getOSType();
 		
 		if (os == OS_TYPE.WINDOWS)
 		{
@@ -122,16 +124,16 @@ public class ZCashInstallationObserver
 	private synchronized DaemonInfo getDaemonInfoForUNIXLikeOS()
 		throws IOException, InterruptedException
 	{
-		DaemonInfo info = new DaemonInfo();
+		final DaemonInfo info = new DaemonInfo();
 		info.status = DAEMON_STATUS.UNABLE_TO_ASCERTAIN;
 
-		CommandExecutor exec = new CommandExecutor(new String[] { "ps", "auxwww"});
-		LineNumberReader lnr = new LineNumberReader(new StringReader(exec.execute()));
+		final CommandExecutor exec = new CommandExecutor(new String[] { "ps", "auxwww"});
+		final LineNumberReader lnr = new LineNumberReader(new StringReader(exec.execute()));
 
 		String line;
 		while ((line = lnr.readLine()) != null)
 		{
-			StringTokenizer st = new StringTokenizer(line, " \t", false);
+			final StringTokenizer st = new StringTokenizer(line, " \t", false);
 			boolean foundZCash = false;
 			for (int i = 0; i < 11; i++)
 			{
@@ -149,19 +151,19 @@ public class ZCashInstallationObserver
 					try
 					{
 						info.cpuPercentage = Double.valueOf(token);
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
+					} catch (final NumberFormatException nfe) { /* TODO: log or handle exception */ };
 				} else if (i == 4)
 				{
 					try
 					{
 						info.virtualSizeMB = Double.valueOf(token) / 1000;
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
+					} catch (final NumberFormatException nfe) { /* TODO: log or handle exception */ };
 				} else if (i == 5)
 				{
 					try
 					{
 					    info.residentSizeMB = Double.valueOf(token) / 1000;
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
+					} catch (final NumberFormatException nfe) { /* TODO: log or handle exception */ };
 				} else if (i == 10)
 				{
 					if ((token.equals("zend")) || (token.endsWith("/zend")))
@@ -193,18 +195,18 @@ public class ZCashInstallationObserver
 	private synchronized DaemonInfo getDaemonInfoForWindowsOS()
 		throws IOException, InterruptedException
 	{
-		DaemonInfo info = new DaemonInfo();
+		final DaemonInfo info = new DaemonInfo();
 		info.status = DAEMON_STATUS.UNABLE_TO_ASCERTAIN;
 		info.cpuPercentage = 0;
 		info.virtualSizeMB = 0;
 
-		CommandExecutor exec = new CommandExecutor(new String[] { "tasklist" });
-		LineNumberReader lnr = new LineNumberReader(new StringReader(exec.execute()));
+		final CommandExecutor exec = new CommandExecutor(new String[] { "tasklist" });
+		final LineNumberReader lnr = new LineNumberReader(new StringReader(exec.execute()));
 
 		String line;
 		while ((line = lnr.readLine()) != null)
 		{
-			StringTokenizer st = new StringTokenizer(line, " \t", false);
+			final StringTokenizer st = new StringTokenizer(line, " \t", false);
 			boolean foundZCash = false;
 			String size = "";
 			for (int i = 0; i < 8; i++)
@@ -245,8 +247,8 @@ public class ZCashInstallationObserver
 						{
 							size = size.substring(0, size.length() - 1);
 						}
-					} catch (NumberFormatException nfe) { /* TODO: Log or handle exception */ };
-				} 
+					} catch (final NumberFormatException nfe) { /* TODO: log or handle exception */ };
+				}
 			} // End parsing row
 
 			if (foundZCash)
@@ -254,10 +256,10 @@ public class ZCashInstallationObserver
 				try
 				{
 					info.residentSizeMB = Double.valueOf(size) / 1000;
-				} catch (NumberFormatException nfe)
+				} catch (final NumberFormatException nfe)
 				{
 					info.residentSizeMB = 0;
-					Log.error("Error: could not find the numeric memory size of zend: " + size);
+					log.error("Error: could not find the numeric memory size of zend: " + size);
 				};
 				
 				break;
@@ -284,17 +286,17 @@ public class ZCashInstallationObserver
 			return this.isOnTestNet.booleanValue();
 		}
 		
-		String blockChainDir = OSUtil.getBlockchainDirectory();
-		File zenConf = new File(blockChainDir + File.separator + "zen.conf");
+		final String blockChainDir = OSUtil.getBlockchainDirectory();
+		final File zenConf = new File(blockChainDir + File.separator + "zen.conf");
 		if (zenConf.exists())
 		{
-			Properties confProps = new Properties();
+			final Properties confProps = new Properties();
 			FileInputStream fis = null;
 			try
 			{
 				fis = new FileInputStream(zenConf);
 				confProps.load(fis);
-				String testNetStr = confProps.getProperty("testnet");
+				final String testNetStr = confProps.getProperty("testnet");
 				
 				this.isOnTestNet = (testNetStr != null) && (testNetStr.trim().equalsIgnoreCase("1"));
 				
@@ -308,7 +310,7 @@ public class ZCashInstallationObserver
 			}
 		} else
 		{
-			Log.warning("Could not find file: {0} to check configuration!", zenConf.getAbsolutePath());
+			log.warn("Could not find file: " + zenConf.getAbsolutePath() + " to check configuration!");
 			return false;
 		}
 	}
@@ -317,7 +319,7 @@ public class ZCashInstallationObserver
 	public static class InstallationDetectionException
 		extends IOException
 	{
-		public InstallationDetectionException(String message)
+		public InstallationDetectionException(final String message)
 		{
 			super(message);
 		}

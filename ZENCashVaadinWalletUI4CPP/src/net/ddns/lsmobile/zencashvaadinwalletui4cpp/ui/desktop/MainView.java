@@ -24,7 +24,6 @@ import com.vaadin.ui.Notification;
 import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaklinov.zcashui.DataGatheringThread;
-import com.vaklinov.zcashui.Log;
 import com.vaklinov.zcashui.OSUtil;
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 import com.vaklinov.zcashui.Util;
@@ -92,7 +91,7 @@ public class MainView extends XdevView implements IWallet {
 							MainView.this.walletIsEncrypted = MainView.this.servlet.clientCaller.isWalletEncrypted();
 						}
 						
-						Log.info("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
+						log.info("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
 						
 						return balance;
 					}
@@ -110,7 +109,7 @@ public class MainView extends XdevView implements IWallet {
 						MainView.this.updateWalletStatusLabel();
 //					} catch (final Exception ex)
 //					{
-//						Log.error("Unexpected error: ", ex);
+//						log.error("Unexpected error: ", ex);
 //						servlet.errorReporter.reportError(ex);
 //					}
 //				}
@@ -131,7 +130,7 @@ public class MainView extends XdevView implements IWallet {
 						final long start = System.currentTimeMillis();
 						final String[][] data =  MainView.this.getTransactionsDataFromWallet();
 						final long end = System.currentTimeMillis();
-						Log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
+						log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
 						
 						return data;
 					}
@@ -149,7 +148,7 @@ public class MainView extends XdevView implements IWallet {
 						MainView.this.updateWalletTransactionsTable();
 //					} catch (final Exception ex)
 //					{
-//						Log.error("Unexpected error: ", ex);
+//						log.error("Unexpected error: ", ex);
 //						servlet.errorReporter.reportError(ex);
 //					}
 //				}
@@ -179,7 +178,7 @@ public class MainView extends XdevView implements IWallet {
 									final long start = System.currentTimeMillis();
 									final String[][] data = getAddressPositiveBalanceDataFromWallet();
 									final long end = System.currentTimeMillis();
-									Log.info("Gathering of address/balance table data done in " + (end - start) + "ms." );
+									log.info("Gathering of address/balance table data done in " + (end - start) + "ms." );
 
 									return data;
 								}
@@ -196,7 +195,7 @@ public class MainView extends XdevView implements IWallet {
 									// closes it (maybe fix)
 									updateWalletAddressPositiveBalanceComboBox();
 								} catch (final Exception e) {
-									Log.error("Unexpected error: ", e);
+									log.error("Unexpected error: ", e);
 									MainView.this.servlet.errorReporter.reportError(e);
 								}
 							}
@@ -222,7 +221,7 @@ public class MainView extends XdevView implements IWallet {
 //									}
 //								} catch (final Exception ex)
 //								{
-//									Log.error("Unexpected error", ex);
+//									log.error("Unexpected error", ex);
 //									// TODO: clipboard exception handling - do it better
 //									// java.awt.datatransfer.UnsupportedFlavorException: Unicode String
 //									//SendCashPanel.this.errorReporter.reportError(ex);
@@ -356,7 +355,7 @@ public class MainView extends XdevView implements IWallet {
 					trans[3] = decimalFormat.format(amount);
 				} catch (final NumberFormatException nfe)
 				{
-					Log.error("Error occurred while formatting amount: " + trans[3] +
+					log.error("Error occurred while formatting amount: " + trans[3] +
 							           " - " + nfe.getMessage() + "!");
 				}
 				
@@ -368,7 +367,7 @@ public class MainView extends XdevView implements IWallet {
 					trans[2] = isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed);
 				} catch (final NumberFormatException nfe)
 				{
-					Log.error("Error occurred while formatting confirmations: " + trans[2] +
+					log.error("Error occurred while formatting confirmations: " + trans[2] +
 							           " - " + nfe.getMessage() + "!");
 				}
 			}
@@ -460,7 +459,7 @@ public class MainView extends XdevView implements IWallet {
 				
 			if (Util.arraysAreDifferent(this.lastTransactionsData, newTransactionsData))
 			{
-				Log.info("Updating table of transactions...");
+				log.info("Updating table of transactions...");
 //				this.remove(this.transactionsTablePane);
 //				this.add(this.transactionsTablePane = new JScrollPane(
 //				             this.transactionsTable = this.createTransactionsTable(newTransactionsData)),
@@ -559,7 +558,7 @@ public class MainView extends XdevView implements IWallet {
 			this.updateWalletAddressBalanceTableInteractive();
 		} catch (final Exception e)
 		{
-			Log.error("Unexpected error: ", e);
+			log.error("Unexpected error: ", e);
 			this.servlet.errorReporter.reportError(e, false);
 		}
 	}
@@ -574,7 +573,7 @@ public class MainView extends XdevView implements IWallet {
 
 		if (Util.arraysAreDifferent(this.lastAddressBalanceFullData, newAddressBalanceData))
 		{
-			Log.info("Updating table of addresses/balances I...");
+			log.info("Updating table of addresses/balances I...");
 			this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(newAddressBalanceData));
 			this.lastAddressBalanceFullData = newAddressBalanceData;
 
@@ -597,7 +596,7 @@ public class MainView extends XdevView implements IWallet {
 		if ((newAddressBalanceData != null) &&
 			Util.arraysAreDifferent(this.lastAddressBalanceFullData, newAddressBalanceData))
 		{
-			Log.info("Updating table of addresses/balances A...");
+			log.info("Updating table of addresses/balances A...");
 			this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(newAddressBalanceData));
 			this.lastAddressBalanceFullData = newAddressBalanceData;
 		}
@@ -744,7 +743,7 @@ public class MainView extends XdevView implements IWallet {
 			sendCash();
 		} catch (final Exception ex)
 		{
-			Log.error("Unexpected error: ", ex);
+			log.error("Unexpected error: ", ex);
 			
 			String errMessage = "";
 			if (ex instanceof WalletCallException)
@@ -893,7 +892,7 @@ public class MainView extends XdevView implements IWallet {
 						final long start = System.currentTimeMillis();
 						final Boolean result = MainView.this.servlet.clientCaller.isSendingOperationComplete(MainView.this.operationStatusID);
 						final long end = System.currentTimeMillis();
-						Log.info("Checking for operation " + MainView.this.operationStatusID + " status done in " + (end - start) + "ms." );
+						log.info("Checking for operation " + MainView.this.operationStatusID + " status done in " + (end - start) + "ms." );
 						
 						return result;
 					}
@@ -972,14 +971,14 @@ public class MainView extends XdevView implements IWallet {
 
 								// SendCashPanel.this.repaint();
 							} catch (final Exception e) {
-								Log.error("Unexpected error: ", e);
+								log.error("Unexpected error: ", e);
 								MainView.this.servlet.errorReporter.reportError(e);
 							}
 						});
 						
 						Thread.sleep(2000);
 					} catch (final Exception ex) {
-						Log.error("Unexpected error: ", ex);
+						log.error("Unexpected error: ", ex);
 						MainView.this.servlet.errorReporter.reportError(ex);
 					}
 				}

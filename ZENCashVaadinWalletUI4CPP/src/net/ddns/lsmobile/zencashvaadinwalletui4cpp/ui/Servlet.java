@@ -16,7 +16,6 @@ import com.vaadin.server.UIProvider;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.UI;
-import com.vaklinov.zcashui.Log;
 import com.vaklinov.zcashui.OSUtil;
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 import com.vaklinov.zcashui.StartupProgressDialog;
@@ -52,11 +51,11 @@ public class Servlet extends XdevServlet implements IConfig {
         		possiblyCreateZENConfigFile();
         	}
         	
-        	Log.info("Starting ZENCash Swing Wallet ...");
-        	Log.info("OS: " + System.getProperty("os.name") + " = " + os);
-        	Log.info("Current directory: " + new File(".").getCanonicalPath());//TODO LS --C:\Program Files\XDEV Software\RapidClipse
-        	Log.info("Class path: " + System.getProperty("java.class.path"));
-        	Log.info("Environment PATH: " + System.getenv("PATH"));
+        	log.info("Starting ZENCash Swing Wallet ...");
+        	log.info("OS: " + System.getProperty("os.name") + " = " + os);
+        	log.info("Current directory: " + new File(".").getCanonicalPath());//TODO LS --C:\Program Files\XDEV Software\RapidClipse
+        	log.info("Class path: " + System.getProperty("java.class.path"));
+        	log.info("Environment PATH: " + System.getenv("PATH"));
             
             // If zend is currently not running, do a startup of the daemon as a child process
             // It may be started but not ready - then also show dialog
@@ -74,7 +73,7 @@ public class Servlet extends XdevServlet implements IConfig {
             		// If more than 20 minutes behind in the blockchain - startup in progress
             		if ((System.currentTimeMillis() - info.lastBlockDate.getTime()) > (20 * 60 * 1000))
             		{
-            			Log.info("Current blockchain synchronization date is "  +
+            			log.info("Current blockchain synchronization date is "  +
             		                       new Date(info.lastBlockDate.getTime()));
             			daemonStartInProgress = true;
             		}
@@ -84,7 +83,7 @@ public class Servlet extends XdevServlet implements IConfig {
                 if ((wce.getMessage().indexOf("{\"code\":-28") != -1) || // Started but not ready
                 	(wce.getMessage().indexOf("error code: -28") != -1))
                 {
-                	Log.info("zend is currently starting...");
+                	log.info("zend is currently starting...");
                 	daemonStartInProgress = true;
                 }
             }
@@ -92,7 +91,7 @@ public class Servlet extends XdevServlet implements IConfig {
             StartupProgressDialog startupBar = null;
             if ((zcashdInfo.status != DAEMON_STATUS.RUNNING) || (daemonStartInProgress))
             {
-            	Log.info(
+            	log.info(
             		"zend is not runing at the moment or has not started/synchronized 100% - showing splash...");
 	            startupBar = new StartupProgressDialog(this.clientCaller);
 //	            startupBar.setVisible(true);
@@ -105,7 +104,7 @@ public class Servlet extends XdevServlet implements IConfig {
 
         } catch (final InstallationDetectionException ide)
         {
-        	Log.error("Unexpected error: ", ide);
+        	log.error("Unexpected error: ", ide);
         	Notification.show("Installation error",
         			"This program was started in directory: " + OSUtil.getProgramDirectory() + "\n" +
                     ide.getMessage() + "\n" +
@@ -114,7 +113,7 @@ public class Servlet extends XdevServlet implements IConfig {
 //            System.exit(1);
         } catch (final WalletCallException wce)
         {
-        	Log.error("Unexpected error: ", wce);
+        	log.error("Unexpected error: ", wce);
 
             if ((wce.getMessage().indexOf("{\"code\":-28,\"message\"") != -1) ||
             	(wce.getMessage().indexOf("error code: -28") != -1))
@@ -133,7 +132,7 @@ public class Servlet extends XdevServlet implements IConfig {
 //            System.exit(2);
         } catch (final Exception e)
         {
-        	Log.error("Unexpected error: ", e);
+        	log.error("Unexpected error: ", e);
         	Notification.show("Error", "A general unexpected critical error has occurred: \n" + e.getMessage() + "\n" +
                     "See the console output for more detailed error information!", Type.ERROR_MESSAGE);
 //            System.exit(3);
@@ -186,7 +185,7 @@ public class Servlet extends XdevServlet implements IConfig {
     		{
     			if (!dir.mkdirs())
     			{
-    				Log.error("ERROR: Could not create settings directory: " + dir.getCanonicalPath());
+    				log.error("ERROR: Could not create settings directory: " + dir.getCanonicalPath());
     				throw new IOException("Could not create settings directory: " + dir.getCanonicalPath());
     			}
     		}
@@ -195,7 +194,7 @@ public class Servlet extends XdevServlet implements IConfig {
     		
     		if (!zenConfigFile.exists())
     		{
-    			Log.info("ZEN configuration file " + zenConfigFile.getCanonicalPath() +
+    			log.info("ZEN configuration file " + zenConfigFile.getCanonicalPath() +
     					 " does not exist. It will be created with default settings.");
     			
     			final Random r = new Random(System.currentTimeMillis());

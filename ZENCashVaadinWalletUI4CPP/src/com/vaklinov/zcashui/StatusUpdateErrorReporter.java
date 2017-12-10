@@ -55,7 +55,7 @@ public class StatusUpdateErrorReporter implements IConfig
 	
 	public void reportError(final Exception e, final boolean isDueToAutomaticUpdate)
 	{
-		Log.error("Unexpected error: ", e);
+		log.error("Unexpected error: ", e);
 		
 		// TODO: Error logging
 		final long time = System.currentTimeMillis();

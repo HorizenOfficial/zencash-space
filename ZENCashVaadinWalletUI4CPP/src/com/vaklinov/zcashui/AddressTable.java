@@ -28,6 +28,8 @@
  **********************************************************************************/
 package com.vaklinov.zcashui;
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -40,42 +42,44 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 /**
  * Table to be used for addresses - specifically.
  *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class AddressTable 
-	extends DataTable 
-{	
-	public AddressTable(final Object[][] rowData, final Object[] columnNames, 
+public class AddressTable
+	extends DataTable  implements IConfig
+{
+	public AddressTable(final Object[][] rowData, final Object[] columnNames,
 			            final ZCashClientCaller caller)
 	{
 		super(rowData, columnNames);
-		int accelaratorKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+		final int accelaratorKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
         
-		JMenuItem obtainPrivateKey = new JMenuItem("Obtain private key...");
+		final JMenuItem obtainPrivateKey = new JMenuItem("Obtain private key...");
 		obtainPrivateKey.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, accelaratorKeyMask));
-        popupMenu.add(obtainPrivateKey);
+        this.popupMenu.add(obtainPrivateKey);
         
-        obtainPrivateKey.addActionListener(new ActionListener() 
-        {	
+        obtainPrivateKey.addActionListener(new ActionListener()
+        {
 			@Override
-			public void actionPerformed(ActionEvent e) 
+			public void actionPerformed(final ActionEvent e)
 			{
-				if ((lastRow >= 0) && (lastColumn >= 0))
+				if ((AddressTable.this.lastRow >= 0) && (AddressTable.this.lastColumn >= 0))
 				{
 					try
 					{
-						String address = AddressTable.this.getModel().getValueAt(lastRow, 2).toString();
-						boolean isZAddress = Util.isZAddress(address);
+						final String address = AddressTable.this.getModel().getValueAt(AddressTable.this.lastRow, 2).toString();
+						final boolean isZAddress = Util.isZAddress(address);
 						
 						// Check for encrypted wallet
 						final boolean bEncryptedWallet = caller.isWalletEncrypted();
 						if (bEncryptedWallet)
 						{
-							PasswordDialog pd = new PasswordDialog((JFrame)(AddressTable.this.getRootPane().getParent()));
+							final PasswordDialog pd = new PasswordDialog((JFrame)(AddressTable.this.getRootPane().getParent()));
 							pd.setVisible(true);
 							
 							if (!pd.isOKPressed())
@@ -86,31 +90,31 @@ public class AddressTable
 							caller.unlockWallet(pd.getPassword());
 						}
 						
-						String privateKey = isZAddress ?
+						final String privateKey = isZAddress ?
 							caller.getZPrivateKey(address) : caller.getTPrivateKey(address);
 							
-						// Lock the wallet again 
+						// Lock the wallet again
 						if (bEncryptedWallet)
 						{
 							caller.lockWallet();
 						}
 							
-						Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+						final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 						clipboard.setContents(new StringSelection(privateKey), null);
 						
 						JOptionPane.showMessageDialog(
-							AddressTable.this.getRootPane().getParent(), 
+							AddressTable.this.getRootPane().getParent(),
 							(isZAddress ? "Z (Private)" : "T (Transparent)") +  " address:\n" +
-							address + "\n" + 
+							address + "\n" +
 							"has private key:\n" +
 							privateKey + "\n\n" +
-							"The private key has also been copied to the clipboard.", 
+							"The private key has also been copied to the clipboard.",
 							"Private key information", JOptionPane.INFORMATION_MESSAGE);
 
 						
-					} catch (Exception ex)
+					} catch (final Exception ex)
 					{
-						Log.error("Unexpected error: ", ex);
+						log.error("Unexpected error: ", ex);
 						// TODO: report exception to user
 					}
 				} else

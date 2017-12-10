@@ -1,11 +1,11 @@
 /************************************************************************************************
- *   ____________ _   _  _____          _      _____ _    _ _______          __   _ _      _   
- *  |___  /  ____| \ | |/ ____|        | |    / ____| |  | |_   _\ \        / /  | | |    | |  
- *     / /| |__  |  \| | |     __ _ ___| |__ | |  __| |  | | | |  \ \  /\  / /_ _| | | ___| |_ 
+ *   ____________ _   _  _____          _      _____ _    _ _______          __   _ _      _
+ *  |___  /  ____| \ | |/ ____|        | |    / ____| |  | |_   _\ \        / /  | | |    | |
+ *     / /| |__  |  \| | |     __ _ ___| |__ | |  __| |  | | | |  \ \  /\  / /_ _| | | ___| |_
  *    / / |  __| | . ` | |    / _` / __| '_ \| | |_ | |  | | | |   \ \/  \/ / _` | | |/ _ \ __|
- *   / /__| |____| |\  | |___| (_| \__ \ | | | |__| | |__| |_| |_   \  /\  / (_| | | |  __/ |_ 
+ *   / /__| |____| |\  | |___| (_| \__ \ | | | |__| | |__| |_| |_   \  /\  / (_| | | |  __/ |_
  *  /_____|______|_| \_|\_____\__,_|___/_| |_|\_____|\____/|_____|   \/  \/ \__,_|_|_|\___|\__|
- *                                                                                             
+ * 
  * Copyright (c) 2017 Ivan Vaklinov <ivan@vaklinov.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,6 +29,8 @@
 package com.vaklinov.zcashui.msg;
 
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -36,8 +38,9 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import com.vaklinov.zcashui.Log;
 import com.vaklinov.zcashui.StatusUpdateErrorReporter;
+
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 
 
 /**
@@ -46,13 +49,13 @@ import com.vaklinov.zcashui.StatusUpdateErrorReporter;
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
 public class OwnIdentityEditDialog
-	extends IdentityInfoDialog
+	extends IdentityInfoDialog implements IConfig
 {
 	private MessagingStorage storage;
 	private StatusUpdateErrorReporter errorReporter;
 	
-	public OwnIdentityEditDialog(JFrame parent, MessagingIdentity identity, 
-			                     MessagingStorage storage, StatusUpdateErrorReporter errorReporter, boolean identityIsBeingCreated)
+	public OwnIdentityEditDialog(final JFrame parent, final MessagingIdentity identity,
+			                     final MessagingStorage storage, final StatusUpdateErrorReporter errorReporter, final boolean identityIsBeingCreated)
 	{
 		super(parent, identity);
 
@@ -67,14 +70,14 @@ public class OwnIdentityEditDialog
 			"shared with other users.<br/> The only mandatory field is the \"Nick name\"." +
 			"</span>");
 		
-		nicknameTextField.setEditable(true);
-		firstnameTextField.setEditable(true);
-		middlenameTextField.setEditable(true);
-		surnameTextField.setEditable(true);
-		emailTextField.setEditable(true);
-		streetaddressTextField.setEditable(true);
-		facebookTextField.setEditable(true);
-		twitterTextField.setEditable(true);
+		this.nicknameTextField.setEditable(true);
+		this.firstnameTextField.setEditable(true);
+		this.middlenameTextField.setEditable(true);
+		this.surnameTextField.setEditable(true);
+		this.emailTextField.setEditable(true);
+		this.streetaddressTextField.setEditable(true);
+		this.facebookTextField.setEditable(true);
+		this.twitterTextField.setEditable(true);
 				
 		// Build the save and Cancel buttons
 		if (identityIsBeingCreated)
@@ -84,17 +87,17 @@ public class OwnIdentityEditDialog
 			this.buttonPanel.removeAll();
 		}
 		
-		JButton saveButon = new JButton("Save & close");
-		buttonPanel.add(saveButon);
+		final JButton saveButon = new JButton("Save & close");
+		this.buttonPanel.add(saveButon);
 		saveButon.addActionListener(new ActionListener()
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void actionPerformed(final ActionEvent e)
 			{
 				try
 				{
 					// Check for validity and save the data - T/Z addresses are not changed!
-					String nick = OwnIdentityEditDialog.this.nicknameTextField.getText();
+					final String nick = OwnIdentityEditDialog.this.nicknameTextField.getText();
 					if ((nick == null) || nick.trim().length() <= 0)
 					{
 				        JOptionPane.showMessageDialog(
@@ -107,7 +110,7 @@ public class OwnIdentityEditDialog
 					// TODO: check validity of fields to avoid entering rubbish (e.g. invalid e-mail)
 					
 					// Save all identity fields from the text fields
-					MessagingIdentity id = OwnIdentityEditDialog.this.identity;
+					final MessagingIdentity id = OwnIdentityEditDialog.this.identity;
 					id.setNickname(OwnIdentityEditDialog.this.nicknameTextField.getText());
 					id.setFirstname(OwnIdentityEditDialog.this.firstnameTextField.getText());
 					id.setMiddlename(OwnIdentityEditDialog.this.middlenameTextField.getText());
@@ -122,9 +125,9 @@ public class OwnIdentityEditDialog
 					
 					OwnIdentityEditDialog.this.setVisible(false);
 					OwnIdentityEditDialog.this.dispose();
-				} catch (Exception ex)
+				} catch (final Exception ex)
 				{
-					Log.error("Unexpected error in editing own messaging identity!", ex);
+					log.error("Unexpected error in editing own messaging identity!", ex);
 					OwnIdentityEditDialog.this.errorReporter.reportError(ex, false);
 				}
 			}

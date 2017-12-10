@@ -29,6 +29,8 @@
 package com.vaklinov.zcashui;
 
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -58,6 +60,8 @@ import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 import com.vaklinov.zcashui.ZCashInstallationObserver.DAEMON_STATUS;
 import com.vaklinov.zcashui.ZCashInstallationObserver.DaemonInfo;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 /**
  * Dashboard ...
@@ -65,7 +69,7 @@ import com.vaklinov.zcashui.ZCashInstallationObserver.DaemonInfo;
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
 public class DashboardPanel
-	extends WalletTabPanel
+	extends WalletTabPanel implements IConfig
 {
 	private JFrame parentFrame;
 	private ZCashInstallationObserver installationObserver;
@@ -171,7 +175,7 @@ public class DashboardPanel
 					final long start = System.currentTimeMillis();
 					final DaemonInfo daemonInfo = DashboardPanel.this.installationObserver.getDaemonInfo();
 					final long end = System.currentTimeMillis();
-					Log.info("Gathering of dashboard daemon status data done in " + (end - start) + "ms." );
+					log.info("Gathering of dashboard daemon status data done in " + (end - start) + "ms." );
 					
 					return daemonInfo;
 				}
@@ -188,7 +192,7 @@ public class DashboardPanel
 					DashboardPanel.this.updateDaemonStatusLabel();
 				} catch (final Exception ex)
 				{
-					Log.error("Unexpected error: ", ex);
+					log.error("Unexpected error: ", ex);
 					DashboardPanel.this.errorReporter.reportError(ex);
 				}
 			}
@@ -216,7 +220,7 @@ public class DashboardPanel
 					    DashboardPanel.this.walletIsEncrypted = DashboardPanel.this.clientCaller.isWalletEncrypted();
 					}
 					
-					Log.info("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
+					log.info("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
 					
 					return balance;
 				}
@@ -233,7 +237,7 @@ public class DashboardPanel
 					DashboardPanel.this.updateWalletStatusLabel();
 				} catch (final Exception ex)
 				{
-					Log.error("Unexpected error: ", ex);
+					log.error("Unexpected error: ", ex);
 					DashboardPanel.this.errorReporter.reportError(ex);
 				}
 			}
@@ -254,7 +258,7 @@ public class DashboardPanel
 					final long start = System.currentTimeMillis();
 					final String[][] data =  DashboardPanel.this.getTransactionsDataFromWallet();
 					final long end = System.currentTimeMillis();
-					Log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
+					log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
 					
 					return data;
 				}
@@ -271,7 +275,7 @@ public class DashboardPanel
 					DashboardPanel.this.updateWalletTransactionsTable();
 				} catch (final Exception ex)
 				{
-					Log.error("Unexpected error: ", ex);
+					log.error("Unexpected error: ", ex);
 					DashboardPanel.this.errorReporter.reportError(ex);
 				}
 			}
@@ -291,7 +295,7 @@ public class DashboardPanel
 					final long start = System.currentTimeMillis();
 					final NetworkAndBlockchainInfo data =  DashboardPanel.this.clientCaller.getNetworkAndBlockchainInfo();
 					final long end = System.currentTimeMillis();
-					Log.info("Gathering of network and blockchain info data done in " + (end - start) + "ms." );
+					log.info("Gathering of network and blockchain info data done in " + (end - start) + "ms." );
 					
 					return data;
 				}
@@ -308,7 +312,7 @@ public class DashboardPanel
 					DashboardPanel.this.updateNetworkAndBlockchainLabel();
 				} catch (final Exception ex)
 				{
-					Log.error("Unexpected error: ", ex);
+					log.error("Unexpected error: ", ex);
 					DashboardPanel.this.errorReporter.reportError(ex);
 				}
 			}
@@ -565,7 +569,7 @@ public class DashboardPanel
 			
 		if (Util.arraysAreDifferent(this.lastTransactionsData, newTransactionsData))
 		{
-			Log.info("Updating table of transactions...");
+			log.info("Updating table of transactions...");
 			this.remove(this.transactionsTablePane);
 			this.add(this.transactionsTablePane = new JScrollPane(
 			             this.transactionsTable = this.createTransactionsTable(newTransactionsData)),
@@ -696,7 +700,7 @@ public class DashboardPanel
 				trans[3] = df.format(amount);
 			} catch (final NumberFormatException nfe)
 			{
-				Log.error("Error occurred while formatting amount: " + trans[3] +
+				log.error("Error occurred while formatting amount: " + trans[3] +
 						           " - " + nfe.getMessage() + "!");
 			}
 			
@@ -708,7 +712,7 @@ public class DashboardPanel
 				trans[2] = isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed);
 			} catch (final NumberFormatException nfe)
 			{
-				Log.error("Error occurred while formatting confirmations: " + trans[2] +
+				log.error("Error occurred while formatting confirmations: " + trans[2] +
 						           " - " + nfe.getMessage() + "!");
 			}
 		}

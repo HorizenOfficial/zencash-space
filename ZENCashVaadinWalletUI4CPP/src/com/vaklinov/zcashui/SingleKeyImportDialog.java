@@ -29,6 +29,8 @@
 package com.vaklinov.zcashui;
 
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -46,6 +48,8 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 /**
  * Dialog to enter a single private key to import
@@ -53,7 +57,7 @@ import javax.swing.JTextField;
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
 public class SingleKeyImportDialog
-	extends JDialog
+	extends JDialog implements IConfig
 {
 	protected boolean isOKPressed = false;
 	protected String  key    = null;
@@ -208,7 +212,7 @@ public class SingleKeyImportDialog
 							JOptionPane.INFORMATION_MESSAGE);
 				} catch (final Exception e)
 				{
-					Log.error("An error occurred when importing private key", e);
+					log.error("An error occurred when importing private key", e);
 					
 					JOptionPane.showMessageDialog(
 						SingleKeyImportDialog.this.getRootPane().getParent(),

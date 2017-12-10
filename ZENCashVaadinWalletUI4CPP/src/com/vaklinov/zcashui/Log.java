@@ -39,34 +39,34 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-public class Log 
+public class Log
 {
 	private static PrintStream fileOut;
 	
-	private static Set<String> oneTimeMessages = new HashSet<String>();
+	private static Set<String> oneTimeMessages = new HashSet<>();
 
-	static 
+	static
 	{
 		try
 		{
 			// Initialize log to a file
-			String settingsDir = OSUtil.getSettingsDirectory();
-			Date today = new Date();
-			String logFile = settingsDir + File.separator + 
+			final String settingsDir = OSUtil.getSettingsDirectory();
+			final Date today = new Date();
+			final String logFile = settingsDir + File.separator +
 			         "ZENCashGUIWallet_" +
-			         (int)(today.getYear() + 1900) + "_" +
-			         (int)(today.getMonth() + 1) + "_" +
+			         (today.getYear() + 1900) + "_" +
+			         (today.getMonth() + 1) + "_" +
 			         "debug.log";
 			fileOut = new PrintStream(new FileOutputStream(logFile, true));
 		}
-		catch (IOException ioe)
+		catch (final IOException ioe)
 		{
 			fileOut = null;
 			System.out.println("Error in initializing file logging!!!");
 			ioe.printStackTrace();
 		}
 	}
-	
+/*
 	public static void debug(String message, Object ... args)
 	{
 		printMessage("DEBUG", message, null, args);
@@ -120,10 +120,10 @@ public class Log
 	{
 		printMessage(false, messageClass, message, t, args);
 	}
+*/
 	
-	
-	private static void printMessage(boolean oneTimeOnly, String messageClass, String message,
-			                         Throwable t, Object ... args)
+	private static void printMessage(final boolean oneTimeOnly, String messageClass, String message,
+			                         final Throwable t, final Object ... args)
 	{
 		// TODO: Too much garbage collection
 		for (int i = 0; i < args.length; i++)
@@ -146,7 +146,7 @@ public class Log
 			}
 		}
 		
-		String prefix =
+		final String prefix =
 			"[" + Thread.currentThread().getName() + "] " +
 		    "[" + (new Date()).toString() + "] ";
 		
@@ -155,12 +155,12 @@ public class Log
 		String throwable = "";
 		if (t != null)
 		{
-			CharArrayWriter car = new CharArrayWriter(500);
-			PrintWriter pr = new PrintWriter(car);
+			final CharArrayWriter car = new CharArrayWriter(500);
+			final PrintWriter pr = new PrintWriter(car);
 			pr.println();  // One line extra before the exception.
 			t.printStackTrace(pr);
 			pr.close();
-			throwable = new String(car.toCharArray()); 
+			throwable = new String(car.toCharArray());
 		}
 			
 		System.out.println(prefix + messageClass + message + throwable);

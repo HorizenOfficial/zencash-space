@@ -253,7 +253,7 @@ public class OSUtil implements IConfig
 		{
 			if (!dir.mkdirs())
 			{
-				Log.warning("Could not create settings directory: " + dir.getCanonicalPath());
+				log.warn("Could not create settings directory: " + dir.getCanonicalPath());
 			}
 		}
 

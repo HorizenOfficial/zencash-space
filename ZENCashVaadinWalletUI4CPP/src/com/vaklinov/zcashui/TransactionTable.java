@@ -28,6 +28,8 @@
  **********************************************************************************/
 package com.vaklinov.zcashui;
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Desktop;
@@ -58,6 +60,8 @@ import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.border.EtchedBorder;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 /**
  * Table to be used for transactions - specifically.
@@ -65,7 +69,7 @@ import javax.swing.border.EtchedBorder;
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
 public class TransactionTable
-	extends DataTable
+	extends DataTable implements IConfig
 {
 	public TransactionTable(final Object[][] rowData, final Object[] columnNames,
 			                final JFrame parent, final ZCashClientCaller caller,
@@ -90,7 +94,7 @@ public class TransactionTable
 						String txID = TransactionTable.this.getModel().getValueAt(TransactionTable.this.lastRow, 6).toString();
 						txID = txID.replaceAll("\"", ""); // In case it has quotes
 						
-						Log.info("Transaction ID for detail dialog is: " + txID);
+						log.info("Transaction ID for detail dialog is: " + txID);
 						final Map<String, String> details = caller.getRawTransactionDetails(txID);
 						final String rawTrans = caller.getRawTransaction(txID);
 						
@@ -98,7 +102,7 @@ public class TransactionTable
 						dd.setVisible(true);
 					} catch (final Exception ex)
 					{
-						Log.error("Unexpected error: ", ex);
+						log.error("Unexpected error: ", ex);
 						// TODO: report exception to user
 					}
 				} else
@@ -125,7 +129,7 @@ public class TransactionTable
 						String txID = TransactionTable.this.getModel().getValueAt(TransactionTable.this.lastRow, 6).toString();
 						txID = txID.replaceAll("\"", ""); // In case it has quotes
 						
-						Log.info("Transaction ID for block explorer is: " + txID);
+						log.info("Transaction ID for block explorer is: " + txID);
 						// https://explorer.zcha.in/transactions/<ID>
 						String urlPrefix = "https://explorer.zensystem.io/tx/";
 						if (installationObserver.isOnTestNet())
@@ -136,7 +140,7 @@ public class TransactionTable
 						Desktop.getDesktop().browse(new URL(urlPrefix + txID).toURI());
 					} catch (final Exception ex)
 					{
-						Log.error("Unexpected error: ", ex);
+						log.error("Unexpected error: ", ex);
 						// TODO: report exception to user
 					}
 				} else
@@ -180,13 +184,13 @@ public class TransactionTable
 						}
 						
 						
-						Log.info("Transaction ID for Memo field is: " + txID);
-						Log.info("Account for Memo field is: " + acc);
+						log.info("Transaction ID for Memo field is: " + txID);
+						log.info("Account for Memo field is: " + acc);
 						parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 						// TODO: some day support outgoing Z transactions
  						String MemoField = caller.getMemoField(acc, txID);
  						parent.setCursor(oldCursor);
- 						Log.info("Memo field is: " + MemoField);
+ 						log.info("Memo field is: " + MemoField);
  						
  						if (MemoField != null)
  						{
@@ -211,7 +215,7 @@ public class TransactionTable
 					} catch (final Exception ex)
 					{
 						parent.setCursor(oldCursor);
-						Log.error("", ex);
+						log.error("", ex);
 						// TODO: report exception to user
 					}
 				} else

@@ -1,11 +1,11 @@
 /************************************************************************************************
- *   ____________ _   _  _____          _      _____ _    _ _______          __   _ _      _   
- *  |___  /  ____| \ | |/ ____|        | |    / ____| |  | |_   _\ \        / /  | | |    | |  
- *     / /| |__  |  \| | |     __ _ ___| |__ | |  __| |  | | | |  \ \  /\  / /_ _| | | ___| |_ 
+ *   ____________ _   _  _____          _      _____ _    _ _______          __   _ _      _
+ *  |___  /  ____| \ | |/ ____|        | |    / ____| |  | |_   _\ \        / /  | | |    | |
+ *     / /| |__  |  \| | |     __ _ ___| |__ | |  __| |  | | | |  \ \  /\  / /_ _| | | ___| |_
  *    / / |  __| | . ` | |    / _` / __| '_ \| | |_ | |  | | | |   \ \/  \/ / _` | | |/ _ \ __|
- *   / /__| |____| |\  | |___| (_| \__ \ | | | |__| | |__| |_| |_   \  /\  / (_| | | |  __/ |_ 
+ *   / /__| |____| |\  | |___| (_| \__ \ | | | |__| | |__| |_| |_   \  /\  / (_| | | |  __/ |_
  *  /_____|______|_| \_|\_____\__,_|___/_| |_|\_____|\____/|_____|   \/  \/ \__,_|_|_|\___|\__|
- *                                                                                             
+ * 
  * Copyright (c) 2017 Ivan Vaklinov <ivan@vaklinov.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -39,7 +39,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -51,13 +50,14 @@ import java.util.UUID;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.WriterConfig;
-import com.vaklinov.zcashui.Log;
 import com.vaklinov.zcashui.OSUtil;
 import com.vaklinov.zcashui.Util;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 /**
- * Stores the information about messages, identities etc in a dir structure. 
+ * Stores the information about messages, identities etc in a dir structure.
  * The standard directories are:
  * 
  * ~/.ZENCashSwingWalletUI/messaging - root dir
@@ -73,14 +73,14 @@ import com.vaklinov.zcashui.Util;
  * ~/.ZENCashSwingWalletUI/messaging/ignored_contacts/UUID.json - single ignored identity.
  * 
  * The sent/received directories have a substructure of type:
- * sent/XXXX/message_xxx.json - where XXXX is between 0000 and 9999, xxx is between 000 and 999 
+ * sent/XXXX/message_xxx.json - where XXXX is between 0000 and 9999, xxx is between 000 and 999
  *
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class MessagingStorage
+public class MessagingStorage implements IConfig
 {
-	private File rootDir;
-	private File ignoredContactsDir;
+	private final File rootDir;
+	private final File ignoredContactsDir;
 	
 	private List<SingleContactStorage> contactsList;
 	
@@ -96,21 +96,21 @@ public class MessagingStorage
 		
 		this.rootDir = new File(OSUtil.getSettingsDirectory() + File.separator + "messaging");
 		
-		if (!rootDir.exists())
+		if (!this.rootDir.exists())
 		{
-			if (!rootDir.mkdirs())
+			if (!this.rootDir.mkdirs())
 			{
-				throw new IOException("Could not create directory: " + rootDir.getAbsolutePath());
+				throw new IOException("Could not create directory: " + this.rootDir.getAbsolutePath());
 			}
 		}
 		
 		this.ignoredContactsDir = new File(this.rootDir, "ignored_contacts");
 		
-		if (!ignoredContactsDir.exists())
+		if (!this.ignoredContactsDir.exists())
 		{
-			if (!ignoredContactsDir.mkdirs())
+			if (!this.ignoredContactsDir.mkdirs())
 			{
-				throw new IOException("Could not create directory: " + ignoredContactsDir.getAbsolutePath());
+				throw new IOException("Could not create directory: " + this.ignoredContactsDir.getAbsolutePath());
 			}
 		}
 		
@@ -120,11 +120,11 @@ public class MessagingStorage
 	}
 	
 	
-	public void addIgnoredContact(MessagingIdentity contact)
+	public void addIgnoredContact(final MessagingIdentity contact)
 		throws IOException
 	{
-		String fileName = UUID.randomUUID().toString() + ".json";
-		File contactFile = new File(this.ignoredContactsDir, fileName);
+		final String fileName = UUID.randomUUID().toString() + ".json";
+		final File contactFile = new File(this.ignoredContactsDir, fileName);
 		
 		contact.writeToFile(contactFile);
 		
@@ -133,15 +133,15 @@ public class MessagingStorage
 	
 	
 	// If a message is from an igonred contact - returns it, else null
-	public MessagingIdentity getIgnoredContactForMessage(Message msg)
+	public MessagingIdentity getIgnoredContactForMessage(final Message msg)
 	{
 		MessagingIdentity contact = null;
 		
-		for (MessagingIdentity id : this.ignoredContacts)
+		for (final MessagingIdentity id : this.ignoredContacts)
 		{
 			if (id.isAnonymous())
 			{
-				if (msg.isAnonymous() && (!Util.stringIsEmpty(id.getThreadID())) && 
+				if (msg.isAnonymous() && (!Util.stringIsEmpty(id.getThreadID())) &&
 					id.getThreadID().equals(msg.getThreadID()))
 				{
 					contact = id;
@@ -149,11 +149,11 @@ public class MessagingStorage
 				}
 			} else
 			{
-				if ((!msg.isAnonymous()) && (!Util.stringIsEmpty(id.getSenderidaddress())) && 
+				if ((!msg.isAnonymous()) && (!Util.stringIsEmpty(id.getSenderidaddress())) &&
 					id.getSenderidaddress().equals(msg.getFrom()))
 				{
 					contact = id;
-					break;					
+					break;
 				}
 			}
 		}
@@ -165,7 +165,7 @@ public class MessagingStorage
 	public MessagingOptions getMessagingOptions()
 		throws IOException
 	{
-		File optionsFile = new File(rootDir, "messagingoptions.json");
+		final File optionsFile = new File(this.rootDir, "messagingoptions.json");
 			
 		if (!optionsFile.exists())
 		{
@@ -177,13 +177,13 @@ public class MessagingStorage
 	}
 
 	
-	public void updateMessagingOptions(MessagingOptions newOptions)
+	public void updateMessagingOptions(final MessagingOptions newOptions)
 		throws IOException
 	{
 		final String OPTIONS_FILE_NAME = "messagingoptions.json";
 			
-		File optionsFile = new File(rootDir, OPTIONS_FILE_NAME);	
-		Util.renameFileForMultiVersionBackup(rootDir, OPTIONS_FILE_NAME);
+		final File optionsFile = new File(this.rootDir, OPTIONS_FILE_NAME);
+		Util.renameFileForMultiVersionBackup(this.rootDir, OPTIONS_FILE_NAME);
 		newOptions.writeToFile(optionsFile);
 	}
 	
@@ -196,7 +196,7 @@ public class MessagingStorage
 			return this.cachedOwnIdentity;
 		}
 		
-		File identityFile = new File(rootDir, "ownidentity.json");
+		final File identityFile = new File(this.rootDir, "ownidentity.json");
 		
 		if (!identityFile.exists())
 		{
@@ -208,14 +208,14 @@ public class MessagingStorage
 	}
 		
 		
-	public void updateOwnIdentity(MessagingIdentity newIdentity)
+	public void updateOwnIdentity(final MessagingIdentity newIdentity)
 		throws IOException
 	{
 		final String OWN_IDENTITY = "ownidentity.json";
 		
-		File identityFile = new File(rootDir, OWN_IDENTITY);	
+		final File identityFile = new File(this.rootDir, OWN_IDENTITY);
 			
-		Util.renameFileForMultiVersionBackup(rootDir, OWN_IDENTITY);
+		Util.renameFileForMultiVersionBackup(this.rootDir, OWN_IDENTITY);
 		
 		newIdentity.writeToFile(identityFile);
 		
@@ -223,14 +223,14 @@ public class MessagingStorage
 	}
 	
 	
-	public List<MessagingIdentity> getContactIdentities(boolean includeAnonymous)
+	public List<MessagingIdentity> getContactIdentities(final boolean includeAnonymous)
 		throws IOException
 	{
-		List<MessagingIdentity> identities = new ArrayList<MessagingIdentity>();
+		final List<MessagingIdentity> identities = new ArrayList<>();
 		
-		for (SingleContactStorage contact : this.contactsList)
+		for (final SingleContactStorage contact : this.contactsList)
 		{
-			MessagingIdentity id = contact.getIdentity();
+			final MessagingIdentity id = contact.getIdentity();
 			if ((!id.isAnonymous()) || includeAnonymous)
 			{
 				identities.add(id);
@@ -241,14 +241,14 @@ public class MessagingStorage
 	}
 	
 	
-	public MessagingIdentity getContactIdentityForSenderIDAddress(String senderIDAddress)
+	public MessagingIdentity getContactIdentityForSenderIDAddress(final String senderIDAddress)
 		throws IOException
 	{
-		List<MessagingIdentity> allIdentities = this.getContactIdentities(false);
+		final List<MessagingIdentity> allIdentities = this.getContactIdentities(false);
 		
 		MessagingIdentity id = null;
 		
-		for (MessagingIdentity tempID : allIdentities)
+		for (final MessagingIdentity tempID : allIdentities)
 		{
 			if ((!tempID.isAnonymous()) && tempID.getSenderidaddress().equals(senderIDAddress))
 			{
@@ -256,39 +256,39 @@ public class MessagingStorage
 			}
 		}
 		
-		return id;		
+		return id;
 	}
 	
 	
-	public void updateContactIdentityForSenderIDAddress(String senderIDAddress, MessagingIdentity newID)
+	public void updateContactIdentityForSenderIDAddress(final String senderIDAddress, final MessagingIdentity newID)
 		throws IOException
 	{
-		for (SingleContactStorage contact : this.contactsList)
+		for (final SingleContactStorage contact : this.contactsList)
 		{
-			MessagingIdentity tempID = contact.getIdentity();
+			final MessagingIdentity tempID = contact.getIdentity();
 			
 			if ((!tempID.isAnonymous()) && tempID.getSenderidaddress().equals(senderIDAddress))
 			{
 				tempID.copyFromJSONObject(newID.toJSONObject(false));
 				contact.updateIdentity(tempID);
 			}
-		}			
+		}
 	}
 	
 	
-	public void updateGroupContactIdentityForSendReceiveAddress(String sendReceiveAddress, MessagingIdentity newID)
+	public void updateGroupContactIdentityForSendReceiveAddress(final String sendReceiveAddress, final MessagingIdentity newID)
 		throws IOException
 	{
-		for (SingleContactStorage contact : this.contactsList)
+		for (final SingleContactStorage contact : this.contactsList)
 		{
-			MessagingIdentity tempID = contact.getIdentity();
+			final MessagingIdentity tempID = contact.getIdentity();
 			
 			if ((tempID.isGroup()) && tempID.getSendreceiveaddress().equals(sendReceiveAddress))
 			{
 				tempID.copyFromJSONObject(newID.toJSONObject(false));
 				contact.updateIdentity(tempID);
 			}
-		}			
+		}
 	}
 	
 	
@@ -303,18 +303,18 @@ public class MessagingStorage
 	 * 
 	 * @throws IOException
 	 */
-	public boolean isSenderIdentityIgnoredForGroup(String senderID, MessagingIdentity groupID)
+	public boolean isSenderIdentityIgnoredForGroup(final String senderID, final MessagingIdentity groupID)
 		throws IOException
 	{
-		for (SingleContactStorage contact : this.contactsList)
+		for (final SingleContactStorage contact : this.contactsList)
 		{
-			MessagingIdentity tempID = contact.getIdentity();
+			final MessagingIdentity tempID = contact.getIdentity();
 			
 			if ((tempID.isGroup()) && tempID.isIdenticalTo(groupID))
 			{
 				return contact.isGroupSenderIDIgnored(senderID);
 			}
-		}			
+		}
 
 		return false;
 	}
@@ -327,29 +327,29 @@ public class MessagingStorage
 	 * 
 	 * @param senderID to add
 	 */
-	public void addIgnoredSenderIdentityForGroup(String senderID, MessagingIdentity groupID)
+	public void addIgnoredSenderIdentityForGroup(final String senderID, final MessagingIdentity groupID)
 		throws IOException
 	{
-		for (SingleContactStorage contact : this.contactsList)
+		for (final SingleContactStorage contact : this.contactsList)
 		{
-			MessagingIdentity tempID = contact.getIdentity();
+			final MessagingIdentity tempID = contact.getIdentity();
 			
 			if ((tempID.isGroup()) && tempID.isIdenticalTo(groupID))
 			{
 				contact.addGroupIgnoredSenderID(senderID);
 				return;
 			}
-		}	
+		}
 	}
 
 		
-	public void addContactIdentity(MessagingIdentity identity)
+	public void addContactIdentity(final MessagingIdentity identity)
 		throws IOException
 	{
-		File contactDirs[] = this.rootDir.listFiles(new FileFilter() 
-		{	
+		final File contactDirs[] = this.rootDir.listFiles(new FileFilter()
+		{
 			@Override
-			public boolean accept(File pathname) 
+			public boolean accept(final File pathname)
 			{
 				return pathname.isDirectory() && pathname.getName().matches("contact_[0-9]{4}");
 			}
@@ -371,7 +371,7 @@ public class MessagingStorage
 			contactDirName = "contact_" + contactDirName;
 		} while (new File(this.rootDir, contactDirName).exists());
 		
-		SingleContactStorage contactStorage = new SingleContactStorage(new File(this.rootDir, contactDirName));
+		final SingleContactStorage contactStorage = new SingleContactStorage(new File(this.rootDir, contactDirName));
 		contactStorage.updateIdentity(identity);
 		this.contactsList.add(contactStorage);
 	}
@@ -386,17 +386,17 @@ public class MessagingStorage
 	 * 
 	 * @throws IOException
 	 */
-	public MessagingIdentity createAndStoreUnknownContactIdentity(String senderIDAdderss)
+	public MessagingIdentity createAndStoreUnknownContactIdentity(final String senderIDAdderss)
 		throws IOException
 	{
-		MessagingIdentity newID = new MessagingIdentity();
+		final MessagingIdentity newID = new MessagingIdentity();
 		
 		String nickName = null;
 		naming_loop:
 		for (int i = 1; i <= 1000; i++) // TODO: more reliable naming scheme
 		{
 			nickName = "Unknown_" + i;
-			for (MessagingIdentity existignID : this.getContactIdentities(true))
+			for (final MessagingIdentity existignID : this.getContactIdentities(true))
 			{
 				if (nickName.equalsIgnoreCase(existignID.getNickname()))
 				{
@@ -427,7 +427,7 @@ public class MessagingStorage
 	
 	/**
 	 * Finds a messaging identity that corresponds to a particular thread id. It may be a normal
-	 * identity with anonymous messages sent to it (outgoing case) or an anonymous identity 
+	 * identity with anonymous messages sent to it (outgoing case) or an anonymous identity
 	 * (incoming case).
 	 * 
 	 * @param threadID
@@ -436,14 +436,14 @@ public class MessagingStorage
 	 * 
 	 * @throws IOException
 	 */
-	public MessagingIdentity findAnonymousOrNormalContactIdentityByThreadID(String threadID)
+	public MessagingIdentity findAnonymousOrNormalContactIdentityByThreadID(final String threadID)
 		throws IOException
 	{
-		List<MessagingIdentity> allIdentities = this.getContactIdentities(true);
+		final List<MessagingIdentity> allIdentities = this.getContactIdentities(true);
 		
 		MessagingIdentity id = null;
 		
-		for (MessagingIdentity tempID : allIdentities)
+		for (final MessagingIdentity tempID : allIdentities)
 		{
 			if ((!Util.stringIsEmpty(tempID.getThreadID())) && tempID.getThreadID().equals(threadID))
 			{
@@ -451,14 +451,14 @@ public class MessagingStorage
 			}
 		}
 		
-		return id;	
+		return id;
 	}
 	
 	
-	public MessagingIdentity createAndStoreAnonumousContactIdentity(String threadID, String returnAddress)
+	public MessagingIdentity createAndStoreAnonumousContactIdentity(final String threadID, final String returnAddress)
 		throws IOException
 	{
-		MessagingIdentity newID = new MessagingIdentity();
+		final MessagingIdentity newID = new MessagingIdentity();
 		newID.setAnonymous(true);
 		newID.setThreadID(threadID);
 			
@@ -467,7 +467,7 @@ public class MessagingStorage
 		for (int i = 1; i <= 1000; i++) // TODO: more reliable naming scheme
 		{
 			nickName = "Anonymous_" + i;
-			for (MessagingIdentity existignID : this.getContactIdentities(true))
+			for (final MessagingIdentity existignID : this.getContactIdentities(true))
 			{
 				if (nickName.equalsIgnoreCase(existignID.getNickname()))
 				{
@@ -496,12 +496,12 @@ public class MessagingStorage
 	}
 	
 	
-	public void updateAnonumousContactIdentityForThreadID(String threadID, MessagingIdentity newID)
+	public void updateAnonumousContactIdentityForThreadID(final String threadID, final MessagingIdentity newID)
 		throws IOException
 	{
-		for (SingleContactStorage contact : this.contactsList)
+		for (final SingleContactStorage contact : this.contactsList)
 		{
-			MessagingIdentity tempID = contact.getIdentity();
+			final MessagingIdentity tempID = contact.getIdentity();
 			
 			if ((tempID.isAnonymous()) && tempID.getThreadID().equals(threadID))
 			{
@@ -509,24 +509,24 @@ public class MessagingStorage
 				contact.updateIdentity(tempID);
 				break;
 			}
-		}			
+		}
 	}
 	
 
 	/**
-	 * Returns all known messages for a certain contact in ascending date order. 
+	 * Returns all known messages for a certain contact in ascending date order.
 	 * If identity not found etc. thorws an exception
 	 * 
 	 * @param conact
 	 * 
 	 * @return all known messages for a certain contact in ascending date order.
 	 */
-	public List<Message> getAllMessagesForContact(MessagingIdentity contact)
+	public List<Message> getAllMessagesForContact(final MessagingIdentity contact)
 		throws IOException
 	{
 		// Find the contact
 		SingleContactStorage contactStorage = null;
-		for (SingleContactStorage scs : this.contactsList)
+		for (final SingleContactStorage scs : this.contactsList)
 		{
 			if (scs.getIdentity().isIdenticalTo(contact))
 			{
@@ -534,12 +534,12 @@ public class MessagingStorage
 			}
 		}
 		
-		List<Message> messages = new ArrayList<Message>();
+		final List<Message> messages = new ArrayList<>();
 		
 		// Should never happen but ...
 		if (contactStorage == null)
 		{
-			Log.warning("Could not find messaging identity in the contact list {0}", 
+			log.warn("Could not find messaging identity in the contact list " +
 					    contact.toJSONObject(false).toString());
 			throw new IOException("Could not find messaging identity in the contact list " +
 					              contact.toJSONObject(false).toString());
@@ -550,10 +550,10 @@ public class MessagingStorage
 		
 		// Finally sort them
 		Collections.sort(messages,
-			new Comparator<Message>() 
+			new Comparator<Message>()
 			{
 				@Override
-				public int compare(Message o1, Message o2) 
+				public int compare(final Message o1, final Message o2)
 				{
 					return o1.getTime().compareTo(o2.getTime());
 				}
@@ -564,12 +564,12 @@ public class MessagingStorage
 	}
 	
 	
-	public void writeNewSentMessageForContact(MessagingIdentity contact, Message msg)
+	public void writeNewSentMessageForContact(final MessagingIdentity contact, final Message msg)
 		throws IOException
 	{
 		// Find the contact
 		SingleContactStorage contactStorage = null;
-		for (SingleContactStorage scs : this.contactsList)
+		for (final SingleContactStorage scs : this.contactsList)
 		{
 			if (scs.getIdentity().isIdenticalTo(contact))
 			{
@@ -581,12 +581,12 @@ public class MessagingStorage
 	}
 	
 	
-	public void writeNewReceivedMessageForContact(MessagingIdentity contact, Message msg)
+	public void writeNewReceivedMessageForContact(final MessagingIdentity contact, final Message msg)
 		throws IOException
 	{
 		// Find the contact
 		SingleContactStorage contactStorage = null;
-		for (SingleContactStorage scs : this.contactsList)
+		for (final SingleContactStorage scs : this.contactsList)
 		{
 			if (scs.getIdentity().isIdenticalTo(contact))
 			{
@@ -598,10 +598,10 @@ public class MessagingStorage
 	
 	
 	// Deletes a certain contact and reloads the contact list
-	public void deleteContact(MessagingIdentity contact)
+	public void deleteContact(final MessagingIdentity contact)
 		throws IOException
 	{
-		for (SingleContactStorage scs : this.contactsList)
+		for (final SingleContactStorage scs : this.contactsList)
 		{
 			if (scs.getIdentity().isIdenticalTo(contact))
 			{
@@ -616,18 +616,18 @@ public class MessagingStorage
 	private void reloadContactListFromStorage()
 		throws IOException
 	{
-			this.contactsList = new ArrayList<SingleContactStorage>();
+			this.contactsList = new ArrayList<>();
 			
-			File contactDirs[] = this.rootDir.listFiles(new FileFilter() 
-			{	
+			final File contactDirs[] = this.rootDir.listFiles(new FileFilter()
+			{
 				@Override
-				public boolean accept(File pathname) 
+				public boolean accept(final File pathname)
 				{
 					return pathname.isDirectory() && pathname.getName().matches("contact_[0-9]{4}");
 				}
 			});
 			
-			for (File dir : contactDirs)
+			for (final File dir : contactDirs)
 			{
 				this.contactsList.add(new SingleContactStorage(dir));
 		    }
@@ -637,18 +637,18 @@ public class MessagingStorage
 	private void reloadIgnoredContactsFromStorage()
 		throws IOException
 	{
-			this.ignoredContacts = new ArrayList<MessagingIdentity>();
+			this.ignoredContacts = new ArrayList<>();
 			
-			File ignoredContacts[] = this.ignoredContactsDir.listFiles(new FileFilter() 
-			{	
+			final File ignoredContacts[] = this.ignoredContactsDir.listFiles(new FileFilter()
+			{
 				@Override
-				public boolean accept(File pathname) 
+				public boolean accept(final File pathname)
 				{
 					return pathname.isFile() && pathname.getName().endsWith(".json");
 				}
 			});
 			
-			for (File contactFile : ignoredContacts)
+			for (final File contactFile : ignoredContacts)
 			{
 				this.ignoredContacts.add(new MessagingIdentity(contactFile));
 			}
@@ -665,17 +665,17 @@ public class MessagingStorage
 	{
 		final String IGNORED_GROUP_IDS = "ignored_group_ids.json";
 		
-		private File rootDir;
+		private final File rootDir;
 		
-		private SentOrReceivedMessagesStore sentMessages;
-		private SentOrReceivedMessagesStore receivedMessages;
+		private final SentOrReceivedMessagesStore sentMessages;
+		private final SentOrReceivedMessagesStore receivedMessages;
 		
 		private MessagingIdentity cachedIdentity;
 		
 		private Set<String> cachedIgnoredGroupSenderIDs;
 		
 		
-		public SingleContactStorage(File rootDir)
+		public SingleContactStorage(final File rootDir)
 			throws IOException
 		{
 			this.cachedIdentity = null;
@@ -704,7 +704,7 @@ public class MessagingStorage
 				return this.cachedIdentity;
 			}
 			
-			File identityFile = new File(rootDir, "identity.json");
+			final File identityFile = new File(this.rootDir, "identity.json");
 			
 			this.cachedIdentity = new MessagingIdentity(identityFile);
 			
@@ -712,13 +712,13 @@ public class MessagingStorage
 		}
 		
 		
-		public void updateIdentity(MessagingIdentity newIdentity)
+		public void updateIdentity(final MessagingIdentity newIdentity)
 			throws IOException
 		{
 			final String IDENTITY = "identity.json";
-			File identityFile = new File(rootDir, IDENTITY);	
+			final File identityFile = new File(this.rootDir, IDENTITY);
 			
-			Util.renameFileForMultiVersionBackup(rootDir, IDENTITY);
+			Util.renameFileForMultiVersionBackup(this.rootDir, IDENTITY);
 			
 			newIdentity.writeToFile(identityFile);
 			
@@ -735,11 +735,11 @@ public class MessagingStorage
 		 * 
 		 * @return true if a particular sender's ID is ignored
 		 */
-		public boolean isGroupSenderIDIgnored(String senderID)
+		public boolean isGroupSenderIDIgnored(final String senderID)
 			throws IOException
 		{
 			this.preloadCachedIgnoredGroupSenderIDs();
-			boolean ignored = this.cachedIgnoredGroupSenderIDs.contains(senderID);
+			final boolean ignored = this.cachedIgnoredGroupSenderIDs.contains(senderID);
 			return ignored;
 		}
 		
@@ -751,19 +751,19 @@ public class MessagingStorage
 		 * 
 		 * @param senderID to add
 		 */
-		public void addGroupIgnoredSenderID(String senderID)
+		public void addGroupIgnoredSenderID(final String senderID)
 			throws IOException
 		{
 			this.preloadCachedIgnoredGroupSenderIDs();
 			
-			File ignoredIDsFile = new File(rootDir, IGNORED_GROUP_IDS);	
+			final File ignoredIDsFile = new File(this.rootDir, this.IGNORED_GROUP_IDS);
 			
-			Util.renameFileForMultiVersionBackup(rootDir, IGNORED_GROUP_IDS);
+			Util.renameFileForMultiVersionBackup(this.rootDir, this.IGNORED_GROUP_IDS);
 			
 			this.cachedIgnoredGroupSenderIDs.add(senderID);
 			
-			JsonArray ar = new JsonArray();
-			for (String id : this.cachedIgnoredGroupSenderIDs)
+			final JsonArray ar = new JsonArray();
+			for (final String id : this.cachedIgnoredGroupSenderIDs)
 			{
 				ar.add(id);
 			}
@@ -772,10 +772,10 @@ public class MessagingStorage
 			try
 			{
 				os = new BufferedOutputStream(new FileOutputStream(ignoredIDsFile));
-				OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+				final OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 				ar.writeTo(osw, WriterConfig.PRETTY_PRINT);
 				osw.flush();
-			} finally 
+			} finally
 			{
 				if (os != null)
 				{
@@ -790,9 +790,9 @@ public class MessagingStorage
 		{
 			if (this.cachedIgnoredGroupSenderIDs == null)
 			{
-				this.cachedIgnoredGroupSenderIDs = new HashSet<String>();
+				this.cachedIgnoredGroupSenderIDs = new HashSet<>();
 				
-				File ignoredIDsFile = new File(rootDir, IGNORED_GROUP_IDS);	
+				final File ignoredIDsFile = new File(this.rootDir, this.IGNORED_GROUP_IDS);
 				
 				if (!ignoredIDsFile.exists())
 				{
@@ -803,8 +803,8 @@ public class MessagingStorage
 				try
 				{
 					is = new BufferedInputStream(new FileInputStream(ignoredIDsFile));
-					InputStreamReader isr = new InputStreamReader(is, "UTF-8");
-					JsonArray ar = Json.parse(isr).asArray(); // TODO: repackage to checked exception
+					final InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+					final JsonArray ar = Json.parse(isr).asArray(); // TODO: repackage to checked exception
 					
 					for (int i = 0; i < ar.size(); i++)
 					{
@@ -840,7 +840,7 @@ public class MessagingStorage
 		}
 		
 		
-		public void writeNewSentMessage(Message msg)
+		public void writeNewSentMessage(final Message msg)
 			throws IOException
 		{
 			this.sentMessages.writeNewMessage(msg);
@@ -854,7 +854,7 @@ public class MessagingStorage
 		}
 
 		
-		public void writeNewReceivedMessage(Message msg)
+		public void writeNewReceivedMessage(final Message msg)
 			throws IOException
 		{
 			this.receivedMessages.writeNewMessage(msg);
@@ -877,7 +877,7 @@ public class MessagingStorage
 		
 		private int currentOutputDirForWrite;
 		
-		public SentOrReceivedMessagesStore(File rootDir)
+		public SentOrReceivedMessagesStore(final File rootDir)
 		    throws IOException
 		{
 			this.rootDir = rootDir;
@@ -892,16 +892,16 @@ public class MessagingStorage
 			
 			// Use the dir with the highest number created so far
 			this.currentOutputDirForWrite = 0;
-			File currentDirs[] = rootDir.listFiles(new FileFilter() 
-			{	
+			final File currentDirs[] = rootDir.listFiles(new FileFilter()
+			{
 				@Override
-				public boolean accept(File pathname) 
+				public boolean accept(final File pathname)
 				{
 					return pathname.isDirectory() && pathname.getName().matches("[0-9]{4}");
 				}
 			});
 			
-			for (File dir : currentDirs)
+			for (final File dir : currentDirs)
 			{
 				if (Integer.parseInt(dir.getName()) > this.currentOutputDirForWrite)
 				{
@@ -915,26 +915,27 @@ public class MessagingStorage
 		public List<Message> getAllMessages()
 			throws IOException
 		{
-			List<Message> allMessages = new ArrayList<Message>();
+			final List<Message> allMessages = new ArrayList<>();
 			
-			File currentDirs[] = this.rootDir.listFiles(new FileFilter() 
-			{	
+			final File currentDirs[] = this.rootDir.listFiles(new FileFilter()
+			{
 				@Override
-				public boolean accept(File pathname) 
+				public boolean accept(final File pathname)
 				{
 					return pathname.isDirectory() && pathname.getName().matches("[0-9]{4}");
 				}
 			});
 			
-			for (File dir : currentDirs)
+			for (final File dir : currentDirs)
 			{
 				this.collectMessagesFromDir(dir, allMessages);
 			}
 			
 			Collections.sort(allMessages,
-				new Comparator<Message>() 
+				new Comparator<Message>()
 				{
-					public int compare(Message m1, Message m2)
+					@Override
+					public int compare(final Message m1, final Message m2)
 					{
 						return m1.getTime().compareTo(m2.getTime());
 					}
@@ -945,17 +946,17 @@ public class MessagingStorage
 		}
 		
 		
-		public void writeNewMessage(Message msg)
+		public void writeNewMessage(final Message msg)
 			throws IOException
 		{
-			File dir = this.getCurrentDirForWrite();
+			final File dir = this.getCurrentDirForWrite();
 			
 			// See how many message files currently exist (000 -> 999)
 			// TODO: This could be avoided - cache current number of files
-			File messages[] = dir.listFiles(new FileFilter() 
-			{	
+			final File messages[] = dir.listFiles(new FileFilter()
+			{
 				@Override
-				public boolean accept(File pathname) 
+				public boolean accept(final File pathname)
 				{
 					return pathname.isFile();
 				}
@@ -972,19 +973,19 @@ public class MessagingStorage
 		}
 		
 		
-		private void collectMessagesFromDir(File dir, List<Message> messages)
+		private void collectMessagesFromDir(final File dir, final List<Message> messages)
 			throws IOException
 		{
-			File messageFiles[] = dir.listFiles(new FileFilter() 
-			{	
+			final File messageFiles[] = dir.listFiles(new FileFilter()
+			{
 				@Override
-				public boolean accept(File pathname) 
+				public boolean accept(final File pathname)
 				{
 					return pathname.isFile();
 				}
 			});
 
-			for (File f : messageFiles)
+			for (final File f : messageFiles)
 			{
 				messages.add(new Message(f));
 			}
@@ -1000,7 +1001,7 @@ public class MessagingStorage
 				name = "0" + name;
 			}
 			
-			File dir = new File(this.rootDir, name);
+			final File dir = new File(this.rootDir, name);
 			
 			if (!dir.exists())
 			{
@@ -1012,10 +1013,10 @@ public class MessagingStorage
 			{
 				// Make sure there are not too many messages
 				// TODO: This could be avoided - cache current number of files
-				File messages[] = dir.listFiles(new FileFilter() 
-				{	
+				final File messages[] = dir.listFiles(new FileFilter()
+				{
 					@Override
-					public boolean accept(File pathname) 
+					public boolean accept(final File pathname)
 					{
 						return pathname.isFile();
 					}
@@ -1025,7 +1026,7 @@ public class MessagingStorage
 				{
 					this.currentOutputDirForWrite++;
 					
-					return getCurrentDirForWrite(); // Recurse 
+					return getCurrentDirForWrite(); // Recurse
 				}
 			}
 			

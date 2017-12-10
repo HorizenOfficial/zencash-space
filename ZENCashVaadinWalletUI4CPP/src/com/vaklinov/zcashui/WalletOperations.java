@@ -41,13 +41,15 @@ import javax.swing.JTabbedPane;
 
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 /**
  * Provides miscellaneous operations for the wallet file.
  * 
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class WalletOperations
+public class WalletOperations implements IConfig
 {
 	private final ZCashUI parent;
 	private final JTabbedPane tabs;
@@ -122,7 +124,7 @@ public class WalletOperations
 			} catch (final WalletCallException wce)
 			{
 				this.parent.setCursor(oldCursor);
-				Log.error("Unexpected error: ", wce);
+				log.error("Unexpected error: ", wce);
 				
 				JOptionPane.showMessageDialog(
 					this.parent,
@@ -183,7 +185,7 @@ public class WalletOperations
 			} catch (final WalletCallException wce)
 			{
 				this.parent.setCursor(oldCursor);
-				Log.error("Unexpected error: ", wce);
+				log.error("Unexpected error: ", wce);
 				
 				JOptionPane.showMessageDialog(
 					this.parent,
@@ -241,7 +243,7 @@ public class WalletOperations
 			} catch (final WalletCallException wce)
 			{
 				this.parent.setCursor(oldCursor);
-				Log.error("Unexpected error: ", wce);
+				log.error("Unexpected error: ", wce);
 				
 				JOptionPane.showMessageDialog(
 					this.parent,
@@ -312,7 +314,7 @@ public class WalletOperations
 			} catch (final WalletCallException wce)
 			{
 				this.parent.setCursor(oldCursor);
-				Log.error("Unexpected error: ", wce);
+				log.error("Unexpected error: ", wce);
 				
 				JOptionPane.showMessageDialog(
 					this.parent,

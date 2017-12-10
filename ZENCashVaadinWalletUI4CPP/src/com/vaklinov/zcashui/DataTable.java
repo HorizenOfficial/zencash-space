@@ -28,6 +28,8 @@
  **********************************************************************************/
 package com.vaklinov.zcashui;
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.awt.Component;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -50,6 +52,8 @@ import javax.swing.KeyStroke;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 
 /**
@@ -58,7 +62,7 @@ import javax.swing.table.TableCellRenderer;
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
 public class DataTable
-	extends JTable
+	extends JTable implements IConfig
 {
 	protected int lastRow = -1;
 	protected int lastColumn = -1;
@@ -112,7 +116,7 @@ public class DataTable
 					DataTable.this.exportToCSV();
 				} catch (final Exception ex)
 				{
-					Log.error("Unexpected error: ", ex);
+					log.error("Unexpected error: ", ex);
 					// TODO: better error handling
 					JOptionPane.showMessageDialog(
 							DataTable.this.getRootPane().getParent(),

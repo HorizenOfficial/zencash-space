@@ -29,6 +29,8 @@
 package com.vaklinov.zcashui;
 
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,8 @@ import javax.swing.Timer;
 
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+
 
 /**
  * Base for all panels contained as wallet TABS.
@@ -45,31 +49,31 @@ import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
 public class WalletTabPanel
-	extends JPanel
-{	
+	extends JPanel implements IConfig
+{
 	// Lists of threads and timers that may be stopped if necessary
 	protected List<Timer> timers                   = null;
-	protected List<DataGatheringThread<?>> threads = null;	
+	protected List<DataGatheringThread<?>> threads = null;
 
 
 	public WalletTabPanel()
 		throws IOException, InterruptedException, WalletCallException
-	{		
+	{
 		super();
 		
-		this.timers = new ArrayList<Timer>();
-		this.threads = new ArrayList<DataGatheringThread<?>>();
+		this.timers = new ArrayList<>();
+		this.threads = new ArrayList<>();
 	}
 
 	
 	public void stopThreadsAndTimers()
 	{
-		for (Timer t : this.timers)
+		for (final Timer t : this.timers)
 		{
 			t.stop();
 		}
 		
-		for (DataGatheringThread<?> t : this.threads)
+		for (final DataGatheringThread<?> t : this.threads)
 		{
 			t.setSuspended(true);
 		}
@@ -78,16 +82,16 @@ public class WalletTabPanel
 	
 	// Interval is in milliseconds
 	// Returns true if all threads have ended, else false
-	public boolean waitForEndOfThreads(long interval)
+	public boolean waitForEndOfThreads(final long interval)
 	{
-		synchronized (this) 
+		synchronized (this)
 		{
-			long startWait = System.currentTimeMillis();
+			final long startWait = System.currentTimeMillis();
 			long endWait = startWait;
 			do
 			{
 				boolean allEnded = true;
-				for (DataGatheringThread<?> t : this.threads)
+				for (final DataGatheringThread<?> t : this.threads)
 				{
 					if (t.isAlive())
 					{
@@ -103,10 +107,10 @@ public class WalletTabPanel
 				try
 				{
 					this.wait(100);
-				} catch (InterruptedException ie)
+				} catch (final InterruptedException ie)
 				{
 					// One of the rare cases where we do nothing
-					Log.error("Unexpected error: ", ie);
+					log.error("Unexpected error: ", ie);
 				}
 				
 				endWait = System.currentTimeMillis();

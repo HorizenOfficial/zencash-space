@@ -1,11 +1,11 @@
 /************************************************************************************************
- *  _________          _     ____          _           __        __    _ _      _   _   _ ___ 
+ *  _________          _     ____          _           __        __    _ _      _   _   _ ___
  * |__  / ___|__ _ ___| |__ / ___|_      _(_)_ __   __ \ \      / /_ _| | | ___| |_| | | |_ _|
- *   / / |   / _` / __| '_ \\___ \ \ /\ / / | '_ \ / _` \ \ /\ / / _` | | |/ _ \ __| | | || | 
- *  / /| |__| (_| \__ \ | | |___) \ V  V /| | | | | (_| |\ V  V / (_| | | |  __/ |_| |_| || | 
+ *   / / |   / _` / __| '_ \\___ \ \ /\ / / | '_ \ / _` \ \ /\ / / _` | | |/ _ \ __| | | || |
+ *  / /| |__| (_| \__ \ | | |___) \ V  V /| | | | | (_| |\ V  V / (_| | | |  __/ |_| |_| || |
  * /____\____\__,_|___/_| |_|____/ \_/\_/ |_|_| |_|\__, | \_/\_/ \__,_|_|_|\___|\__|\___/|___|
- *                                                 |___/                                      
- *                                       
+ *                                                 |___/
+ * 
  * Copyright (c) 2016 Ivan Vaklinov <ivan@vaklinov.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,11 +28,11 @@
  **********************************************************************************/
 package com.vaklinov.zcashui;
 
-
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 
 /**
- * This thread may be used to periodically and asynchronously load data if the load operation 
- * takes considerable time. The creator of the thread may obtain the latest gathered data 
+ * This thread may be used to periodically and asynchronously load data if the load operation
+ * takes considerable time. The creator of the thread may obtain the latest gathered data
  * quickly since it is stored in the thread.
  * 
  * @param <T> the type of data that is gathered.
@@ -40,10 +40,10 @@ package com.vaklinov.zcashui;
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
 public class DataGatheringThread<T>
-	extends Thread
-{	
+	extends Thread implements IConfig
+{
 	/**
-	 * All implementations must provide an impl. of this interface to 
+	 * All implementations must provide an impl. of this interface to
 	 * gather the actual data.
 	 * 
 	 * @param <T> the type of data that is gathered.
@@ -75,7 +75,7 @@ public class DataGatheringThread<T>
 	 * @param errorReporter Error reporter - may be null
 	 * @param interval Interval in ms for gathering
 	 */
-	public DataGatheringThread(DataGatherer<T> gatherer, StatusUpdateErrorReporter errorReporter, int interval)
+	public DataGatheringThread(final DataGatherer<T> gatherer, final StatusUpdateErrorReporter errorReporter, final int interval)
 	{
 		this(gatherer, errorReporter, interval, false);
 	}
@@ -87,8 +87,8 @@ public class DataGatheringThread<T>
 	 * @param errorReporter Error reporter - may be null
 	 * @param interval Interval in ms for gathering
 	 */
-	public DataGatheringThread(DataGatherer<T> gatherer, StatusUpdateErrorReporter errorReporter, 
-			                   int interval, boolean doAFirstGatehring)
+	public DataGatheringThread(final DataGatherer<T> gatherer, final StatusUpdateErrorReporter errorReporter,
+			                   final int interval, final boolean doAFirstGatehring)
 	{
 		this.suspended = false;
 		this.gatherer = gatherer;
@@ -108,7 +108,7 @@ public class DataGatheringThread<T>
 	 * 
 	 * @param suspended suspension flag.
 	 */
-	public synchronized void setSuspended(boolean suspended)
+	public synchronized void setSuspended(final boolean suspended)
 	{
 		this.suspended = suspended;
 	}
@@ -132,7 +132,7 @@ public class DataGatheringThread<T>
 	 */
 	public synchronized T getLastData()
 	{
-		return lastGatheredData;
+		return this.lastGatheredData;
 	}
 	
 	
@@ -150,19 +150,19 @@ public class DataGatheringThread<T>
 		mainLoop:
 		while (true)
 		{
-			synchronized (this) 
+			synchronized (this)
 			{
-				long startWait = System.currentTimeMillis();
+				final long startWait = System.currentTimeMillis();
 				long endWait = startWait;
 				do
 				{
 					try
 					{
 						this.wait(300);
-					} catch (InterruptedException ie)
+					} catch (final InterruptedException ie)
 					{
 						// One of the rare cases where we do nothing
-						Log.error("Unexpected error: ", ie);
+						log.error("Unexpected error: ", ie);
 					}
 					
 					endWait = System.currentTimeMillis();
@@ -178,7 +178,7 @@ public class DataGatheringThread<T>
 			}
 		}
 		
-		Log.info("Ending data gathering thread {0} ...", this.getName());
+		log.info("Ending data gathering thread " + this.getName() + " ...");
 	} // End public void run()
 	
 	
@@ -191,22 +191,22 @@ public class DataGatheringThread<T>
 		try
 		{
 			localData = this.gatherer.gatherData();
-		} catch (Exception e)
+		} catch (final Exception e)
 		{
 			if (!this.suspended)
 			{
-				Log.error("Unexpected error: ", e);
+				log.error("Unexpected error: ", e);
 				if (this.errorReporter != null)
 				{
 					this.errorReporter.reportError(e);
 				}
 			} else
 			{
-				Log.info("DataGatheringThread: ignoring " + e.getClass().getName() + " due to suspension!");
+				log.info("DataGatheringThread: ignoring " + e.getClass().getName() + " due to suspension!");
 			}
 		}
 		
-		synchronized (this) 
+		synchronized (this)
 		{
 			this.lastGatheredData = localData;
 		}

@@ -1,11 +1,11 @@
 /************************************************************************************************
- *   ____________ _   _  _____          _      _____ _    _ _______          __   _ _      _   
- *  |___  /  ____| \ | |/ ____|        | |    / ____| |  | |_   _\ \        / /  | | |    | |  
- *     / /| |__  |  \| | |     __ _ ___| |__ | |  __| |  | | | |  \ \  /\  / /_ _| | | ___| |_ 
+ *   ____________ _   _  _____          _      _____ _    _ _______          __   _ _      _
+ *  |___  /  ____| \ | |/ ____|        | |    / ____| |  | |_   _\ \        / /  | | |    | |
+ *     / /| |__  |  \| | |     __ _ ___| |__ | |  __| |  | | | |  \ \  /\  / /_ _| | | ___| |_
  *    / / |  __| | . ` | |    / _` / __| '_ \| | |_ | |  | | | |   \ \/  \/ / _` | | |/ _ \ __|
- *   / /__| |____| |\  | |___| (_| \__ \ | | | |__| | |__| |_| |_   \  /\  / (_| | | |  __/ |_ 
+ *   / /__| |____| |\  | |___| (_| \__ \ | | | |__| | |__| |_| |_   \  /\  / (_| | | |  __/ |_
  *  /_____|______|_| \_|\_____\__,_|___/_| |_|\_____|\____/|_____|   \/  \/ \__,_|_|_|\___|\__|
- *                                                                                             
+ * 
  * Copyright (c) 2017 Ivan Vaklinov <ivan@vaklinov.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,14 +28,14 @@
  **********************************************************************************/
 package com.vaklinov.zcashui.msg;
 
+import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -60,17 +60,15 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import com.vaklinov.zcashui.DataTable;
-import com.vaklinov.zcashui.Log;
-import com.vaklinov.zcashui.SingleKeyImportDialog;
 import com.vaklinov.zcashui.StatusUpdateErrorReporter;
+
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 
 
 /**
@@ -79,7 +77,7 @@ import com.vaklinov.zcashui.StatusUpdateErrorReporter;
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
 public class JContactListPanel
-	extends JPanel
+	extends JPanel implements IConfig
 {
 	private MessagingPanel   parent;
 	private MessagingStorage mesagingStorage;
@@ -89,10 +87,10 @@ public class JContactListPanel
 	
 	private JPopupMenu popupMenu;
 	
-	public JContactListPanel(MessagingPanel parent, 
-			                 JFrame parentFrame,
-			                 MessagingStorage messagingStorage, 
-			                 StatusUpdateErrorReporter errorReporter)
+	public JContactListPanel(final MessagingPanel parent,
+			                 final JFrame parentFrame,
+			                 final MessagingStorage messagingStorage,
+			                 final StatusUpdateErrorReporter errorReporter)
 		throws IOException
 	{
 		super();
@@ -104,26 +102,26 @@ public class JContactListPanel
 		
 		this.setLayout(new BorderLayout(0, 0));
 		
-		list = new ContactList();
-		list.setIdentities(this.mesagingStorage.getContactIdentities(true));
-		this.add(new JScrollPane(list), BorderLayout.CENTER);
+		this.list = new ContactList();
+		this.list.setIdentities(this.mesagingStorage.getContactIdentities(true));
+		this.add(new JScrollPane(this.list), BorderLayout.CENTER);
 		
-		JPanel upperPanel = new JPanel(new BorderLayout(0, 0));
+		final JPanel upperPanel = new JPanel(new BorderLayout(0, 0));
 		upperPanel.add(new JLabel(
 			"<html><span style=\"font-size:1.2em;font-style:italic;\">Contact list: &nbsp;</span></html>"),
 			BorderLayout.WEST);
-		URL addIconUrl = this.getClass().getClassLoader().getResource("images/add12.png");
-        ImageIcon addIcon = new ImageIcon(addIconUrl);
-        URL removeIconUrl = this.getClass().getClassLoader().getResource("images/remove12.png");
-        ImageIcon removeIcon = new ImageIcon(removeIconUrl);
-        JButton addButton = new JButton(addIcon);
+		final URL addIconUrl = this.getClass().getClassLoader().getResource("images/add12.png");
+        final ImageIcon addIcon = new ImageIcon(addIconUrl);
+        final URL removeIconUrl = this.getClass().getClassLoader().getResource("images/remove12.png");
+        final ImageIcon removeIcon = new ImageIcon(removeIconUrl);
+        final JButton addButton = new JButton(addIcon);
         addButton.setToolTipText("Add contact...");
-        JButton removeButton = new JButton(removeIcon);
+        final JButton removeButton = new JButton(removeIcon);
         removeButton.setToolTipText("Remove contact...");
-        JButton addGroupButton = new JButton(
+        final JButton addGroupButton = new JButton(
         	"<html><span style=\"font-size:0.7em;\">Group</span></html>", addIcon);
         addGroupButton.setToolTipText("Add group...");
-        JPanel tempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
+        final JPanel tempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         tempPanel.add(removeButton);
         tempPanel.add(addButton);
         tempPanel.add(addGroupButton);
@@ -136,20 +134,20 @@ public class JContactListPanel
 		this.add(upperPanel, BorderLayout.NORTH);
 		
 		// Add a listener for adding a contact
-		addButton.addActionListener(new ActionListener() 
-		{	
+		addButton.addActionListener(new ActionListener()
+		{
 			@Override
-			public void actionPerformed(ActionEvent e) 
+			public void actionPerformed(final ActionEvent e)
 			{
 				JContactListPanel.this.parent.importContactIdentity();
 			}
 		});
 		
 		// Add a listener for adding a group
-		addGroupButton.addActionListener(new ActionListener() 
-		{	
+		addGroupButton.addActionListener(new ActionListener()
+		{
 			@Override
-			public void actionPerformed(ActionEvent e) 
+			public void actionPerformed(final ActionEvent e)
 			{
 				JContactListPanel.this.parent.addMessagingGroup();
 			}
@@ -157,20 +155,20 @@ public class JContactListPanel
 
 		
 		// Add a listener for removing a contact
-		removeButton.addActionListener(new ActionListener() 
-		{	
+		removeButton.addActionListener(new ActionListener()
+		{
 			@Override
-			public void actionPerformed(ActionEvent e) 
+			public void actionPerformed(final ActionEvent e)
 			{
 				JContactListPanel.this.parent.removeSelectedContact();
 			}
 		});
 		
 		// Take care of updating the messages on selection
-		list.addListSelectionListener(new ListSelectionListener() 
-		{	
+		this.list.addListSelectionListener(new ListSelectionListener()
+		{
 			@Override
-			public void valueChanged(ListSelectionEvent e) 
+			public void valueChanged(final ListSelectionEvent e)
 			{
 				try
 				{
@@ -179,14 +177,14 @@ public class JContactListPanel
 						return; // Change is not final
 					}
 					
-					MessagingIdentity id = JContactListPanel.this.list.getSelectedValue();
+					final MessagingIdentity id = JContactListPanel.this.list.getSelectedValue();
 					
 					if (id == null)
 					{
 						return; // Nothing selected
 					}
 					
-					Cursor oldCursor = JContactListPanel.this.parentFrame.getCursor();
+					final Cursor oldCursor = JContactListPanel.this.parentFrame.getCursor();
 					try
 					{
 						JContactListPanel.this.parentFrame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -195,31 +193,33 @@ public class JContactListPanel
 					{
 						JContactListPanel.this.parentFrame.setCursor(oldCursor);
 					}
-				} catch (IOException ioe)
+				} catch (final IOException ioe)
 				{
-					Log.error("Unexpected error: ", ioe);
+					log.error("Unexpected error: ", ioe);
 					JContactListPanel.this.errorReporter.reportError(ioe, false);
 				}
 			}
 		});
 		
 		// Mouse listener is used to show the popup menu
-		list.addMouseListener(new MouseAdapter()
+		this.list.addMouseListener(new MouseAdapter()
         {
-        	public void mousePressed(MouseEvent e)
+        	@Override
+			public void mousePressed(final MouseEvent e)
         	{
                 if ((!e.isConsumed()) && e.isPopupTrigger())
                 {
-                    ContactList list = (ContactList)e.getSource();
+                    final ContactList list = (ContactList)e.getSource();
                     if (list.getSelectedValue() != null)
                     {
-                    	popupMenu.show(e.getComponent(), e.getPoint().x, e.getPoint().y);
+                    	JContactListPanel.this.popupMenu.show(e.getComponent(), e.getPoint().x, e.getPoint().y);
                     	e.consume();
                     }
                 }
         	}
         	
-            public void mouseReleased(MouseEvent e)
+            @Override
+			public void mouseReleased(final MouseEvent e)
             {
             	if ((!e.isConsumed()) && e.isPopupTrigger())
             	{
@@ -231,45 +231,45 @@ public class JContactListPanel
 		
 		// Actions of the popup menu
 		this.popupMenu = new JPopupMenu();
-		int accelaratorKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+		final int accelaratorKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 		
-		JMenuItem showDetails = new JMenuItem("Show details...");
-        popupMenu.add(showDetails);
+		final JMenuItem showDetails = new JMenuItem("Show details...");
+        this.popupMenu.add(showDetails);
         showDetails.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, accelaratorKeyMask));
-        showDetails.addActionListener(new ActionListener() 
-        {	
+        showDetails.addActionListener(new ActionListener()
+        {
 			@Override
-			public void actionPerformed(ActionEvent e) 
+			public void actionPerformed(final ActionEvent e)
 			{
 				// Show a messaging identity dialog
-				if (list.getSelectedValue() != null)
+				if (JContactListPanel.this.list.getSelectedValue() != null)
 				{
-					IdentityInfoDialog iid = new IdentityInfoDialog(
-						JContactListPanel.this.parentFrame, list.getSelectedValue());
+					final IdentityInfoDialog iid = new IdentityInfoDialog(
+						JContactListPanel.this.parentFrame, JContactListPanel.this.list.getSelectedValue());
 					iid.setVisible(true);
 				}
 			}
 		});
         
-		JMenuItem removeContact = new JMenuItem("Remove...");
-        popupMenu.add(removeContact);
+		final JMenuItem removeContact = new JMenuItem("Remove...");
+        this.popupMenu.add(removeContact);
         removeContact.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, accelaratorKeyMask));
-        removeContact.addActionListener(new ActionListener() 
-        {	
+        removeContact.addActionListener(new ActionListener()
+        {
 			@Override
-			public void actionPerformed(ActionEvent e) 
+			public void actionPerformed(final ActionEvent e)
 			{
 				JContactListPanel.this.parent.removeSelectedContact();
 			}
 		});
 
-		JMenuItem sendContactDetails = new JMenuItem("Send contact details...");
-        popupMenu.add(sendContactDetails);
+		final JMenuItem sendContactDetails = new JMenuItem("Send contact details...");
+        this.popupMenu.add(sendContactDetails);
         sendContactDetails.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, accelaratorKeyMask));
-        sendContactDetails.addActionListener(new ActionListener() 
-        {	
+        sendContactDetails.addActionListener(new ActionListener()
+        {
 			@Override
-			public void actionPerformed(ActionEvent e) 
+			public void actionPerformed(final ActionEvent e)
 			{
 				JContactListPanel.this.sendContactDetailsToSelectedContact();
 			}
@@ -281,7 +281,7 @@ public class JContactListPanel
 	{
 		try
 		{
-			MessagingIdentity id = this.list.getSelectedValue();
+			final MessagingIdentity id = this.list.getSelectedValue();
 			
 			if (id == null)
 			{
@@ -289,21 +289,21 @@ public class JContactListPanel
 			        this.parentFrame,
 			        "No messaging contact is selected in the contact list (on the right side of the UI).\n" +
 			        "In order to send contact details you need to select a contact first!",
-				    "No messaging contact is selected...", JOptionPane.ERROR_MESSAGE);					
+				    "No messaging contact is selected...", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
 			
 			if (id.isAnonymous())
 			{
-		        int reply = JOptionPane.showConfirmDialog(
-			        this.parentFrame, 
+		        final int reply = JOptionPane.showConfirmDialog(
+			        this.parentFrame,
 			        "The contact: " + id.getDiplayString() + "\n" +
 			        "is anonymous. Sending your contact details to him will reveal your messaging\n" +
-			        "identity! Are you sure you want to send your contact details to him?", 
-			        "Are you sure you want to send your contact details", 
+			        "identity! Are you sure you want to send your contact details to him?",
+			        "Are you sure you want to send your contact details",
 			        JOptionPane.YES_NO_OPTION);
 			        
-			    if (reply == JOptionPane.NO_OPTION) 
+			    if (reply == JOptionPane.NO_OPTION)
 			    {
 			      	return;
 			    }
@@ -311,9 +311,9 @@ public class JContactListPanel
 			
 			this.parent.sendIdentityMessageTo(id);
 			
-		} catch (Exception ioe)
+		} catch (final Exception ioe)
 		{
-			Log.error("Unexpected error: ", ioe);
+			log.error("Unexpected error: ", ioe);
 			JContactListPanel.this.errorReporter.reportError(ioe, false);
 		}
 	}
@@ -322,14 +322,14 @@ public class JContactListPanel
 	public void reloadMessagingIdentities()
 		throws IOException
 	{
-		list.setIdentities(this.mesagingStorage.getContactIdentities(true));
-		list.revalidate();
+		this.list.setIdentities(this.mesagingStorage.getContactIdentities(true));
+		this.list.revalidate();
 	}
 	
 	
 	public int getNumberOfContacts()
 	{
-		return list.getModel().getSize();
+		return this.list.getModel().getSize();
 	}
 	
 	
@@ -353,33 +353,33 @@ public class JContactListPanel
 			
 			this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			
-	        URL iconUrl = this.getClass().getClassLoader().getResource("images/contact-black.png");
-	        contactBlackIcon = new ImageIcon(iconUrl);
-	        URL groupIconUrl = this.getClass().getClassLoader().getResource("images/contact-group-black.png");
-	        contactGroupBlackIcon = new ImageIcon(groupIconUrl);
+	        final URL iconUrl = this.getClass().getClassLoader().getResource("images/contact-black.png");
+	        this.contactBlackIcon = new ImageIcon(iconUrl);
+	        final URL groupIconUrl = this.getClass().getClassLoader().getResource("images/contact-group-black.png");
+	        this.contactGroupBlackIcon = new ImageIcon(groupIconUrl);
 	        
-	        renderer = new JLabel();
-	        renderer.setOpaque(true);
+	        this.renderer = new JLabel();
+	        this.renderer.setOpaque(true);
 		}
 		
 		
-		public void setIdentities(List<MessagingIdentity> identities)
+		public void setIdentities(final List<MessagingIdentity> identities)
 		{
-			List<MessagingIdentity> localIdentities = new ArrayList<MessagingIdentity>();
+			final List<MessagingIdentity> localIdentities = new ArrayList<>();
 			localIdentities.addAll(identities);
 			
 			Collections.sort(
 				localIdentities,
-				new Comparator<MessagingIdentity>() 
-				{ 
+				new Comparator<MessagingIdentity>()
+				{
 					@Override
-					public int compare(MessagingIdentity o1, MessagingIdentity o2) 
+					public int compare(final MessagingIdentity o1, final MessagingIdentity o2)
 					{
 						if (o1.isGroup() != o2.isGroup())
 						{
 							return o1.isGroup() ? -1 : +1;
 						} else
-						{						
+						{
 							return o1.getDiplayString().toUpperCase().compareTo(
 								   o2.getDiplayString().toUpperCase());
 						}
@@ -387,8 +387,8 @@ public class JContactListPanel
 				}
 			);
 			
-			DefaultListModel<MessagingIdentity> newModel = new DefaultListModel<MessagingIdentity>();
-			for (MessagingIdentity id : localIdentities)
+			final DefaultListModel<MessagingIdentity> newModel = new DefaultListModel<>();
+			for (final MessagingIdentity id : localIdentities)
 			{
 				newModel.addElement(id);
 			}
@@ -398,33 +398,33 @@ public class JContactListPanel
 		
 		
 		@Override
-		public ListCellRenderer<MessagingIdentity> getCellRenderer() 
+		public ListCellRenderer<MessagingIdentity> getCellRenderer()
 		{
-			return new ListCellRenderer<MessagingIdentity>() 
+			return new ListCellRenderer<MessagingIdentity>()
 			{
 				@Override
-				public Component getListCellRendererComponent(JList<? extends MessagingIdentity> list,
-						MessagingIdentity id, int index, boolean isSelected, boolean cellHasFocus) 
-				{					
-					renderer.setText(id.getDiplayString());
+				public Component getListCellRendererComponent(final JList<? extends MessagingIdentity> list,
+						final MessagingIdentity id, final int index, final boolean isSelected, final boolean cellHasFocus)
+				{
+					ContactList.this.renderer.setText(id.getDiplayString());
 					if (!id.isGroup())
 					{
-						renderer.setIcon(contactBlackIcon);
+						ContactList.this.renderer.setIcon(ContactList.this.contactBlackIcon);
 					} else
 					{
-						renderer.setIcon(contactGroupBlackIcon);
+						ContactList.this.renderer.setIcon(ContactList.this.contactGroupBlackIcon);
 					}
 					
-					if (isSelected) 
+					if (isSelected)
 					{
-						renderer.setBackground(list.getSelectionBackground());
-					} else 
+						ContactList.this.renderer.setBackground(list.getSelectionBackground());
+					} else
 					{
 						// TODO: list background issues on Linux - if used directly
-						renderer.setBackground(new Color(list.getBackground().getRGB()));  
+						ContactList.this.renderer.setBackground(new Color(list.getBackground().getRGB()));
 					}
 					
-					return renderer;
+					return ContactList.this.renderer;
 				}
 			};
 		}
