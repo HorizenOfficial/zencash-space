@@ -38,7 +38,7 @@ public class ProvingKeyFetcher {
         try {
             verifyOrFetch(/*parent*/);
         } catch (final InterruptedIOException iox) {
-        	Notification.show("The ZENCash wallet cannot proceed without a proving key.", Type.HUMANIZED_MESSAGE);
+        	Notification.show("The ZENCash wallet cannot proceed without a proving key.", Type.ERROR_MESSAGE);
 //            System.exit(-3);
         }
     }
@@ -127,7 +127,7 @@ public class ProvingKeyFetcher {
 //        parent.setProgressText("Verifying downloaded proving key...");
         if (!checkSHA256(provingKeyFile/*, parent*/))
         {
-        	Notification.show("Failed to download proving key properly. Cannot continue!", Type.HUMANIZED_MESSAGE);
+        	Notification.show("Failed to download proving key properly. Cannot continue!", Type.ERROR_MESSAGE);
 //            System.exit(-4);
         }
     }

@@ -752,8 +752,7 @@ public class MainView extends XdevView implements IWallet {
 				errMessage = ((WalletCallException)ex).getMessage().replace(",", ",\n");
 			}
 			
-			//"Error in sending cash"
-			Notification.show("An unexpected error occurred when sending cash!\n" +
+			Notification.show("Error in sending cash", "An unexpected error occurred when sending cash!\n" +
 					"Please ensure that the ZENCash daemon is running and\n" +
 					"parameters are correct. You may try again later...\n" +
 					errMessage, Type.ERROR_MESSAGE);
@@ -767,16 +766,14 @@ public class MainView extends XdevView implements IWallet {
 		{
 			if (this.comboBoxBalanceAddress.size() <= 0)
 			{
-				//"No funds available"
-				Notification.show("There are no addresses with a positive balance to send\n" +
+				Notification.show("No funds available", "There are no addresses with a positive balance to send\n" +
 						"cash from!", Type.ERROR_MESSAGE);
 				return;
 			}
 			
 			if (this.comboBoxBalanceAddress.getValue() == null)
 			{
-				//"Please select source address"
-				Notification.show("Please select a source address with a current positive\n" +
+				Notification.show("Please select source address", "Please select a source address with a current positive\n" +
 						"balance to send cash from!", Type.ERROR_MESSAGE);
 				return;
 			}
@@ -851,7 +848,7 @@ public class MainView extends XdevView implements IWallet {
 
 			if (errorMessage != null)
 			{
-				Notification.show("Sending parameters are incorrect" + errorMessage, Type.ERROR_MESSAGE);
+				Notification.show("Sending parameters are incorrect", errorMessage, Type.ERROR_MESSAGE);
 				return;
 			}
 			
@@ -924,8 +921,7 @@ public class MainView extends XdevView implements IWallet {
 											.isCompletedOperationSuccessful(MainView.this.operationStatusID)) {
 										MainView.this.labelOperationStatus.setValue(
 												"<html><span style=\"color:green;font-weight:bold\">SUCCESSFUL</span></html>");
-										// "Cash sent successfully"
-										Notification.show("Succesfully sent " + amountFinal + " ZEN from address: \n" + sourceAddress
+										Notification.show("Cash sent successfully", "Succesfully sent " + amountFinal + " ZEN from address: \n" + sourceAddress
 												+ "\n" + "to address: \n" + destinationAddress, Type.HUMANIZED_MESSAGE);
 									} else {
 										final String errorMessage2 = MainView.this.servlet.clientCaller
@@ -934,12 +930,11 @@ public class MainView extends XdevView implements IWallet {
 												.setValue("<html><span style=\"color:red;font-weight:bold\">ERROR: "
 														+ errorMessage2 + "</span></html>");
 
-										// "Error in sending cash"
-										Notification.show(
+										Notification.show("Error in sending cash",
 												"An error occurred when sending cash. Error message is:\n" + errorMessage2
 														+ "\n\n"
 														+ "Please ensure that sending parameters are correct. You may try again later...\n",
-												Type.HUMANIZED_MESSAGE);
+												Type.ERROR_MESSAGE);
 									}
 
 									// Lock the wallet again

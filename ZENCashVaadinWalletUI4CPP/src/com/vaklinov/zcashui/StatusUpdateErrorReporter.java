@@ -71,14 +71,6 @@ public class StatusUpdateErrorReporter implements IConfig
 			this.lastReportedErrroTime = time;
 		}
 		
-		Notification.show("An unexpected error occurred when updating the wallet state." + "\n" + e.getMessage(), Type.HUMANIZED_MESSAGE);
-		
-//		JOptionPane.showMessageDialog(
-//			parent,
-//			"An unexpected error occurred when updating the GUI wallet\n" +
-//			"state. Please ensure that the ZENCash daemon is running. \n" +
-//			"\n" +
-//			e.getMessage(),
-//			"Error in updating status.", JOptionPane.ERROR_MESSAGE);
+		Notification.show("Error in updating status.", "An unexpected error occurred when updating the wallet state." + "\n" + e.getMessage(), Type.ERROR_MESSAGE);
 	}
 }
