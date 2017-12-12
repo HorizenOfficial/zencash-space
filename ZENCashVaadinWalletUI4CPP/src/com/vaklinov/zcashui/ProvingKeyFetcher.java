@@ -18,16 +18,16 @@ import java.security.NoSuchAlgorithmException;
 //import javax.swing.ProgressMonitorInputStream;
 import javax.xml.bind.DatatypeConverter;
 
-import com.vaadin.ui.Notification;
-import com.vaadin.ui.Notification.Type;
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
+
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 
 
 /**
  * Fetches the proving key.  Deliberately hardcoded.
  * @author zab
  */
-public class ProvingKeyFetcher {
+public class ProvingKeyFetcher implements IConfig {
     
     private static final int PROVING_KEY_SIZE = 910173851;
     private static final String SHA256 = "8bc20a7f013b2b58970cddd2e7ea028975c88ae7ceb9259a5344a16bc2c0eef7";
@@ -38,7 +38,9 @@ public class ProvingKeyFetcher {
         try {
             verifyOrFetch(/*parent*/);
         } catch (final InterruptedIOException iox) {
-        	Notification.show("The ZENCash wallet cannot proceed without a proving key.", Type.ERROR_MESSAGE);
+        	log.error("The ZENCash wallet cannot proceed without a proving key.", iox);
+//        	Notification.show("The ZENCash wallet cannot proceed without a proving key.", Type.ERROR_MESSAGE);
+        	throw iox;
 //            System.exit(-3);
         }
     }
@@ -99,8 +101,10 @@ public class ProvingKeyFetcher {
             return;
         }
         
-    	Notification.show("The wallet needs to download the Z cryptographic proving key (approx. 900 MB).\n" +
-            	"This will be done only once. Please be patient... Press OK to continue", Type.HUMANIZED_MESSAGE);
+        log.info("The wallet needs to download the Z cryptographic proving key (approx. 900 MB)." +
+            	"This will be done only once. Please be patient... Press OK to continue");
+//    	Notification.show("The wallet needs to download the Z cryptographic proving key (approx. 900 MB).\n" +
+//            	"This will be done only once. Please be patient... Press OK to continue", Type.HUMANIZED_MESSAGE);
 
 //        parent.setProgressText("Downloading proving key...");
         provingKeyFile.delete();
@@ -125,11 +129,15 @@ public class ProvingKeyFetcher {
 //			} } catch (final IOException ignore){}
 //        }
 //        parent.setProgressText("Verifying downloaded proving key...");
-        if (!checkSHA256(provingKeyFile/*, parent*/))
-        {
-        	Notification.show("Failed to download proving key properly. Cannot continue!", Type.ERROR_MESSAGE);
-//            System.exit(-4);
-        }
+        
+//        TODO LS check provingKey
+//        if (!checkSHA256(provingKeyFile/*, parent*/))
+//        {
+//        	throw new IOException("Failed to download proving key properly. Cannot continue!");
+////        	Notification.show("Failed to download proving key properly. Cannot continue!", Type.ERROR_MESSAGE);
+////            System.exit(-4);
+//        }
+        
     }
             
 

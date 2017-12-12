@@ -54,14 +54,14 @@ public class MainView extends XdevView implements IWallet {
 	private final NumberFormat usNumberFormat = java.text.NumberFormat.getNumberInstance(Locale.US);
 
 
-	private final DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
+	private DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
 	
-	private final Boolean walletIsEncrypted   = null;
+	private Boolean walletIsEncrypted   = null;
 
 	private final String OSInfo              = null;
 
 	private String[][] lastTransactionsData = null;
-	private final DataGatheringThread<String[][]> transactionGatheringThread = null;
+	private DataGatheringThread<String[][]> transactionGatheringThread = null;
 	
 	public MainView() {
 		super();
@@ -72,7 +72,7 @@ public class MainView extends XdevView implements IWallet {
 		this.usNumberFormat.setMaximumFractionDigits(10);
 
 		try {
-/*			// Thread and timer to update the wallet balance
+			// Thread and timer to update the wallet balance
 			this.walletBalanceGatheringThread = new DataGatheringThread<>(
 				new DataGatheringThread.DataGatherer<WalletBalance>()
 				{
@@ -96,28 +96,21 @@ public class MainView extends XdevView implements IWallet {
 						return balance;
 					}
 				},
-				this.servlet.errorReporter, 8000, true);
+				8000, true);
 			threads.add(this.walletBalanceGatheringThread);
-
-			//TODO LS
-//			final ActionListener alWalletBalance = new ActionListener() {
-//				@Override
-//				public void actionPerformed(final ActionEvent e)
-//				{
-//					try
-//					{
-						MainView.this.updateWalletStatusLabel();
-//					} catch (final Exception ex)
-//					{
-//						log.error("Unexpected error: ", ex);
-//						servlet.errorReporter.reportError(ex);
-//					}
-//				}
-//			};
-//			final Timer walletBalanceTimer =  new Timer(2000, alWalletBalance);
-//			walletBalanceTimer.setInitialDelay(1000);
-//			walletBalanceTimer.start();
-//			timers.add(walletBalanceTimer);
+			
+//			getUI().access(() -> {});
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new RunnableAccessWrapper(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						updateWalletStatusLabel();
+					} catch (final Exception e) {
+						log.error("Unexpected error: ", e);
+					}
+				}
+			}), 1000, 2000 , TimeUnit.MILLISECONDS);
+//			this.timers.add(walletBalanceTimer); TODO LS
 
 			// Thread and timer to update the transactions table
 			this.transactionGatheringThread = new DataGatheringThread<>(
@@ -135,27 +128,20 @@ public class MainView extends XdevView implements IWallet {
 						return data;
 					}
 				},
-				this.servlet.errorReporter, 20000);
+				20000);
 			threads.add(this.transactionGatheringThread);
-*/
-			//TODO LS
-//			final ActionListener alTransactions = new ActionListener() {
-//				@Override
-//				public void actionPerformed(final ActionEvent e)
-//				{
-//					try
-//					{
-						MainView.this.updateWalletTransactionsTable();
-//					} catch (final Exception ex)
-//					{
-//						log.error("Unexpected error: ", ex);
-//						servlet.errorReporter.reportError(ex);
-//					}
-//				}
-//			};
-//			final Timer t = new Timer(5000, alTransactions);
-//			t.start();
-//			timers.add(t);
+
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new RunnableAccessWrapper(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						updateWalletTransactionsTable();
+					} catch (final Exception e) {
+						log.error("Unexpected error: ", e);
+					}
+				}
+			}), 0, 5000, TimeUnit.MILLISECONDS);
+//			timers.add(t); TODO LS
 
 						
 			//AddressesPanel
@@ -166,6 +152,9 @@ public class MainView extends XdevView implements IWallet {
 						updateWalletAddressBalanceTableInteractive();
 						
 			//SendCashPanel
+						
+						//TODO LS
+						this.textFieldTransactionFee.setValue(this.defaultNumberFormat.format(Double.valueOf(0.0001)));
 						
 						// Update the balances via timer and data gathering thread
 						this.addressBalanceGatheringThread = new DataGatheringThread<>(
@@ -918,7 +907,7 @@ public class MainView extends XdevView implements IWallet {
 									if (MainView.this.servlet.clientCaller
 											.isCompletedOperationSuccessful(MainView.this.operationStatusID)) {
 										MainView.this.labelOperationStatus.setValue(
-												"<html><span style=\"color:green;font-weight:bold\">SUCCESSFUL</span></html>");
+												"<span style=\"color:green;font-weight:bold\">SUCCESSFUL</span>");
 										Notification.show("Cash sent successfully", "Succesfully sent " + amountFinal + " ZEN from address: \n" + sourceAddress
 												+ "\n" + "to address: \n" + destinationAddress, Type.HUMANIZED_MESSAGE);
 									} else {
@@ -1216,12 +1205,12 @@ public class MainView extends XdevView implements IWallet {
 		this.textFieldTransactionFee.setCaption("Transaction fee:");
 		this.textFieldTransactionFee.setStyleName("align-right");
 		this.textFieldTransactionFee.setRequired(true);
-		this.textFieldTransactionFee.setValue("0.0001");
 		this.label4.setValue("ZEN");
 		this.buttonSend.setCaption("Send");
 		this.prohgressBarOperationStatus.setCaption("Progress:");
 		this.labelOperationStatus.setCaption("Last operation status: ");
 		this.labelOperationStatus.setValue("N/A");
+		this.labelOperationStatus.setContentMode(ContentMode.HTML);
 		this.label5.setStyleName("tiny");
 		this.label5.setValue(
 				" * When sending cash from a T (Transparent) address, the remining unspent balance is sent to another auto-generated T address.<br>When sending from a Z (Private) address, the remining unspent balance remains with the Z address. In both cases the original sending <br>address cannot be used for sending again until the transaction is confirmed. The address is temporarily removed from the list! <br>Freshly mined coins may only be sent to a Z (Private) address.");
@@ -1320,7 +1309,7 @@ public class MainView extends XdevView implements IWallet {
 		this.tabSheet.addTab(this.tabAddressBook, "Address book", null);
 		this.tabMessaging.setSizeFull();
 		this.tabSheet.addTab(this.tabMessaging, "Messaging", null);
-		this.tabSheet.setSelectedTab(this.tabSendCash);
+		this.tabSheet.setSelectedTab(this.tabOverview);
 		this.gridLayout.setColumns(1);
 		this.gridLayout.setRows(2);
 		this.menuBar.setWidth(100, Unit.PERCENTAGE);
