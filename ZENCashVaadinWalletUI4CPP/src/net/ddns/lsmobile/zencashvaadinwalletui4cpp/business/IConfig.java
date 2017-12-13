@@ -28,5 +28,8 @@ public interface IConfig {
 	
 	// Format double numbers - else sometimes we get exponential notation 1E-4 ZEN
 	//TODO LS
-	public final static DecimalFormat decimalFormat = new DecimalFormat("########0.00######");
+	public final static String DECIMAL_FORMAT = "########0.00######";
+	public final static DecimalFormat decimalFormat = new DecimalFormat(DECIMAL_FORMAT);
+	
+	public final static int MAXIMUM_FRACTION_DIGITS = 8;
 }

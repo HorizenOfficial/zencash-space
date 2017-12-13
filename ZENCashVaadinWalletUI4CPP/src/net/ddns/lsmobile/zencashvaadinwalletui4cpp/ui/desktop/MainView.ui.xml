@@ -29,7 +29,9 @@
                 <XdevMenuItem enabled="false" x:name="menuItemEncrypt" text="Encrypt..." />
                 <XdevMenuItem x:name="menuItemExportPrivateKeys" text="Export private keys..." />
                 <XdevMenuItem x:name="menuItemImportPrivateKeys" text="Import private keys..." />
-                <XdevMenuItem x:name="menuItemShowPrivateKey" text="Show private key..." />
+                <XdevMenuItem x:name="menuItemShowPrivateKey" text="Show private key...">
+                    <x:event>menuSelected.menuSelected</x:event>
+                </XdevMenuItem>
                 <XdevMenuItem x:name="menuItemImportOnePrivateKey" text="Import one private key..." />
             </XdevMenuItem>
             <XdevMenuItem x:name="menuItemMessaging" text="Messaging">

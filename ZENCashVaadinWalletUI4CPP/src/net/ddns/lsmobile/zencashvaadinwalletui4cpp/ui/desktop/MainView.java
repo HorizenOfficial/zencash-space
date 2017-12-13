@@ -14,12 +14,14 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.vaadin.jsclipboard.ClipboardButton;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.Grid;
+import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.renderers.HtmlRenderer;
@@ -68,8 +70,8 @@ public class MainView extends XdevView implements IWallet {
 		this.initUI();
 		
 		this.servlet = (Servlet) Servlet.getCurrent();
-		this.defaultNumberFormat.setMaximumFractionDigits(10);
-		this.usNumberFormat.setMaximumFractionDigits(10);
+		this.defaultNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
+		this.usNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
 
 		try {
 			// Thread and timer to update the wallet balance
@@ -497,20 +499,23 @@ public class MainView extends XdevView implements IWallet {
 	
 	private long lastInteractiveRefresh;
 	
-	// Null if not selected
-	public String getSelectedAddress()
-	{
-		final String address = null;
-		
-		final Object selectedRow = this.addressBalanceTable.getSelectedRow();
-		
-		if (selectedRow != null)
-		{
-//			address = this.addressBalanceTable.getModel().getValueAt(selectedRow, 2).toString();
-		}
-		
-		return address;
-	}
+	protected String selectedAddress = null;
+	
+//	// Null if not selected
+//	public String getSelectedAddress()
+//	{
+//		String address = null;
+//
+//		final String[] selectedRow = (String[]) this.addressBalanceTable.get;
+//
+//		if (selectedRow != null)
+//		{
+//			address = selectedRow[2];
+////			address = this.addressBalanceTable.getModel().getValueAt(selectedRow, 2).toString();
+//		}
+//
+//		return address;
+//	}
 
 	
 	private void createNewAddress(final boolean isZAddress)
@@ -595,29 +600,34 @@ public class MainView extends XdevView implements IWallet {
 	private Grid createAddressBalanceTable(final String rowData[][])
 		throws WalletCallException, IOException, InterruptedException
 	{
-		final Grid gridAddresses = new Grid(/*"Addresses:"*/);
+		this.addressBalanceTable = new Grid(/*"Addresses:"*/);
 //		final HeaderRow headerWallets = gridTransactions.prependHeaderRow();
 
 		// Formats
 //		final DecimalFormat formatUsd = new DecimalFormat(UsdToHtmlConverter.FORMAT_USD);
 
 		// Columns
-		gridAddresses.addColumn(ADDRESSES_COLUMN_BALANCE, String.class/*Double.class*/).setRenderer(new HtmlRenderer()/*NumberRenderer(formatUsd), new UsdToHtmlConverter()*/)/*.setHeaderCaption("")*/;
-		gridAddresses.addColumn(ADDRESSES_COLUMN_CONFIRMED, String.class).setRenderer(new HtmlRenderer());
-		gridAddresses.addColumn(ADDRESSES_COLUMN_ADDRESS, String.class).setRenderer(new HtmlRenderer()).setSortable(false)/*.setWidth(0)*/;
+		this.addressBalanceTable.addColumn(ADDRESSES_COLUMN_BALANCE, String.class/*Double.class*/).setRenderer(new HtmlRenderer()/*NumberRenderer(formatUsd), new UsdToHtmlConverter()*/)/*.setHeaderCaption("")*/;
+		this.addressBalanceTable.addColumn(ADDRESSES_COLUMN_CONFIRMED, String.class).setRenderer(new HtmlRenderer());
+		this.addressBalanceTable.addColumn(ADDRESSES_COLUMN_ADDRESS, String.class).setRenderer(new HtmlRenderer()).setSortable(false)/*.setWidth(0)*/;
 		
 //		gridTransactions.setFrozenColumnCount(2);
 
 		// Rows (Values)
 		for (final String[] row : rowData) {
-				gridAddresses.addRow(row);
+			this.addressBalanceTable.addRow(row);
 		}
 
 //		gridBalance.sort(Sort.by(COLUMN_SECURITY_DEGREE, SortDirection.ASCENDING)
-//		          .then(COLUMN_SUM, SortDirection.DESCENDING));;
+//		          .then(COLUMN_SUM, SortDirection.DESCENDING));
 
-		gridAddresses.setSizeFull();
-		this.panelGridOwnAddresses.setContent(gridAddresses);
+		this.addressBalanceTable.addSelectionListener((selectionEvent) -> {
+			this.selectedAddress = (String) ((Grid)selectionEvent.getSource()).getContainerDataSource()
+					.getItem(selectionEvent.getSelected().iterator().next()).getItemProperty(ADDRESSES_COLUMN_ADDRESS).getValue();
+		});
+		
+		this.addressBalanceTable.setSizeFull();
+		this.panelGridOwnAddresses.setContent(this.addressBalanceTable);
 
 		
 //		final String columnNames[] = { "Balance", "Confirmed?", "Address" };
@@ -627,7 +637,7 @@ public class MainView extends XdevView implements IWallet {
 //        table.getColumnModel().getColumn(1).setPreferredWidth(140);
 //        table.getColumnModel().getColumn(2).setPreferredWidth(1000);
 
-        return gridAddresses;
+        return this.addressBalanceTable;
 	}
 
 
@@ -1139,6 +1149,101 @@ public class MainView extends XdevView implements IWallet {
 		createNewAddress (true);
 	}
 
+	/**
+	 * Event handler delegate method for the {@link XdevMenuBar.XdevMenuItem}
+	 * {@link #menuItemShowPrivateKey}.
+	 *
+	 * @see MenuBar.Command#menuSelected(MenuBar.MenuItem)
+	 * @eventHandlerDelegate Do NOT delete, used by UI designer!
+	 */
+	private void menuItemShowPrivateKey_menuSelected(final MenuBar.MenuItem selectedItem) {
+		showPrivateKey();
+	}
+	
+	public void showPrivateKey()
+	{
+		/*TODO LS select tab
+		if (this.tabs.getSelectedIndex() != 1)
+		{
+			Notification.show("Please select an address...", "Please select an address in the \"Own addresses\" tab " +
+					"to view its private key", Type.HUMANIZED_MESSAGE);
+			this.tabs.setSelectedIndex(1);
+			return;
+		}
+		*/
+		
+		if (this.selectedAddress == null)
+		{
+			Notification.show("Please select an address...", "Please select an address in the table of addresses " +
+					"to view its private key", Type.HUMANIZED_MESSAGE);
+			return;
+		}
+		
+		try
+		{
+			/*TODO LS bEncryptedWallet
+			// Check for encrypted wallet
+			final boolean bEncryptedWallet = servlet.clientCaller.isWalletEncrypted();
+			if (bEncryptedWallet)
+			{
+				PasswordDialog pd = new PasswordDialog((JFrame)(this.parent));
+				pd.setVisible(true);
+				
+				if (!pd.isOKPressed())
+				{
+					return;
+				}
+				
+				servlet.clientCaller.unlockWallet(pd.getPassword());
+			}
+			*/
+			final boolean isZAddress = Util.isZAddress(this.selectedAddress);
+			
+			final String privateKey = isZAddress ?
+					this.servlet.clientCaller.getZPrivateKey(this.selectedAddress) : this.servlet.clientCaller.getTPrivateKey(this.selectedAddress);
+			/*TODO LS bEncryptedWallet
+			// Lock the wallet again
+			if (bEncryptedWallet)
+			{
+				this.servlet.clientCaller.lockWallet();
+			}
+			*/
+					
+					
+			final ClipboardButton clipboardButton = new ClipboardButton("clipboardTarget");
+			clipboardButton.addSuccessListener(new ClipboardButton.SuccessListener() {
+
+			    @Override
+			    public void onSuccess() {
+			        Notification.show("Copy to clipboard successful");
+			    }
+			});
+			clipboardButton.addErrorListener(new ClipboardButton.ErrorListener() {
+
+			    @Override
+			    public void onError() {
+			        Notification.show("Copy to clipboard unsuccessful", Notification.Type.ERROR_MESSAGE);
+			    }
+			});
+			clipboardButton.setClipboardText(privateKey);
+					
+/*			TODO LS Clipboard
+			final JsClipboard JsClipboard = new JsClipboard ();
+			
+			final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+			clipboard.setContents(new StringSelection(privateKey), null);
+*/
+			Notification.show("Private key information", isZAddress ? "Z (Private)" : "T (Transparent)" + " address:\n" +
+					this.selectedAddress + "\n" +
+					"has private key:\n" +
+					privateKey + "\n\n" +
+					"The private key has also been copied to the clipboard.", Type.HUMANIZED_MESSAGE);
+		} catch (final Exception ex)
+		{
+			log.error("", ex);
+		}
+	}
+
 	/*
 	 * WARNING: Do NOT edit!<br>The content of this method is always regenerated by
 	 * the UI designer.
@@ -1343,6 +1448,7 @@ public class MainView extends XdevView implements IWallet {
 		this.setContent(this.gridLayout);
 		this.setSizeFull();
 	
+		this.menuItemShowPrivateKey.setCommand(selectedItem -> this.menuItemShowPrivateKey_menuSelected(selectedItem));
 		this.buttonNewTAddress.addClickListener(event -> this.buttonNewTAddress_buttonClick(event));
 		this.buttonNewZAddress.addClickListener(event -> this.buttonNewZAddress_buttonClick(event));
 		this.buttonSend.addClickListener(event -> this.buttonSend_buttonClick(event));

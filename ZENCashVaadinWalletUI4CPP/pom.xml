@@ -70,6 +70,13 @@
 		    <artifactId>minimal-json</artifactId>
 		    <version>0.9.4</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.github.vaadin4qbanos/jsclipboard -->
+		<!-- https://github.com/vaadin4qbanos/vaadin-jsclipboard-addon -->
+		<dependency>
+		    <groupId>com.github.vaadin4qbanos</groupId>
+		    <artifactId>jsclipboard</artifactId>
+		    <version>1.0.9</version>
+		</dependency>
 	</dependencies>
 	<properties>
 		<project.build.sourceEncoding>
