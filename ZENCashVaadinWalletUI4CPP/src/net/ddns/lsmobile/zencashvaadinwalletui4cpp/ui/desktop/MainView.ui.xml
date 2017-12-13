@@ -70,16 +70,15 @@
             <XdevGridLayout caption="Own addresses" x:name="tabOwnAddresses">
                 <x:constraints width="100%" height="100%" />
                 <XdevPanel x:name="panelGridOwnAddresses">
-                    <x:constraints gridx="1" gridy="1" weighty="0.1" weightx="0.1" width="100%" gridWidth="3" height="100%" />
+                    <x:constraints gridx="1" gridy="1" weighty="0.1" weightx="0.1" width="100%" gridWidth="2" height="100%" />
                 </XdevPanel>
                 <XdevButton caption="New T (Transparent) address" x:name="buttonNewTAddress">
-                    <x:constraints gridx="1" gridy="2" weighty="0.0" weightx="0.0" alignment="TOP_RIGHT" />
+                    <x:constraints gridx="1" gridy="2" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />
+                    <x:event>click.buttonClick</x:event>
                 </XdevButton>
                 <XdevButton caption="New Z (Private) address" x:name="buttonNewZAddress">
-                    <x:constraints gridx="2" gridy="2" weighty="0.0" weightx="0.0" />
-                </XdevButton>
-                <XdevButton caption="Refresh" x:name="buttonrefresh">
-                    <x:constraints gridx="3" gridy="2" weighty="0.0" weightx="0.1" alignment="TOP_CENTER" />
+                    <x:constraints gridx="2" gridy="2" weighty="0.0" weightx="0.1" />
+                    <x:event>click.buttonClick</x:event>
                 </XdevButton>
             </XdevGridLayout>
             <XdevGridLayout caption="Send cash" x:name="tabSendCash">
@@ -130,10 +129,10 @@
                     <x:constraints gridx="1" gridy="8" weighty="0.0" weightx="0.2" width="100%" gridWidth="4" />
                 </XdevLabel>
             </XdevGridLayout>
-            <XdevGridLayout caption="Address book" x:name="tabAddressBook">
+            <XdevGridLayout caption="Address book" x:name="tabAddressBook" visible="false">
                 <x:constraints width="100%" height="100%" />
             </XdevGridLayout>
-            <XdevGridLayout caption="Messaging" x:name="tabMessaging">
+            <XdevGridLayout caption="Messaging" x:name="tabMessaging" visible="false">
                 <x:constraints width="100%" height="100%" />
             </XdevGridLayout>
         </XdevTabSheet>
