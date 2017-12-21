@@ -3,18 +3,15 @@ package net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import com.vaadin.jsclipboard.ClipboardButton;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
@@ -52,10 +49,6 @@ public class MainView extends XdevView implements IWallet {
 	
 	protected Servlet servlet;
 	
-	private final NumberFormat defaultNumberFormat = NumberFormat.getNumberInstance();
-	private final NumberFormat usNumberFormat = java.text.NumberFormat.getNumberInstance(Locale.US);
-
-
 	private DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
 	
 	private Boolean walletIsEncrypted   = null;
@@ -761,227 +754,214 @@ public class MainView extends XdevView implements IWallet {
 	
 	private void sendCash()
 			throws WalletCallException, IOException, InterruptedException
-		{
-			if (this.comboBoxBalanceAddress.size() <= 0)
-			{
-				Notification.show("No funds available", "There are no addresses with a positive balance to send\n" +
-						"cash from!", Type.ERROR_MESSAGE);
-				return;
-			}
-			
-			if (this.comboBoxBalanceAddress.getValue() == null)
-			{
-				Notification.show("Please select source address", "Please select a source address with a current positive\n" +
-						"balance to send cash from!", Type.ERROR_MESSAGE);
-				return;
-			}
-			
-			final String sourceAddress = ((AddressWithBalance)this.comboBoxBalanceAddress.getValue()).address;
-			final String destinationAddress = this.textFieldDestinationAddress.getValue();
-			final String memo = this.textFieldDestinationMemo.getValue();
-			String amount = this.textFieldDestinationAmount.getValue();
-			String fee = this.textFieldTransactionFee.getValue();
+	{
+		if (this.comboBoxBalanceAddress.size() <= 0) {
+			Notification.show("No funds available",
+					"There are no addresses with a positive balance to send\n" + "cash from!", Type.ERROR_MESSAGE);
+			return;
+		}
 
-			// Verify general correctness.
-			String errorMessage = null;
-			
-			if ((sourceAddress == null) || (sourceAddress.trim().length() <= 20))
-			{
-				errorMessage = "Source address is invalid; it is too short or missing.";
-			} else if (sourceAddress.length() > 512)
-			{
-				errorMessage = "Source address is invalid; it is too long.";
-			}
-			
-			// TODO: full address validation
-			if ((destinationAddress == null) || (destinationAddress.trim().length() <= 0))
-			{
-				errorMessage = "Destination address is invalid; it is missing.";
-			} else if (destinationAddress.trim().length() <= 20)
-			{
-				errorMessage = "Destination address is invalid; it is too short.";
-			} else if (destinationAddress.length() > 512)
-			{
-				errorMessage = "Destination address is invalid; it is too long.";
-			}
-			
-			if ((amount == null) || (amount.trim().length() <= 0))
-			{
-				errorMessage = "Amount to send is invalid; it is missing.";
-			} else
-			{
-				try
-				{
+		if (this.comboBoxBalanceAddress.getValue() == null) {
+			Notification.show("Please select source address",
+					"Please select a source address with a current positive\n" + "balance to send cash from!",
+					Type.ERROR_MESSAGE);
+			return;
+		}
+
+		final String sourceAddress = ((AddressWithBalance) this.comboBoxBalanceAddress.getValue()).address;
+		final String destinationAddress = this.textFieldDestinationAddress.getValue();
+		final String memo = this.textFieldDestinationMemo.getValue();
+		String amount = this.textFieldDestinationAmount.getValue();
+		String fee = this.textFieldTransactionFee.getValue();
+
+		// Verify general correctness.
+		String errorMessage = null;
+
+		if ((sourceAddress == null) || (sourceAddress.trim().length() <= 20)) {
+			errorMessage = "Source address is invalid; it is too short or missing.";
+		} else if (sourceAddress.length() > 512) {
+			errorMessage = "Source address is invalid; it is too long.";
+		}
+
+		// TODO: full address validation
+		if ((destinationAddress == null) || (destinationAddress.trim().length() <= 0)) {
+			errorMessage = "Destination address is invalid; it is missing.";
+		} else if (destinationAddress.trim().length() <= 20) {
+			errorMessage = "Destination address is invalid; it is too short.";
+		} else if (destinationAddress.length() > 512) {
+			errorMessage = "Destination address is invalid; it is too long.";
+		}
+
+		if ((amount == null) || (amount.trim().length() <= 0)) {
+			errorMessage = "Amount to send is invalid; it is missing.";
+		} else {
+			try {
+				final double d = Double.valueOf(amount);
+			} catch (final Exception nfe) {
+				try {
+					amount = this.usNumberFormat.format(this.defaultNumberFormat.parse(amount));
 					final double d = Double.valueOf(amount);
-				} catch (final Exception nfe)
-				{
-					try {
-						amount = this.usNumberFormat.format(this.defaultNumberFormat.parse(amount));
-						final double d = Double.valueOf(amount);
-					} catch (final ParseException e) {
-						errorMessage = "Amount to send is invalid; it is not a number.";
-					}
+				} catch (final ParseException e) {
+					errorMessage = "Amount to send is invalid; it is not a number.";
 				}
 			}
-			
-			if ((fee == null) || (fee.trim().length() <= 0))
-			{
-				errorMessage = "Transaction fee is invalid; it is missing.";
-			} else
-			{
-				try
-				{
+		}
+
+		if ((fee == null) || (fee.trim().length() <= 0)) {
+			errorMessage = "Transaction fee is invalid; it is missing.";
+		} else {
+			try {
+				final double d = Double.valueOf(fee);
+			} catch (final Exception nfe) {
+				try {
+					fee = this.usNumberFormat.format(this.defaultNumberFormat.parse(fee));
 					final double d = Double.valueOf(fee);
-				} catch (final Exception nfe)
-				{
-					try {
-						fee = this.usNumberFormat.format(this.defaultNumberFormat.parse(fee));
-						final double d = Double.valueOf(fee);
-					} catch (final ParseException e) {
-						errorMessage = "Transaction fee is invalid; it is not a number.";
-					}
+				} catch (final ParseException e) {
+					errorMessage = "Transaction fee is invalid; it is not a number.";
 				}
 			}
+		}
 
+		if (errorMessage != null) {
+			Notification.show("Sending parameters are incorrect", errorMessage, Type.ERROR_MESSAGE);
+			return;
+		}
 
-			if (errorMessage != null)
-			{
-				Notification.show("Sending parameters are incorrect", errorMessage, Type.ERROR_MESSAGE);
-				return;
-			}
-			
+		// Check for encrypted wallet
+		final boolean bEncryptedWallet = this.servlet.clientCaller.isWalletEncrypted();
+		/*
+		 * TODO LS if (bEncryptedWallet) { final PasswordDialog pd = new
+		 * PasswordDialog((JFrame)(SendCashPanel.this.getRootPane().getParent())
+		 * ); pd.setVisible(true);
+		 * 
+		 * if (!pd.isOKPressed()) { return; }
+		 * 
+		 * this.servlet.clientCaller.unlockWallet(pd.getPassword()); }
+		 */
 
-			// Check for encrypted wallet
-			final boolean bEncryptedWallet = this.servlet.clientCaller.isWalletEncrypted();
-			/*TODO LS
-			if (bEncryptedWallet)
-			{
-				final PasswordDialog pd = new PasswordDialog((JFrame)(SendCashPanel.this.getRootPane().getParent()));
-				pd.setVisible(true);
-				
-				if (!pd.isOKPressed())
-				{
-					return;
-				}
-				
-				this.servlet.clientCaller.unlockWallet(pd.getPassword());
-			}
-			*/
-			
-			// Call the wallet send method
-			this.operationStatusID = this.servlet.clientCaller.sendCash(sourceAddress, destinationAddress, amount, memo, fee);
-					
-			// Disable controls after send
-			this.buttonSend.setEnabled(false);
-			this.comboBoxBalanceAddress.setEnabled(false);
-			this.textFieldDestinationAddress.setEnabled(false);
-			this.textFieldDestinationAmount.setEnabled(false);
-			this.textFieldDestinationMemo.setEnabled(false);
-			this.textFieldTransactionFee.setEnabled(false);
-			
-			// Start a data gathering thread specific to the operation being executed - this is done is a separate
-			// thread since the server responds more slowly during JoinSPlits and this blocks he GUI somewhat.
-			final DataGatheringThread<Boolean> opFollowingThread = new DataGatheringThread<>(
-				new DataGatheringThread.DataGatherer<Boolean>()
-				{
+		// Call the wallet send method
+		this.operationStatusID = this.servlet.clientCaller.sendCash(sourceAddress, destinationAddress, amount, memo,
+				fee);
+
+		// Disable controls after send
+		this.buttonSend.setEnabled(false);
+		this.comboBoxBalanceAddress.setEnabled(false);
+		this.textFieldDestinationAddress.setEnabled(false);
+		this.textFieldDestinationAmount.setEnabled(false);
+		this.textFieldDestinationMemo.setEnabled(false);
+		this.textFieldTransactionFee.setEnabled(false);
+
+		// Start a data gathering thread specific to the operation being
+		// executed - this is done is a separate
+		// thread since the server responds more slowly during JoinSPlits and
+		// this blocks he GUI somewhat.
+		final DataGatheringThread<Boolean> opFollowingThread = new DataGatheringThread<>(
+				new DataGatheringThread.DataGatherer<Boolean>() {
 					@Override
-					public Boolean gatherData()
-						throws Exception
-					{
+					public Boolean gatherData() throws Exception {
 						final long start = System.currentTimeMillis();
-						final Boolean result = MainView.this.servlet.clientCaller.isSendingOperationComplete(MainView.this.operationStatusID);
+						final Boolean result = MainView.this.servlet.clientCaller
+								.isSendingOperationComplete(MainView.this.operationStatusID);
 						final long end = System.currentTimeMillis();
-						log.info("Checking for operation " + MainView.this.operationStatusID + " status done in " + (end - start) + "ms." );
-						
+						log.info("Checking for operation " + MainView.this.operationStatusID + " status done in "
+								+ (end - start) + "ms.");
+
 						return result;
 					}
-				},
-				2000, true);
-			
-			// Start a new thread on the serverside to update the progress of the operation
-			this.operationStatusCounter = 0;
-			final String amountFinal = amount;
-			 final Thread operationStatusTimer = new Thread(new RunnableAccessWrapper(() -> {
-				 Boolean opComplete_ = null;
-				while (!((opComplete_ != null) && opComplete_.booleanValue())) {
-					try {
-						// TODO: Handle errors in case of restarted server while wallet is sending ...
-						final Boolean opComplete = opComplete_ = opFollowingThread.getLastData();
-						
+				}, 2000, true);
+
+		// Start a new thread on the serverside to update the progress of the
+		// operation
+		this.operationStatusCounter = 0;
+		final String amountFinal = amount;
+		new Thread(new RunnableAccessWrapper(() -> {
+			try {
+				Boolean opComplete = null;
+				while (!((opComplete != null) && opComplete.booleanValue())) {
+					// TODO: Handle errors in case of restarted server while
+					// wallet is sending ...
+					opComplete = opFollowingThread.getLastData();
+
+					if ((opComplete != null) && opComplete.booleanValue()) {
+						// End the special thread used to follow the
+						// operation
+						opFollowingThread.setSuspended(true);
+
 						getUI().access(() -> {
 							try {
-								if ((opComplete != null) && opComplete.booleanValue()) {
-									// End the special thread used to follow the
-									// operation
-									opFollowingThread.setSuspended(true);
-
-									if (MainView.this.servlet.clientCaller
-											.isCompletedOperationSuccessful(MainView.this.operationStatusID)) {
-										MainView.this.labelOperationStatus.setValue(
-												"<span style=\"color:green;font-weight:bold\">SUCCESSFUL</span>");
-										Notification.show("Cash sent successfully", "Succesfully sent " + amountFinal + " ZEN from address: \n" + sourceAddress
-												+ "\n" + "to address: \n" + destinationAddress, Type.HUMANIZED_MESSAGE);
-									} else {
-										final String errorMessage2 = MainView.this.servlet.clientCaller
-												.getOperationFinalErrorMessage(MainView.this.operationStatusID);
-										MainView.this.labelOperationStatus
-												.setValue("<html><span style=\"color:red;font-weight:bold\">ERROR: "
-														+ errorMessage2 + "</span></html>");
-
-										Notification.show("Error in sending cash",
-												"An error occurred when sending cash. Error message is:\n" + errorMessage2
-														+ "\n\n"
-														+ "Please ensure that sending parameters are correct. You may try again later...\n",
-												Type.ERROR_MESSAGE);
-									}
-
-									// Lock the wallet again
-									if (bEncryptedWallet) {
-										MainView.this.servlet.clientCaller.lockWallet();
-									}
-
-									// Restore controls etc.
-									MainView.this.operationStatusCounter = 0;
-									MainView.this.operationStatusID = null;
-									MainView.this.prohgressBarOperationStatus.setValue(0F);
-
-									MainView.this.buttonSend.setEnabled(true);
-									MainView.this.comboBoxBalanceAddress.setEnabled(true);
-									MainView.this.textFieldDestinationAddress.setEnabled(true);
-									MainView.this.textFieldDestinationAmount.setEnabled(true);
-									MainView.this.textFieldTransactionFee.setEnabled(true);
-									MainView.this.textFieldDestinationMemo.setEnabled(true);
-
+								if (MainView.this.servlet.clientCaller
+										.isCompletedOperationSuccessful(MainView.this.operationStatusID)) {
+									MainView.this.labelOperationStatus
+											.setValue("<span style=\"color:green;font-weight:bold\">SUCCESSFUL</span>");
+									Notification.show("Cash sent successfully",
+											"Succesfully sent " + amountFinal + " ZEN from address: \n" + sourceAddress
+													+ "\n" + "to address: \n" + destinationAddress,
+											Type.HUMANIZED_MESSAGE);
 								} else {
-									// Update the progress
-									getUI().access(() -> MainView.this.labelOperationStatus.setValue(
-											"<html><span style=\"color:orange;font-weight:bold\">IN PROGRESS</span></html>"));
-									MainView.this.operationStatusCounter += 0.02;
-									float progress = 0;
-									if (MainView.this.operationStatusCounter <= 1) {
-										progress = MainView.this.operationStatusCounter;
-									} else {
-										progress = 1 + (((MainView.this.operationStatusCounter - 1) * 6) / 10);
-									}
-									// Server Push to update in the ProgressBar in the
-									// Browser
-									MainView.this.prohgressBarOperationStatus.setValue(progress);
+									final String errorMessage2 = MainView.this.servlet.clientCaller
+											.getOperationFinalErrorMessage(MainView.this.operationStatusID);
+									MainView.this.labelOperationStatus
+											.setValue("<html><span style=\"color:red;font-weight:bold\">ERROR: "
+													+ errorMessage2 + "</span></html>");
+
+									Notification.show("Error in sending cash",
+											"An error occurred when sending cash. Error message is:\n" + errorMessage2
+													+ "\n\n"
+													+ "Please ensure that sending parameters are correct. You may try again later...\n",
+											Type.ERROR_MESSAGE);
 								}
 
-								// SendCashPanel.this.repaint();
+								// Lock the wallet again
+								if (bEncryptedWallet) {
+									MainView.this.servlet.clientCaller.lockWallet();
+								}
+
+								// Restore controls etc.
+								MainView.this.operationStatusCounter = 0;
+								MainView.this.operationStatusID = null;
+								MainView.this.prohgressBarOperationStatus.setValue(0F);
+
+								MainView.this.buttonSend.setEnabled(true);
+								MainView.this.comboBoxBalanceAddress.setEnabled(true);
+								MainView.this.textFieldDestinationAddress.setEnabled(true);
+								MainView.this.textFieldDestinationAmount.setEnabled(true);
+								MainView.this.textFieldTransactionFee.setEnabled(true);
+								MainView.this.textFieldDestinationMemo.setEnabled(true);
 							} catch (final Exception e) {
 								log.error("Unexpected error: ", e);
 							}
 						});
-						
-						Thread.sleep(2000);
-					} catch (final Exception ex) {
-						log.error("Unexpected error: ", ex);
+					} else {
+						getUI().access(() -> {
+							try {
+								// Update the progress
+								MainView.this.labelOperationStatus
+										.setValue("<span style=\"color:orange;font-weight:bold\">IN PROGRESS</span>");
+								MainView.this.operationStatusCounter += 0.02;
+								float progress = 0;
+								if (MainView.this.operationStatusCounter <= 1) {
+									progress = MainView.this.operationStatusCounter;
+								} else {
+									progress = 1 + (((MainView.this.operationStatusCounter - 1) * 6) / 10);
+								}
+								// Server Push to update in the ProgressBar
+								// in the
+								// Browser
+								MainView.this.prohgressBarOperationStatus.setValue(progress);
+							} catch (final Exception e) {
+								log.error("Unexpected error: ", e);
+							}
+						});
 					}
+					// SendCashPanel.this.repaint();
+
+					Thread.sleep(2000);
 				}
-			}));
-	        operationStatusTimer.start();
-		}
+			} catch (final Exception ex) {
+				log.error("Unexpected error: ", ex);
+			}
+		})).start();
+	}
 
 	public void prepareForSending(final String address)
 	{
@@ -1209,8 +1189,8 @@ public class MainView extends XdevView implements IWallet {
 			}
 			*/
 					
-					
-			final ClipboardButton clipboardButton = new ClipboardButton("clipboardTarget");
+/*
+			final ClipboardButton clipboardButton = new ClipboardButton(getId());
 			clipboardButton.addSuccessListener(new ClipboardButton.SuccessListener() {
 
 			    @Override
@@ -1227,7 +1207,7 @@ public class MainView extends XdevView implements IWallet {
 			});
 			clipboardButton.setClipboardText(privateKey);
 					
-/*			TODO LS Clipboard
+			TODO LS Clipboard
 			final JsClipboard JsClipboard = new JsClipboard ();
 			
 			final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();

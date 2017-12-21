@@ -392,7 +392,7 @@ public class DashboardPanel
 			walletEncryption + " <br/> " +
 			"<span style=\"font-size:3px\"><br/></span>" +
 			"<span style=\"font-size:0.8em\">" +
-			"Installation: " + OSUtil.getProgramDirectory() + ", " +
+//			"Installation: " + OSUtil.getProgramDirectory() + ", " +
 	        "Blockchain: " + OSUtil.getBlockchainDirectory() + " <br/> " +
 		    "System: " + this.OSInfo + " </span> </html>";
 		this.daemonStatusLabel.setText(text);

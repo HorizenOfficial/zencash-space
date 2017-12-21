@@ -56,10 +56,10 @@ public class Servlet extends XdevServlet implements IConfig {
             // If zend is currently not running, do a startup of the daemon as a child process
             // It may be started but not ready - then also show dialog
         	this.installationObserver =
-            	new ZCashInstallationObserver(ZEN_DIRECTORY/*OSUtil.getProgramDirectory()*/);
+            	new ZCashInstallationObserver();
             final DaemonInfo zcashdInfo = this.installationObserver.getDaemonInfo();
             
-            this.clientCaller = new ZCashClientCaller(ZEN_DIRECTORY/*OSUtil.getProgramDirectory()*/);
+            this.clientCaller = new ZCashClientCaller();
             boolean daemonStartInProgress = false;
             try
             {

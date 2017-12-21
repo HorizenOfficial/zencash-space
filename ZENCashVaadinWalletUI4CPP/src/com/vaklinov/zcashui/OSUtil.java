@@ -135,6 +135,7 @@ public class OSUtil implements IConfig
 	public static String getProgramDirectory()
 		throws IOException
 	{
+/*		TODO LS getProgramDirectory
 		// TODO: this way of finding the dir is JAR name dependent - tricky, may not work
 		// if program is repackaged as different JAR!
 		final String JAR_NAME = "ZENCashSwingWalletUI.jar";
@@ -198,9 +199,8 @@ public class OSUtil implements IConfig
 				return ud.getCanonicalPath();
 			}
 		}
-
+*/
 		// TODO: tests and more options
-
 		return new File(".").getCanonicalPath();
 	}
 	
@@ -358,6 +358,20 @@ public class OSUtil implements IConfig
 			
 
 		// TODO: Try to find it with which/PATH
+		
+    	final String programDirectory = System.getenv(ZEN_BIN);
+    	if ((programDirectory != null) && (!programDirectory.isEmpty()))
+    	{
+    		final File pd = new File(programDirectory);
+    		if (pd.exists() && pd.isDirectory())
+    		{
+				final File cf = new File(pd, command);
+				if (cf.exists() && cf.isFile())
+				{
+					return cf;
+				}
+    		}
+    	}
 		
 		return null;
 	}

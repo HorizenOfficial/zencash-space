@@ -1,6 +1,8 @@
 package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -12,7 +14,9 @@ public interface IConfig {
 	
 	//TODO LS: in config file
 	
-	public final static String ZEN_DIRECTORY = "C:\\Program Files (x86)\\ZENCashDesktopGUIWallet_0.74.2\\app";
+//	public final static String ZEN_DIRECTORY = "C:\\Program Files (x86)\\ZENCashDesktopGUIWallet_0.74.2\\app";
+	
+	public final static String ZEN_BIN = "ZEN_BIN";
 
 	public final static String TRANSACTIONS_COLUMN_TYPE = "Type";
 	public final static String TRANSACTIONS_COLUMN_DIRECTION = "Direction";
@@ -32,4 +36,8 @@ public interface IConfig {
 	public final static DecimalFormat decimalFormat = new DecimalFormat(DECIMAL_FORMAT);
 	
 	public final static int MAXIMUM_FRACTION_DIGITS = 8;
+	
+	public final NumberFormat defaultNumberFormat = NumberFormat.getNumberInstance();
+	public final NumberFormat usNumberFormat = java.text.NumberFormat.getNumberInstance(Locale.US);
+
 }

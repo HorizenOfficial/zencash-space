@@ -68,28 +68,12 @@ public class ZCashInstallationObserver implements IConfig
 	
 	private Boolean isOnTestNet = null;
 
-	public ZCashInstallationObserver(final String installDir)
+	public ZCashInstallationObserver()
 		throws IOException
 	{
-		// Detect daemon and client tools installation
-		final File dir = new File(installDir);
-
-		if (!dir.exists() || dir.isFile())
-		{
-			throw new InstallationDetectionException(
-				"The ZENCash installation directory " + installDir + " does not exist or is not " +
-			    "a directory or is otherwise inaccessible to the wallet!");
-		}
-
-		File zcashd = new File(dir, OSUtil.getZCashd());
-		File zcashcli = new File(dir, OSUtil.getZCashCli());
-
-		if ((!zcashd.exists()) || (!zcashcli.exists()))
-		{
-			zcashd = OSUtil.findZCashCommand(OSUtil.getZCashd());
-			zcashcli = OSUtil.findZCashCommand(OSUtil.getZCashCli());
-		}
-
+		final File zcashd = OSUtil.findZCashCommand(OSUtil.getZCashd());
+		final File zcashcli = OSUtil.findZCashCommand(OSUtil.getZCashCli());
+		
 		log.info("Using ZENCash utilities: " +
 		                   "zend: "    + ((zcashd != null) ? zcashd.getCanonicalPath() : "<MISSING>") + ", " +
 		                   "zen-cli: " + ((zcashcli != null) ? zcashcli.getCanonicalPath() : "<MISSING>"));
@@ -97,10 +81,8 @@ public class ZCashInstallationObserver implements IConfig
 		if ((zcashd == null) || (zcashcli == null) || (!zcashd.exists()) || (!zcashcli.exists()))
 		{
 			throw new InstallationDetectionException(
-				"The ZENCash GUI Wallet installation directory " + installDir + " needs\nto contain " +
-				"the command line utilities zend and zen-cli. At least one of them is missing! \n" +
-				"Please place files ZENCashSwingWalletUI.jar, " + OSUtil.getZCashCli() + ", " +
-				OSUtil.getZCashd() + " in the same directory.");
+				"The ZEN installation directory  needs to contain " +
+				"the command line utilities zend and zen-cli. At least one of them is missing!");
 		}
 	}
 

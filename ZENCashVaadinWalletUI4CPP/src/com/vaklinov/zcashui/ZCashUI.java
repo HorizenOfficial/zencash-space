@@ -117,8 +117,8 @@ public class ZCashUI
 
 //        final Container contentPane = this.getContentPane();
 
-        this.installationObserver = new ZCashInstallationObserver(OSUtil.getProgramDirectory());
-        this.clientCaller = new ZCashClientCaller(OSUtil.getProgramDirectory());
+        this.installationObserver = new ZCashInstallationObserver();
+        this.clientCaller = new ZCashClientCaller();
         
         if (this.installationObserver.isOnTestNet())
         {
@@ -518,11 +518,11 @@ public class ZCashUI
             // If zend is currently not running, do a startup of the daemon as a child process
             // It may be started but not ready - then also show dialog
             ZCashInstallationObserver initialInstallationObserver =
-            	new ZCashInstallationObserver(OSUtil.getProgramDirectory());
+            	new ZCashInstallationObserver();
             final DaemonInfo zcashdInfo = initialInstallationObserver.getDaemonInfo();
             initialInstallationObserver = null;
             
-            ZCashClientCaller initialClientCaller = new ZCashClientCaller(OSUtil.getProgramDirectory());
+            ZCashClientCaller initialClientCaller = new ZCashClientCaller();
             boolean daemonStartInProgress = false;
             try
             {

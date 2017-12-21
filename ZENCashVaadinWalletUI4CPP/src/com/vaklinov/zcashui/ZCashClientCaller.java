@@ -96,33 +96,23 @@ public class ZCashClientCaller implements IConfig
 
 
 	// ZCash client program and daemon
-	private File zcashcli, zcashd;
+	private final File zcashcli, zcashd;
 
 
-	public ZCashClientCaller(final String installDir)
+	public ZCashClientCaller()
 		throws IOException
 	{
 		// Detect daemon and client tools installation
-		final File dir = new File(installDir);
-	    this.zcashcli = new File(dir, OSUtil.getZCashCli());
-
-		if (!this.zcashcli.exists())
-		{
-			this.zcashcli = OSUtil.findZCashCommand(OSUtil.getZCashCli());
-		}
+		this.zcashcli = OSUtil.findZCashCommand(OSUtil.getZCashCli());
 
 		if ((this.zcashcli == null) || (!this.zcashcli.exists()))
 		{
 			throw new IOException(
-				"The ZENCash installation directory " + installDir + " needs to contain " +
+				"The ZENCash installation directory needs to contain " +
 				"the command line utilities zend and zen-cli. zen-cli is missing!");
 		}
 		
-		this.zcashd = new File(dir, OSUtil.getZCashd());
-		if (!this.zcashd.exists())
-		{
-		    this.zcashd = OSUtil.findZCashCommand(OSUtil.getZCashd());
-		}
+	    this.zcashd = OSUtil.findZCashCommand(OSUtil.getZCashd());
 		
 		if (this.zcashd == null || (!this.zcashd.exists()))
 		{
@@ -166,6 +156,8 @@ public class ZCashClientCaller implements IConfig
 	    final CommandExecutor infoGetter = new CommandExecutor(
 	            new String[] { this.zcashcli.getCanonicalPath(), "getinfo"} );
 	    String info = infoGetter.execute();
+	    
+	    log.info("zcashcli.getinfo " + info);
 	    
 	    if (info.trim().toLowerCase(Locale.ROOT).startsWith("error: couldn't connect to server"))
 	    {
@@ -714,6 +706,7 @@ public class ZCashClientCaller implements IConfig
 		final NetworkAndBlockchainInfo info = new NetworkAndBlockchainInfo();
 
 		final String strNumCons = this.executeCommandAndGetSingleStringResponse("getconnectioncount");
+		log.info("getconnectioncount: " + strNumCons); //TODO LS for Linux-DEBUG
 		info.numConnections = Integer.valueOf(strNumCons.trim());
 
 		final String strBlockCount = this.executeCommandAndGetSingleStringResponse("getblockcount");
