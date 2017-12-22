@@ -61,21 +61,36 @@
 			<version>3.1.1</version>
 		</dependency>
 		<dependency>
-		    <groupId>org.bitcoinj</groupId>
-		    <artifactId>bitcoinj-core</artifactId>
-		    <version>0.14.5</version>
+			<groupId>com.xdev-software</groupId>
+			<artifactId>xdev-server-aa-ui</artifactId>
+			<version>3.1.1</version>
 		</dependency>
 		<dependency>
-		    <groupId>com.eclipsesource.minimal-json</groupId>
-		    <artifactId>minimal-json</artifactId>
-		    <version>0.9.4</version>
+			<groupId>com.xdev-software</groupId>
+			<artifactId>xdev-server-aa</artifactId>
+			<version>3.1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bitcoinj</groupId>
+			<artifactId>bitcoinj-core</artifactId>
+			<version>0.14.5</version>
+		</dependency>
+		<dependency>
+			<groupId>com.eclipsesource.minimal-json</groupId>
+			<artifactId>minimal-json</artifactId>
+			<version>0.9.4</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.github.vaadin4qbanos/jsclipboard -->
 		<!-- https://github.com/vaadin4qbanos/vaadin-jsclipboard-addon -->
 		<dependency>
-		    <groupId>com.github.vaadin4qbanos</groupId>
-		    <artifactId>jsclipboard</artifactId>
-		    <version>1.0.9</version>
+			<groupId>com.github.vaadin4qbanos</groupId>
+			<artifactId>jsclipboard</artifactId>
+			<version>1.0.9</version>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.35</version>
 		</dependency>
 	</dependencies>
 	<properties>

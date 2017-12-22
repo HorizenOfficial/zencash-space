@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-reverse-engineering PUBLIC "-//Hibernate/Hibernate Reverse Engineering DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-reverse-engineering-3.0.dtd">
+
+<hibernate-reverse-engineering>
+    <type-mapping>
+        <sql-type jdbc-type="INTEGER" not-null="true" hibernate-type="int" />
+        <sql-type jdbc-type="INTEGER" hibernate-type="java.lang.Integer" />
+        <sql-type jdbc-type="TINYINT" precision="1" not-null="true" hibernate-type="boolean" />
+        <sql-type jdbc-type="TINYINT" precision="1" hibernate-type="java.lang.Boolean" />
+        <sql-type jdbc-type="TINYINT" not-null="true" hibernate-type="short" />
+        <sql-type jdbc-type="TINYINT" hibernate-type="java.lang.Short" />
+    </type-mapping>
+    <table-filter match-catalog="zenwallet" match-name="users" />
+    <table catalog="zenwallet" name="users" class="net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.User" />
+</hibernate-reverse-engineering>
+

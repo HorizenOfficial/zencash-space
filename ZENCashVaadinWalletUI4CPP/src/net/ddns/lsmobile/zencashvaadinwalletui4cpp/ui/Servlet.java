@@ -97,7 +97,7 @@ public class Servlet extends XdevServlet implements IConfig {
             // Main GUI is created here
 //            final ZCashUI ui = new ZCashUI(startupBar);
 //            ui.setVisible(true);
-
+            
         } catch (final InstallationDetectionException ide)
         {
         	log.error("Unexpected error: ", ide);
