@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
@@ -29,6 +30,7 @@ import com.vaklinov.zcashui.Util;
 import com.vaklinov.zcashui.ZCashClientCaller.WalletBalance;
 import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 import com.xdev.communication.RunnableAccessWrapper;
+import com.xdev.security.authentication.ui.Authentication;
 import com.xdev.ui.XdevButton;
 import com.xdev.ui.XdevGridLayout;
 import com.xdev.ui.XdevLabel;
@@ -43,11 +45,12 @@ import com.xdev.ui.entitycomponent.combobox.XdevComboBox;
 import com.xdev.util.ConverterBuilder;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IWallet;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZenNode;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 
 public class MainView extends XdevView implements IWallet {
 	
-	protected Servlet servlet;
+	protected ZenNode zenNode;
 	
 	private DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
 	
@@ -62,9 +65,9 @@ public class MainView extends XdevView implements IWallet {
 		super();
 		this.initUI();
 		
-		this.servlet = (Servlet) Servlet.getCurrent();
-		this.defaultNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
-		this.usNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
+		this.zenNode = ((Servlet) Servlet.getCurrent()).zenNode;
+		defaultNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
+		usNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
 
 		try {
 			// Thread and timer to update the wallet balance
@@ -76,14 +79,14 @@ public class MainView extends XdevView implements IWallet {
 						throws Exception
 					{
 						final long start = System.currentTimeMillis();
-						final WalletBalance balance = MainView.this.servlet.clientCaller.getWalletInfo();
+						final WalletBalance balance = MainView.this.zenNode.clientCaller.getWalletInfo();
 						final long end = System.currentTimeMillis();
 						
 						// TODO: move this call to a dedicated one-off gathering thread - this is the wrong place
 						// it works but a better design is needed.
 						if (MainView.this.walletIsEncrypted == null)
 						{
-							MainView.this.walletIsEncrypted = MainView.this.servlet.clientCaller.isWalletEncrypted();
+							MainView.this.walletIsEncrypted = MainView.this.zenNode.clientCaller.isWalletEncrypted();
 						}
 						
 						log.info("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
@@ -149,7 +152,7 @@ public class MainView extends XdevView implements IWallet {
 			//SendCashPanel
 						
 						//TODO LS
-						this.textFieldTransactionFee.setValue(this.defaultNumberFormat.format(Double.valueOf(0.0001)));
+						this.textFieldTransactionFee.setValue(defaultNumberFormat.format(Double.valueOf(0.0001)));
 						
 						// Update the balances via timer and data gathering thread
 						this.addressBalanceGatheringThread = new DataGatheringThread<>(
@@ -237,16 +240,22 @@ public class MainView extends XdevView implements IWallet {
 
 
 		} catch (final Exception e) {
-			e.printStackTrace();
+			log.error(e, e);
 		}
 	}
 	
+	@Override
+	public void enter(final ViewChangeListener.ViewChangeEvent event) {
+		super.enter(event);
+	
+	}
+
 	private String[][] getTransactionsDataFromWallet()
 			throws WalletCallException, IOException, InterruptedException
 		{
 			// Get available public+private transactions and unify them.
-			final String[][] publicTransactions = this.servlet.clientCaller.getWalletPublicTransactions();
-			final String[][] zReceivedTransactions = this.servlet.clientCaller.getWalletZReceivedTransactions();
+			final String[][] publicTransactions = this.zenNode.clientCaller.getWalletPublicTransactions();
+			final String[][] zReceivedTransactions = this.zenNode.clientCaller.getWalletZReceivedTransactions();
 
 			final String[][] allTransactions = new String[publicTransactions.length + zReceivedTransactions.length][];
 
@@ -362,7 +371,7 @@ public class MainView extends XdevView implements IWallet {
 	private void updateWalletStatusLabel()
 			throws WalletCallException, IOException, InterruptedException
 		{
-			final WalletBalance balance = this.servlet.clientCaller.getWalletInfo();
+			final WalletBalance balance = this.zenNode.clientCaller.getWalletInfo();
 			
 			// Format double numbers - else sometimes we get exponential notation 1E-4 ZEN
 			final DecimalFormat df = new DecimalFormat("########0.00###### ZEN");
@@ -531,7 +540,7 @@ public class MainView extends XdevView implements IWallet {
 				this.servlet.clientCaller.unlockWallet(pd.getPassword());
 			}
 			*/
-			final String address = this.servlet.clientCaller.createNewAddress(isZAddress);
+			final String address = this.zenNode.clientCaller.createNewAddress(isZAddress);
 			
 			/*TODO LS bEncryptedWallet
 			// Lock the wallet again
@@ -638,10 +647,10 @@ public class MainView extends XdevView implements IWallet {
 		throws WalletCallException, IOException, InterruptedException
 	{
 		// Z Addresses - they are OK
-		final String[] zAddresses = this.servlet.clientCaller.getWalletZAddresses();
+		final String[] zAddresses = this.zenNode.clientCaller.getWalletZAddresses();
 		
 		// T Addresses listed with the list received by addr comamnd
-		final String[] tAddresses = this.servlet.clientCaller.getWalletAllPublicAddresses();
+		final String[] tAddresses = this.zenNode.clientCaller.getWalletAllPublicAddresses();
 		final Set<String> tStoredAddressSet = new HashSet<>();
 		for (final String address : tAddresses)
 		{
@@ -649,7 +658,7 @@ public class MainView extends XdevView implements IWallet {
 		}
 		
 		// T addresses with unspent outputs - just in case they are different
-		final String[] tAddressesWithUnspentOuts = this.servlet.clientCaller.getWalletPublicAddressesWithUnspentOutputs();
+		final String[] tAddressesWithUnspentOuts = this.zenNode.clientCaller.getWalletPublicAddressesWithUnspentOutputs();
 		final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
 		for (final String address : tAddressesWithUnspentOuts)
 		{
@@ -679,8 +688,8 @@ public class MainView extends XdevView implements IWallet {
 
 		for (final String address : tAddressesCombined)
 		{
-			final String confirmedBalance = this.servlet.clientCaller.getBalanceForAddress(address);
-			final String unconfirmedBalance = this.servlet.clientCaller.getUnconfirmedBalanceForAddress(address);
+			final String confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
+			final String unconfirmedBalance = this.zenNode.clientCaller.getUnconfirmedBalanceForAddress(address);
 			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
 			final String balanceToShow = decimalFormat.format(Double.valueOf(
 				isConfirmed ? confirmedBalance : unconfirmedBalance));
@@ -695,8 +704,8 @@ public class MainView extends XdevView implements IWallet {
 		
 		for (final String address : zAddresses)
 		{
-			final String confirmedBalance = this.servlet.clientCaller.getBalanceForAddress(address);
-			final String unconfirmedBalance = this.servlet.clientCaller.getUnconfirmedBalanceForAddress(address);
+			final String confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
+			final String unconfirmedBalance = this.zenNode.clientCaller.getUnconfirmedBalanceForAddress(address);
 			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
 			final String balanceToShow = decimalFormat.format(Double.valueOf(
 				isConfirmed ? confirmedBalance : unconfirmedBalance));
@@ -799,7 +808,7 @@ public class MainView extends XdevView implements IWallet {
 				final double d = Double.valueOf(amount);
 			} catch (final Exception nfe) {
 				try {
-					amount = this.usNumberFormat.format(this.defaultNumberFormat.parse(amount));
+					amount = usNumberFormat.format(defaultNumberFormat.parse(amount));
 					final double d = Double.valueOf(amount);
 				} catch (final ParseException e) {
 					errorMessage = "Amount to send is invalid; it is not a number.";
@@ -814,7 +823,7 @@ public class MainView extends XdevView implements IWallet {
 				final double d = Double.valueOf(fee);
 			} catch (final Exception nfe) {
 				try {
-					fee = this.usNumberFormat.format(this.defaultNumberFormat.parse(fee));
+					fee = usNumberFormat.format(defaultNumberFormat.parse(fee));
 					final double d = Double.valueOf(fee);
 				} catch (final ParseException e) {
 					errorMessage = "Transaction fee is invalid; it is not a number.";
@@ -828,7 +837,7 @@ public class MainView extends XdevView implements IWallet {
 		}
 
 		// Check for encrypted wallet
-		final boolean bEncryptedWallet = this.servlet.clientCaller.isWalletEncrypted();
+		final boolean bEncryptedWallet = this.zenNode.clientCaller.isWalletEncrypted();
 		/*
 		 * TODO LS if (bEncryptedWallet) { final PasswordDialog pd = new
 		 * PasswordDialog((JFrame)(SendCashPanel.this.getRootPane().getParent())
@@ -840,7 +849,7 @@ public class MainView extends XdevView implements IWallet {
 		 */
 
 		// Call the wallet send method
-		this.operationStatusID = this.servlet.clientCaller.sendCash(sourceAddress, destinationAddress, amount, memo,
+		this.operationStatusID = this.zenNode.clientCaller.sendCash(sourceAddress, destinationAddress, amount, memo,
 				fee);
 
 		// Disable controls after send
@@ -860,7 +869,7 @@ public class MainView extends XdevView implements IWallet {
 					@Override
 					public Boolean gatherData() throws Exception {
 						final long start = System.currentTimeMillis();
-						final Boolean result = MainView.this.servlet.clientCaller
+						final Boolean result = MainView.this.zenNode.clientCaller
 								.isSendingOperationComplete(MainView.this.operationStatusID);
 						final long end = System.currentTimeMillis();
 						log.info("Checking for operation " + MainView.this.operationStatusID + " status done in "
@@ -889,7 +898,7 @@ public class MainView extends XdevView implements IWallet {
 
 						getUI().access(() -> {
 							try {
-								if (MainView.this.servlet.clientCaller
+								if (MainView.this.zenNode.clientCaller
 										.isCompletedOperationSuccessful(MainView.this.operationStatusID)) {
 									MainView.this.labelOperationStatus
 											.setValue("<span style=\"color:green;font-weight:bold\">SUCCESSFUL</span>");
@@ -898,7 +907,7 @@ public class MainView extends XdevView implements IWallet {
 													+ "\n" + "to address: \n" + destinationAddress,
 											Type.HUMANIZED_MESSAGE);
 								} else {
-									final String errorMessage2 = MainView.this.servlet.clientCaller
+									final String errorMessage2 = MainView.this.zenNode.clientCaller
 											.getOperationFinalErrorMessage(MainView.this.operationStatusID);
 									MainView.this.labelOperationStatus
 											.setValue("<html><span style=\"color:red;font-weight:bold\">ERROR: "
@@ -913,7 +922,7 @@ public class MainView extends XdevView implements IWallet {
 
 								// Lock the wallet again
 								if (bEncryptedWallet) {
-									MainView.this.servlet.clientCaller.lockWallet();
+									MainView.this.zenNode.clientCaller.lockWallet();
 								}
 
 								// Restore controls etc.
@@ -1048,10 +1057,10 @@ public class MainView extends XdevView implements IWallet {
 		throws WalletCallException, IOException, InterruptedException
 	{
 		// Z Addresses - they are OK
-		final String[] zAddresses = this.servlet.clientCaller.getWalletZAddresses();
+		final String[] zAddresses = this.zenNode.clientCaller.getWalletZAddresses();
 		
 		// T Addresses created inside wallet that may be empty
-		final String[] tAddresses = this.servlet.clientCaller.getWalletAllPublicAddresses();
+		final String[] tAddresses = this.zenNode.clientCaller.getWalletAllPublicAddresses();
 		final Set<String> tStoredAddressSet = new HashSet<>();
 		for (final String address : tAddresses)
 		{
@@ -1059,7 +1068,7 @@ public class MainView extends XdevView implements IWallet {
 		}
 		
 		// T addresses with unspent outputs (even if not GUI created)...
-		final String[] tAddressesWithUnspentOuts = this.servlet.clientCaller.getWalletPublicAddressesWithUnspentOutputs();
+		final String[] tAddressesWithUnspentOuts = this.zenNode.clientCaller.getWalletPublicAddressesWithUnspentOutputs();
 		final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
 		for (final String address : tAddressesWithUnspentOuts)
 		{
@@ -1077,7 +1086,7 @@ public class MainView extends XdevView implements IWallet {
 
 		for (final String address : tAddressesCombined)
 		{
-			final String balance = this.servlet.clientCaller.getBalanceForAddress(address);
+			final String balance = this.zenNode.clientCaller.getBalanceForAddress(address);
 			if (Double.valueOf(balance) > 0)
 			{
 				tempAddressBalances[count++] = new String[]
@@ -1089,7 +1098,7 @@ public class MainView extends XdevView implements IWallet {
 		
 		for (final String address : zAddresses)
 		{
-			final String balance = this.servlet.clientCaller.getBalanceForAddress(address);
+			final String balance = this.zenNode.clientCaller.getBalanceForAddress(address);
 			if (Double.valueOf(balance) > 0)
 			{
 				tempAddressBalances[count++] = new String[]
@@ -1180,7 +1189,7 @@ public class MainView extends XdevView implements IWallet {
 			final boolean isZAddress = Util.isZAddress(this.selectedAddress);
 			
 			final String privateKey = isZAddress ?
-					this.servlet.clientCaller.getZPrivateKey(this.selectedAddress) : this.servlet.clientCaller.getTPrivateKey(this.selectedAddress);
+					this.zenNode.clientCaller.getZPrivateKey(this.selectedAddress) : this.zenNode.clientCaller.getTPrivateKey(this.selectedAddress);
 			/*TODO LS bEncryptedWallet
 			// Lock the wallet again
 			if (bEncryptedWallet)
@@ -1224,6 +1233,17 @@ public class MainView extends XdevView implements IWallet {
 		}
 	}
 
+	/**
+	 * Event handler delegate method for the {@link XdevMenuBar.XdevMenuItem}
+	 * {@link #menuItemLogOut}.
+	 *
+	 * @see MenuBar.Command#menuSelected(MenuBar.MenuItem)
+	 * @eventHandlerDelegate Do NOT delete, used by UI designer!
+	 */
+	private void menuItemLogOut_menuSelected(final MenuBar.MenuItem selectedItem) {
+		Authentication.logout();
+	}
+
 	/*
 	 * WARNING: Do NOT edit!<br>The content of this method is always regenerated by
 	 * the UI designer.
@@ -1234,6 +1254,7 @@ public class MainView extends XdevView implements IWallet {
 		this.menuBar = new XdevMenuBar();
 		this.menuItemMain = this.menuBar.addItem("Main", null);
 		this.menuItemAbout = this.menuItemMain.addItem("About...", null);
+		this.menuItemLogOut = this.menuItemMain.addItem("Log out...", null);
 		this.menuItemWallet = this.menuBar.addItem("Wallet", null);
 		this.menuItemBackup = this.menuItemWallet.addItem("Backup...", null);
 		this.menuItemEncrypt = this.menuItemWallet.addItem("Encrypt...", null);
@@ -1279,7 +1300,18 @@ public class MainView extends XdevView implements IWallet {
 		this.tabMessaging = new XdevGridLayout();
 	
 		this.gridLayout.setMargin(new MarginInfo(false));
+		this.menuItemAbout.setEnabled(false);
+		this.menuItemBackup.setEnabled(false);
 		this.menuItemEncrypt.setEnabled(false);
+		this.menuItemExportPrivateKeys.setEnabled(false);
+		this.menuItemImportPrivateKeys.setEnabled(false);
+		this.menuItemImportOnePrivateKey.setEnabled(false);
+		this.menuItemOwnIdentity.setEnabled(false);
+		this.menuItemExportOwnIdentity.setEnabled(false);
+		this.menuItemAddMessagingGroup.setEnabled(false);
+		this.menuItemImportContactIdentity.setEnabled(false);
+		this.menuItemRemoveContact.setEnabled(false);
+		this.menuItemOptions.setEnabled(false);
 		this.tabSheet.setStyleName("framed");
 		this.labelTransparentBalanceCaption.setValue("Transparent (T) balance:");
 		this.labelTransparentBalance.setValue("0");
@@ -1321,7 +1353,9 @@ public class MainView extends XdevView implements IWallet {
 		this.label5.setValue(
 				" * When sending cash from a T (Transparent) address, the remining unspent balance is sent to another auto-generated T address.<br>When sending from a Z (Private) address, the remining unspent balance remains with the Z address. In both cases the original sending <br>address cannot be used for sending again until the transaction is confirmed. The address is temporarily removed from the list! <br>Freshly mined coins may only be sent to a Z (Private) address.");
 		this.label5.setContentMode(ContentMode.HTML);
+		this.tabAddressBook.setEnabled(false);
 		this.tabAddressBook.setVisible(false);
+		this.tabMessaging.setEnabled(false);
 		this.tabMessaging.setVisible(false);
 	
 		this.tabOverview.setColumns(2);
@@ -1428,6 +1462,7 @@ public class MainView extends XdevView implements IWallet {
 		this.setContent(this.gridLayout);
 		this.setSizeFull();
 	
+		this.menuItemLogOut.setCommand(selectedItem -> this.menuItemLogOut_menuSelected(selectedItem));
 		this.menuItemShowPrivateKey.setCommand(selectedItem -> this.menuItemShowPrivateKey_menuSelected(selectedItem));
 		this.buttonNewTAddress.addClickListener(event -> this.buttonNewTAddress_buttonClick(event));
 		this.buttonNewZAddress.addClickListener(event -> this.buttonNewZAddress_buttonClick(event));
@@ -1442,7 +1477,7 @@ public class MainView extends XdevView implements IWallet {
 			labelOperationStatus, label5;
 	private XdevButton buttonNewTAddress, buttonNewZAddress, buttonSend;
 	private XdevMenuBar menuBar;
-	private XdevMenuItem menuItemMain, menuItemAbout, menuItemWallet, menuItemBackup, menuItemEncrypt,
+	private XdevMenuItem menuItemMain, menuItemAbout, menuItemLogOut, menuItemWallet, menuItemBackup, menuItemEncrypt,
 			menuItemExportPrivateKeys, menuItemImportPrivateKeys, menuItemShowPrivateKey, menuItemImportOnePrivateKey,
 			menuItemMessaging, menuItemOwnIdentity, menuItemExportOwnIdentity, menuItemAddMessagingGroup,
 			menuItemImportContactIdentity, menuItemRemoveContact, menuItemOptions;

@@ -14,12 +14,12 @@ public interface IWallet extends IConfig {
 
 	default void stopThreadsAndTimers()
 	{
-		for (final Timer t : this.timers)
+		for (final Timer t : timers)
 		{
 			t.stop();
 		}
 		
-		for (final DataGatheringThread<?> t : this.threads)
+		for (final DataGatheringThread<?> t : threads)
 		{
 			t.setSuspended(true);
 		}
@@ -37,7 +37,7 @@ public interface IWallet extends IConfig {
 			do
 			{
 				boolean allEnded = true;
-				for (final DataGatheringThread<?> t : this.threads)
+				for (final DataGatheringThread<?> t : threads)
 				{
 					if (t.isAlive())
 					{

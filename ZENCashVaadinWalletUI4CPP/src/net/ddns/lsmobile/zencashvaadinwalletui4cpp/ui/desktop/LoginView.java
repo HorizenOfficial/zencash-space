@@ -16,8 +16,11 @@ import com.xdev.ui.XdevTextField;
 import com.xdev.ui.XdevView;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.AuthenticationProvider;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZenNode;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 
-public class LoginView extends XdevView implements com.xdev.security.authentication.ui.LoginView {
+public class LoginView extends XdevView implements com.xdev.security.authentication.ui.LoginView, IConfig {
 
 	/**
 	 * 
@@ -58,6 +61,14 @@ public class LoginView extends XdevView implements com.xdev.security.authenticat
             userDAO.commit();
         }
 */
+		final ZenNode zenNode = ((Servlet) Servlet.getCurrent()).zenNode;
+		while (!zenNode.connected) {
+			try {
+				Thread.sleep(3000);
+			} catch (final InterruptedException e) {
+			}
+			log.error("The node is not connected yet.");
+		}
 		final CredentialsUsernamePassword credentials = CredentialsUsernamePassword.New(getUsername(), getPassword());
 		final AuthenticationProvider authenticatorProvider = AuthenticationProvider.getInstance();
 		if (!Authentication.tryLogin(credentials, authenticatorProvider)) {

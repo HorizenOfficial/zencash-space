@@ -22,25 +22,28 @@
         <XdevMenuBar x:name="menuBar">
             <x:constraints gridx="1" gridy="1" weighty="0.0" weightx="1.0" width="100%" />
             <XdevMenuItem x:name="menuItemMain" text="Main">
-                <XdevMenuItem x:name="menuItemAbout" text="About..." />
+                <XdevMenuItem enabled="false" x:name="menuItemAbout" text="About..." />
+                <XdevMenuItem x:name="menuItemLogOut" text="Log out...">
+                    <x:event>menuSelected.menuSelected</x:event>
+                </XdevMenuItem>
             </XdevMenuItem>
             <XdevMenuItem x:name="menuItemWallet" text="Wallet">
-                <XdevMenuItem x:name="menuItemBackup" text="Backup..." />
+                <XdevMenuItem enabled="false" x:name="menuItemBackup" text="Backup..." />
                 <XdevMenuItem enabled="false" x:name="menuItemEncrypt" text="Encrypt..." />
-                <XdevMenuItem x:name="menuItemExportPrivateKeys" text="Export private keys..." />
-                <XdevMenuItem x:name="menuItemImportPrivateKeys" text="Import private keys..." />
+                <XdevMenuItem enabled="false" x:name="menuItemExportPrivateKeys" text="Export private keys..." />
+                <XdevMenuItem enabled="false" x:name="menuItemImportPrivateKeys" text="Import private keys..." />
                 <XdevMenuItem x:name="menuItemShowPrivateKey" text="Show private key...">
                     <x:event>menuSelected.menuSelected</x:event>
                 </XdevMenuItem>
-                <XdevMenuItem x:name="menuItemImportOnePrivateKey" text="Import one private key..." />
+                <XdevMenuItem enabled="false" x:name="menuItemImportOnePrivateKey" text="Import one private key..." />
             </XdevMenuItem>
             <XdevMenuItem x:name="menuItemMessaging" text="Messaging">
-                <XdevMenuItem x:name="menuItemOwnIdentity" text="Own identity..." />
-                <XdevMenuItem x:name="menuItemExportOwnIdentity" text="Export own identity..." />
-                <XdevMenuItem x:name="menuItemAddMessagingGroup" text="Add messaging group..." />
-                <XdevMenuItem x:name="menuItemImportContactIdentity" text="Import contact identity..." />
-                <XdevMenuItem x:name="menuItemRemoveContact" text="Remove contact..." />
-                <XdevMenuItem x:name="menuItemOptions" text="Options..." />
+                <XdevMenuItem enabled="false" x:name="menuItemOwnIdentity" text="Own identity..." />
+                <XdevMenuItem enabled="false" x:name="menuItemExportOwnIdentity" text="Export own identity..." />
+                <XdevMenuItem enabled="false" x:name="menuItemAddMessagingGroup" text="Add messaging group..." />
+                <XdevMenuItem enabled="false" x:name="menuItemImportContactIdentity" text="Import contact identity..." />
+                <XdevMenuItem enabled="false" x:name="menuItemRemoveContact" text="Remove contact..." />
+                <XdevMenuItem enabled="false" x:name="menuItemOptions" text="Options..." />
             </XdevMenuItem>
         </XdevMenuBar>
         <XdevTabSheet styleName="framed" x:name="tabSheet" x:selectedTabIndex="0">
@@ -131,10 +134,10 @@
                     <x:constraints gridx="1" gridy="8" weighty="0.0" weightx="0.2" width="100%" gridWidth="4" />
                 </XdevLabel>
             </XdevGridLayout>
-            <XdevGridLayout caption="Address book" x:name="tabAddressBook" visible="false">
+            <XdevGridLayout caption="Address book" enabled="false" x:name="tabAddressBook" visible="false">
                 <x:constraints width="100%" height="100%" />
             </XdevGridLayout>
-            <XdevGridLayout caption="Messaging" x:name="tabMessaging" visible="false">
+            <XdevGridLayout caption="Messaging" enabled="false" x:name="tabMessaging" visible="false">
                 <x:constraints width="100%" height="100%" />
             </XdevGridLayout>
         </XdevTabSheet>

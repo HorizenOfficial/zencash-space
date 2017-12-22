@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+
+<?xdevuiml version="1.0"?>
+<?template BROWSER_XGA?>
+<?import com.xdev.ui.XdevButton?>
+<?import com.xdev.ui.XdevGridLayout?>
+<?import com.xdev.ui.XdevImage?>
+<?import com.xdev.ui.XdevLabel?>
+<?import com.xdev.ui.XdevView?>
+<XdevView xmlns:x="http://xml.xdev-software.com/xdevuiml" x:name="LoadingView">
+    <x:constraints zpos="0" width="100%" height="100%" />
+    <XdevGridLayout x:name="gridLayout">
+        <x:constraints zpos="0" width="100%" height="100%" />
+        <XdevImage source="WebContent/WEB-INF/resources/images/loading.gif" x:name="imageLoading">
+            <x:constraints gridx="1" gridy="1" top="-23px" left="1159px" weighty="0.1" weightx="0.1" width="100px" alignment="BOTTOM_CENTER" height="100px" />
+        </XdevImage>
+        <XdevLabel x:name="labelLoading" value="Your wallet is currently being downloaded and decrypted. Please, be patient...">
+            <x:constraints gridx="1" gridy="2" top="-23px" left="1159px" weighty="0.0" weightx="0.1" alignment="TOP_CENTER" />
+        </XdevLabel>
+        <XdevButton caption="OK" x:name="buttonOk">
+            <x:constraints gridx="1" gridy="4" weighty="0.1" weightx="0.1" alignment="TOP_CENTER" />
+            <x:event>click.buttonClick</x:event>
+        </XdevButton>
+    </XdevGridLayout>
+</XdevView>
+
