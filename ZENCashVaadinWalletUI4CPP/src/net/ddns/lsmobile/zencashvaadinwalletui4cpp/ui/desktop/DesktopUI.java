@@ -33,7 +33,7 @@ public class DesktopUI extends XdevUI {
 		this.navigator = new XdevAuthenticationNavigator(this, this);
 	
 		this.setTabIndex(0);
-		this.navigator.setRedirectViewName("loading");
+		this.navigator.setRedirectViewName("home");
 		this.navigator.addView("", LoginView.class);
 		this.navigator.addView("loading", LoadingView.class);
 		this.navigator.addView("home", MainView.class);

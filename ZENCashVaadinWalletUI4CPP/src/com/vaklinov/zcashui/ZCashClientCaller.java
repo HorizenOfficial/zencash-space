@@ -52,6 +52,7 @@ import com.eclipsesource.json.WriterConfig;
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Transaction;
 
 
 /**
@@ -214,40 +215,59 @@ public class ZCashClientCaller implements IConfig
 	}
 
 
-	public synchronized String[][] getWalletPublicTransactions()
+	public synchronized Set<Transaction> getWalletPublicTransactions()
 		throws WalletCallException, IOException, InterruptedException
 	{
-		String notListed = "\u26D4";
-		
-		final OS_TYPE os = OSUtil.getOSType();
-		if (os == OS_TYPE.WINDOWS)
-		{
-			notListed = " \u25B6";
-		}
 		
 	    final JsonArray jsonTransactions = executeCommandAndGetJsonArray(
 	    	"listtransactions", wrapStringParameter(""), "300");
-	    final String strTransactions[][] = new String[jsonTransactions.size()][];
-	    for (int i = 0; i < jsonTransactions.size(); i++)
+	    final Set<Transaction> transactions = new HashSet<> ();
+	    for (final JsonValue jsonValue : jsonTransactions)
 	    {
-	    	strTransactions[i] = new String[7];
-	    	final JsonObject trans = jsonTransactions.get(i).asObject();
+	    	final JsonObject jsonObject = jsonValue.asObject();
 
+	    	final Transaction transaction = new Transaction ();
 	    	// Needs to be the same as in getWalletZReceivedTransactions()
 	    	// TODO: some day refactor to use object containers
-	    	strTransactions[i][0] = "\u2606T (Public)";
-	    	strTransactions[i][1] = trans.getString("category", "ERROR!");
-	    	strTransactions[i][2] = trans.get("confirmations").toString();
-	    	strTransactions[i][3] = trans.get("amount").toString();
-	    	strTransactions[i][4] = trans.get("time").toString();
-	    	strTransactions[i][5] = trans.getString("address", notListed + " (Z Address not listed by wallet!)");
-	    	strTransactions[i][6] = trans.get("txid").toString();
-
+	    	transaction.setType(Transaction.Type.PUBLIC);
+	    	transaction.setDirection(jsonObject.getString("category", null));
+	    	transaction.setIsConfirmed(jsonObject.get("confirmations").toString());
+	    	transaction.setAmount(jsonObject.get("amount").toString());
+	    	transaction.setDate(jsonObject.get("time").toString());
+	    	transaction.setDestinationAddress(jsonObject.getString("address", null));
+	    	transaction.setTransaction(jsonObject.get("txid").toString().replaceAll("\"", ""));
+	    	transactions.add(transaction);
 	    }
 
-	    return strTransactions;
+	    return transactions;
 	}
+	
+	/**
+	 * Get available public+private transactions and unify them
+	 * */
+	public synchronized Set<Transaction> getTransactionsDataFromWallet()
+			throws WalletCallException, IOException, InterruptedException
+		{
+			final Set<Transaction> publicTransactions = getWalletPublicTransactions();
+			final Set<Transaction> zReceivedTransactions = getWalletZReceivedTransactions();
 
+			final Set<Transaction> allTransactions = new HashSet<>();
+			
+			allTransactions.addAll(publicTransactions);
+			allTransactions.addAll(zReceivedTransactions);
+			
+			return allTransactions;
+		}
+	
+	private volatile Set<Transaction> lastTransactionsData = null;
+	
+	public synchronized boolean isTransactionsDataChanged () throws WalletCallException, IOException, InterruptedException
+	{
+		final Set<Transaction> newTransactionsData = getTransactionsDataFromWallet();
+		final boolean isTransactionsDataChanged = this.lastTransactionsData == null || newTransactionsData.size() > this.lastTransactionsData.size();
+		this.lastTransactionsData = newTransactionsData;
+		return isTransactionsDataChanged;
+	}
 
 	public synchronized String[] getWalletZAddresses()
 		throws WalletCallException, IOException, InterruptedException
@@ -263,12 +283,12 @@ public class ZCashClientCaller implements IConfig
 	}
 
 
-	public synchronized String[][] getWalletZReceivedTransactions()
+	public synchronized Set<Transaction> getWalletZReceivedTransactions()
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final String[] zAddresses = this.getWalletZAddresses();
 
-		final List<String[]> zReceivedTransactions = new ArrayList<>();
+		final Set<Transaction> zReceivedTransactions = new HashSet<>();
 
 		for (final String zAddress : zAddresses)
 		{
@@ -276,25 +296,26 @@ public class ZCashClientCaller implements IConfig
 		    	"z_listreceivedbyaddress", wrapStringParameter(zAddress), "0");
 		    for (int i = 0; i < jsonTransactions.size(); i++)
 		    {
-		    	final String[] currentTransaction = new String[7];
 		    	final JsonObject trans = jsonTransactions.get(i).asObject();
+		    	final Transaction currentTransaction = new Transaction();
 
 		    	final String txID = trans.getString("txid", "ERROR!");
 		    	// Needs to be the same as in getWalletPublicTransactions()
 		    	// TODO: some day refactor to use object containers
-		    	currentTransaction[0] = "\u2605Z (Private)";
-		    	currentTransaction[1] = "receive";
-		    	currentTransaction[2] = this.getWalletTransactionConfirmations(txID);
-		    	currentTransaction[3] = trans.get("amount").toString();
-		    	currentTransaction[4] = this.getWalletTransactionTime(txID); // TODO: minimize sub-calls
-		    	currentTransaction[5] = zAddress;
-		    	currentTransaction[6] = trans.get("txid").toString();
+		    	currentTransaction.setType(Transaction.Type.PUBLIC);
+		    	currentTransaction.setDirection(Transaction.Direction.RECEIVE);
+		    	currentTransaction.setIsConfirmed(this.getWalletTransactionConfirmations(txID));
+		    	currentTransaction.setAmount(trans.get("amount").toString());
+		    	currentTransaction.setDate(this.getWalletTransactionTime(txID));// TODO: minimize sub-calls
+		    	currentTransaction.setDestinationAddress(zAddress);
+		    	currentTransaction.setTransaction(trans.get("txid").toString());
 
 		    	zReceivedTransactions.add(currentTransaction);
 		    }
 		}
 
-		return zReceivedTransactions.toArray(new String[0][]);
+		//return zReceivedTransactions.toArray(new String[0][]); TODO LS
+		return zReceivedTransactions;
 	}
 
 	
@@ -1101,6 +1122,11 @@ public class ZCashClientCaller implements IConfig
 		{
 			map.put(name, val.toString());
 		}
+	}
+
+
+	public synchronized Set<Transaction> getLastTransactionsData() {
+		return this.lastTransactionsData;
 	}
 
 }

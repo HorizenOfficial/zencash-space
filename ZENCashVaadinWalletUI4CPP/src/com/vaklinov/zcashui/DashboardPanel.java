@@ -598,8 +598,8 @@ public class DashboardPanel
 		throws WalletCallException, IOException, InterruptedException
 	{
 		// Get available public+private transactions and unify them.
-		final String[][] publicTransactions = this.clientCaller.getWalletPublicTransactions();
-		final String[][] zReceivedTransactions = this.clientCaller.getWalletZReceivedTransactions();
+		final String[][] publicTransactions = null;// TODO LS this.clientCaller.getWalletPublicTransactions();
+		final String[][] zReceivedTransactions = null;// TODO LS this.clientCaller.getWalletZReceivedTransactions();
 
 		final String[][] allTransactions = new String[publicTransactions.length + zReceivedTransactions.length][];
 

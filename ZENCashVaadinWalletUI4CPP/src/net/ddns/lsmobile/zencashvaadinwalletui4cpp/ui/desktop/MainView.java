@@ -2,17 +2,16 @@
 package net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop;
 
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.vaadin.data.sort.Sort;
 import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
@@ -45,6 +44,7 @@ import com.xdev.ui.entitycomponent.combobox.XdevComboBox;
 import com.xdev.util.ConverterBuilder;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IWallet;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Transaction;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZenNode;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 
@@ -58,8 +58,7 @@ public class MainView extends XdevView implements IWallet {
 
 	private final String OSInfo              = null;
 
-	private String[][] lastTransactionsData = null;
-	private DataGatheringThread<String[][]> transactionGatheringThread = null;
+	private DataGatheringThread<Set<Transaction>> transactionGatheringThread = null;
 	
 	public MainView() {
 		super();
@@ -112,14 +111,14 @@ public class MainView extends XdevView implements IWallet {
 
 			// Thread and timer to update the transactions table
 			this.transactionGatheringThread = new DataGatheringThread<>(
-				new DataGatheringThread.DataGatherer<String[][]>()
+				new DataGatheringThread.DataGatherer<Set<Transaction>>()
 				{
 					@Override
-					public String[][] gatherData()
+					public Set<Transaction> gatherData()
 						throws Exception
 					{
 						final long start = System.currentTimeMillis();
-						final String[][] data =  MainView.this.getTransactionsDataFromWallet();
+						final Set<Transaction> data =  MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet();
 						final long end = System.currentTimeMillis();
 						log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
 						
@@ -250,135 +249,16 @@ public class MainView extends XdevView implements IWallet {
 	
 	}
 
-	private String[][] getTransactionsDataFromWallet()
-			throws WalletCallException, IOException, InterruptedException
-		{
-			// Get available public+private transactions and unify them.
-			final String[][] publicTransactions = this.zenNode.clientCaller.getWalletPublicTransactions();
-			final String[][] zReceivedTransactions = this.zenNode.clientCaller.getWalletZReceivedTransactions();
 
-			final String[][] allTransactions = new String[publicTransactions.length + zReceivedTransactions.length][];
-
-			int i  = 0;
-
-			for (final String[] t : publicTransactions)
-			{
-				allTransactions[i++] = t;
-			}
-
-			for (final String[] t : zReceivedTransactions)
-			{
-				allTransactions[i++] = t;
-			}
-			
-			// Sort transactions by date
-			Arrays.sort(allTransactions, new Comparator<String[]>() {
-				@Override
-				public int compare(final String[] o1, final String[] o2)
-				{
-					Date d1 = new Date(0);
-					if (!o1[4].equals("N/A"))
-					{
-						d1 = new Date(Long.valueOf(o1[4]).longValue() * 1000L);
-					}
-
-					Date d2 = new Date(0);
-					if (!o2[4].equals("N/A"))
-					{
-						d2 = new Date(Long.valueOf(o2[4]).longValue() * 1000L);
-					}
-
-					if (d1.equals(d2))
-					{
-						return 0;
-					} else
-					{
-						return d2.compareTo(d1);
-					}
-				}
-			});
-			
-			
-			// Confirmation symbols
-			String confirmed    = "\u2690";
-			String notConfirmed = "\u2691";
-			
-			// Windows does not support the flag symbol (Windows 7 by default)
-			// TODO: isolate OS-specific symbol codes in a separate class
-			final OS_TYPE os = OSUtil.getOSType();
-			if (os == OS_TYPE.WINDOWS)
-			{
-				confirmed = " \u25B7";
-				notConfirmed = " \u25B6";
-			}
-
-			// Change the direction and date etc. attributes for presentation purposes
-			for (final String[] trans : allTransactions)
-			{
-				// Direction
-				if (trans[1].equals("receive"))
-				{
-					trans[1] = "\u21E8 IN";
-				} else if (trans[1].equals("send"))
-				{
-					trans[1] = "\u21E6 OUT";
-				} else if (trans[1].equals("generate"))
-				{
-					trans[1] = "\u2692\u2699 MINED";
-				} else if (trans[1].equals("immature"))
-				{
-					trans[1] = "\u2696 Immature";
-				};
-
-				// Date
-				if (!trans[4].equals("N/A"))
-				{
-					trans[4] = new Date(Long.valueOf(trans[4]).longValue() * 1000L).toLocaleString();
-				}
-				
-				// Amount
-				try
-				{
-					double amount = Double.valueOf(trans[3]);
-					if (amount < 0d)
-					{
-						amount = -amount;
-					}
-					trans[3] = decimalFormat.format(amount);
-				} catch (final NumberFormatException nfe)
-				{
-					log.error("Error occurred while formatting amount: " + trans[3] +
-							           " - " + nfe.getMessage() + "!");
-				}
-				
-				// Confirmed?
-				try
-				{
-					final boolean isConfirmed = !trans[2].trim().equals("0");
-					
-					trans[2] = isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed);
-				} catch (final NumberFormatException nfe)
-				{
-					log.error("Error occurred while formatting confirmations: " + trans[2] +
-							           " - " + nfe.getMessage() + "!");
-				}
-			}
-
-
-			return allTransactions;
-		}
 	
 	private void updateWalletStatusLabel()
 			throws WalletCallException, IOException, InterruptedException
 		{
 			final WalletBalance balance = this.zenNode.clientCaller.getWalletInfo();
 			
-			// Format double numbers - else sometimes we get exponential notation 1E-4 ZEN
-			final DecimalFormat df = new DecimalFormat("########0.00###### ZEN");
-			
-			this.labelTransparentBalance.setValue(df.format(balance.transparentBalance));
-			this.labelPrivateBalance.setValue(df.format(balance.privateBalance));
-			this.labelTotalBalance.setValue(df.format(balance.totalBalance));
+			this.labelTransparentBalance.setValue(defaultNumberFormat.format(balance.transparentBalance) + " ZEN");
+			this.labelPrivateBalance.setValue(defaultNumberFormat.format(balance.privateBalance) + " ZEN");
+			this.labelTotalBalance.setValue(defaultNumberFormat.format(balance.totalBalance) + " ZEN");
 			
 			/* TODO LS
 			
@@ -436,59 +316,55 @@ public class MainView extends XdevView implements IWallet {
 			*/
 		}
 	
-	private void updateWalletTransactionsTable()
-			throws WalletCallException, IOException, InterruptedException
-		{
-		
-			final String[][] newTransactionsData = getTransactionsDataFromWallet();
+	private void updateWalletTransactionsTable() throws WalletCallException, IOException, InterruptedException {
+		if (this.zenNode.clientCaller.isTransactionsDataChanged()) {
+			log.info("Updating table of transactions...");
+			final Set<Transaction> newTransactionsData = this.zenNode.clientCaller.getLastTransactionsData();
 			// TODO LS this.transactionGatheringThread.getLastData();
-			
+
 			// May be null - not even gathered once
-			if (newTransactionsData == null)
-			{
+			if (newTransactionsData == null) {
 				return;
 			}
-				
-			if (Util.arraysAreDifferent(this.lastTransactionsData, newTransactionsData))
-			{
-				log.info("Updating table of transactions...");
-//				this.remove(this.transactionsTablePane);
-//				this.add(this.transactionsTablePane = new JScrollPane(
-//				             this.transactionsTable = this.createTransactionsTable(newTransactionsData)),
-//				         BorderLayout.CENTER);
-				
-				final Grid gridTransactions = new Grid("Transactions:");
-		//		final HeaderRow headerWallets = gridTransactions.prependHeaderRow();
-		
-				// Formats
-		//		final DecimalFormat formatUsd = new DecimalFormat(UsdToHtmlConverter.FORMAT_USD);
-		
-				// Columns
-				gridTransactions.addColumn(TRANSACTIONS_COLUMN_TYPE, String.class).setRenderer(new HtmlRenderer())/*.setHeaderCaption("")*/;
-				gridTransactions.addColumn(TRANSACTIONS_COLUMN_DIRECTION, String.class).setRenderer(new HtmlRenderer());
-				gridTransactions.addColumn(TRANSACTIONS_COLUMN_CONFIRMED, String.class).setRenderer(new HtmlRenderer());
-				gridTransactions.addColumn(TRANSACTIONS_COLUMN_AMOUNT, String.class/*Double.class*/).setRenderer(new HtmlRenderer()/*NumberRenderer(formatUsd), new UsdToHtmlConverter()*/);
-				gridTransactions.addColumn(TRANSACTIONS_COLUMN_DATE, String.class/*Date.class*/).setRenderer(new HtmlRenderer/*DateRenderer*/());
-				gridTransactions.addColumn(TRANSACTIONS_COLUMN_DESTINATION_ADDRESS, String.class).setRenderer(new HtmlRenderer()).setSortable(false);
-				gridTransactions.addColumn(TRANSACTIONS_COLUMN_DESTINATION_TRANSACTION, String.class).setRenderer(new HtmlRenderer()).setSortable(false)/*.setWidth(0)*/;
-				
-		//		gridTransactions.setFrozenColumnCount(2);
-		
-				// Rows (Values)
-				for (final String[] transactionsRow : newTransactionsData) {
-						gridTransactions.addRow(transactionsRow);
-				}
-		
-		//		gridBalance.sort(Sort.by(COLUMN_SECURITY_DEGREE, SortDirection.ASCENDING)
-		//		          .then(COLUMN_SUM, SortDirection.DESCENDING));;
-		
-				gridTransactions.setSizeFull();
-				this.panelGridTransactions.setContent(gridTransactions);
+
+			final Grid gridTransactions = new Grid("Transactions:");
+			// final HeaderRow headerWallets =
+			// gridTransactions.prependHeaderRow();
+
+			// Formats
+			// final DecimalFormat formatUsd = new
+			// DecimalFormat(UsdToHtmlConverter.FORMAT_USD);
+
+			// Columns
+			gridTransactions.addColumn(Transaction.COLUMN_TYPE, String.class)
+					.setRenderer(new HtmlRenderer())/* .setHeaderCaption("") */;
+			gridTransactions.addColumn(Transaction.COLUMN_DIRECTION, String.class).setRenderer(new HtmlRenderer());
+			gridTransactions.addColumn(Transaction.COLUMN_CONFIRMED, String.class).setRenderer(new HtmlRenderer());
+			gridTransactions.addColumn(Transaction.COLUMN_AMOUNT, String.class/* Double.class */)
+					.setRenderer(new HtmlRenderer()/* NumberRenderer(formatUsd), new UsdToHtmlConverter() */);
+			gridTransactions.addColumn(Transaction.COLUMN_DATE,
+					String.class/* Date.class */).setRenderer(new HtmlRenderer/* DateRenderer */());
+			gridTransactions.addColumn(Transaction.COLUMN_DESTINATION_ADDRESS, String.class)
+					.setRenderer(new HtmlRenderer()).setSortable(false);
+			gridTransactions.addColumn(Transaction.COLUMN_DESTINATION_TRANSACTION, String.class)
+					.setRenderer(new HtmlRenderer()).setSortable(false)/* .setWidth(0) */;
+
+			// gridTransactions.setFrozenColumnCount(2);
+
+			// Rows (Values)
+			for (final Transaction transactionsRow : newTransactionsData) {
+				gridTransactions.addRow(transactionsRow.getTypeAsString(), transactionsRow.getDirectionAsString(),
+						transactionsRow.getIsConfirmedAsString(),
+						defaultNumberFormat.format(transactionsRow.getAmount()), transactionsRow.getDateAsString(),
+						transactionsRow.getDestinationAddressAsString(), transactionsRow.getTransactionAsString());
 			}
 
-			this.lastTransactionsData = newTransactionsData;
+			gridTransactions.sort(Sort.by(Transaction.COLUMN_DATE, SortDirection.DESCENDING));
+
+			gridTransactions.setSizeFull();
+			this.panelGridTransactions.setContent(gridTransactions);
 		}
-	
+	}
 	
 	
 	//AddressesPanel
@@ -691,7 +567,7 @@ public class MainView extends XdevView implements IWallet {
 			final String confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
 			final String unconfirmedBalance = this.zenNode.clientCaller.getUnconfirmedBalanceForAddress(address);
 			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
-			final String balanceToShow = decimalFormat.format(Double.valueOf(
+			final String balanceToShow = defaultNumberFormat.format(Double.valueOf(
 				isConfirmed ? confirmedBalance : unconfirmedBalance));
 			
 			addressBalances[i++] = new String[]
@@ -707,7 +583,7 @@ public class MainView extends XdevView implements IWallet {
 			final String confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
 			final String unconfirmedBalance = this.zenNode.clientCaller.getUnconfirmedBalanceForAddress(address);
 			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
-			final String balanceToShow = decimalFormat.format(Double.valueOf(
+			final String balanceToShow = defaultNumberFormat.format(Double.valueOf(
 				isConfirmed ? confirmedBalance : unconfirmedBalance));
 			
 			addressBalances[i++] = new String[]
@@ -987,7 +863,7 @@ public class MainView extends XdevView implements IWallet {
 		}
 	    @Override
 		public String toString() {
-	    	return decimalFormat.format(Double.valueOf(this.balance))  +
+	    	return defaultNumberFormat.format(Double.valueOf(this.balance))  +
 					" - " + this.address;
 	    }
 	}

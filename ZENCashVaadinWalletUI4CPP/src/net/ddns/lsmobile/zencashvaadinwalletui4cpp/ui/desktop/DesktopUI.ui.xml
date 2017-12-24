@@ -10,7 +10,7 @@
 <?import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop.MainView?>
 <XdevUI xmlns:x="http://xml.xdev-software.com/xdevuiml" tabIndex="0" x:name="DesktopUI">
     <x:constraints zpos="0" width="100%" height="100%" />
-    <XdevAuthenticationNavigator redirectViewName="loading" x:target="DesktopUI" x:name="navigator" x:singleComponentContainer="DesktopUI">
+    <XdevAuthenticationNavigator redirectViewName="home" x:target="DesktopUI" x:name="navigator" x:singleComponentContainer="DesktopUI">
         <x:views>
             <entry path="" class="LoginView" />
             <entry path="loading" class="LoadingView" />
