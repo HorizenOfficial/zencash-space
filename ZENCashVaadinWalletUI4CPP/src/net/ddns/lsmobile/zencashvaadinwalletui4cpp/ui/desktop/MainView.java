@@ -21,6 +21,7 @@ import com.vaadin.ui.Grid;
 import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Notification.Type;
+import com.vaadin.ui.UI;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import com.vaklinov.zcashui.DataGatheringThread;
 import com.vaklinov.zcashui.OSUtil;
@@ -109,6 +110,8 @@ public class MainView extends XdevView implements IWallet {
 			}), 1000, 2000 , TimeUnit.MILLISECONDS);
 //			this.timers.add(walletBalanceTimer); TODO LS
 
+//			updateWalletTransactionsTable(MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet());
+			
 			// Thread and timer to update the transactions table
 			this.transactionGatheringThread = new DataGatheringThread<>(
 				new DataGatheringThread.DataGatherer<Set<Transaction>>()
@@ -117,28 +120,34 @@ public class MainView extends XdevView implements IWallet {
 					public Set<Transaction> gatherData()
 						throws Exception
 					{
-						final long start = System.currentTimeMillis();
-						final Set<Transaction> data =  MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet();
-						final long end = System.currentTimeMillis();
-						log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
-						
-						return data;
+						final UI ui = getUI();
+						if (ui != null) {
+							final long start = System.currentTimeMillis();
+							final Set<Transaction> lastData = MainView.this.transactionGatheringThread.getLastData();
+							final Set<Transaction> data =  MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet();
+							final long end = System.currentTimeMillis();
+							log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
+
+							if (lastData == null || data.size() > lastData.size()) {
+						        new Thread(new RunnableAccessWrapper(()->{
+									ui.access(() -> {
+										try {
+											updateWalletTransactionsTable(data);
+										} catch (final Exception e) {
+											log.error("Unexpected error: ", e);
+										}
+									});
+									ui.push();
+						        })).start();
+							}
+							
+							return data;
+						}
+						return null;
 					}
 				},
 				20000);
 			threads.add(this.transactionGatheringThread);
-
-			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new RunnableAccessWrapper(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						updateWalletTransactionsTable();
-					} catch (final Exception e) {
-						log.error("Unexpected error: ", e);
-					}
-				}
-			}), 0, 5000, TimeUnit.MILLISECONDS);
-//			timers.add(t); TODO LS
 
 						
 			//AddressesPanel
@@ -316,54 +325,51 @@ public class MainView extends XdevView implements IWallet {
 			*/
 		}
 	
-	private void updateWalletTransactionsTable() throws WalletCallException, IOException, InterruptedException {
-		if (this.zenNode.clientCaller.isTransactionsDataChanged()) {
-			log.info("Updating table of transactions...");
-			final Set<Transaction> newTransactionsData = this.zenNode.clientCaller.getLastTransactionsData();
-			// TODO LS this.transactionGatheringThread.getLastData();
+	private void updateWalletTransactionsTable(final Set<Transaction> newTransactionsData) throws WalletCallException, IOException, InterruptedException {
+		log.info("Updating table of transactions...");
+		// TODO LS this.transactionGatheringThread.getLastData();
 
-			// May be null - not even gathered once
-			if (newTransactionsData == null) {
-				return;
-			}
-
-			final Grid gridTransactions = new Grid("Transactions:");
-			// final HeaderRow headerWallets =
-			// gridTransactions.prependHeaderRow();
-
-			// Formats
-			// final DecimalFormat formatUsd = new
-			// DecimalFormat(UsdToHtmlConverter.FORMAT_USD);
-
-			// Columns
-			gridTransactions.addColumn(Transaction.COLUMN_TYPE, String.class)
-					.setRenderer(new HtmlRenderer())/* .setHeaderCaption("") */;
-			gridTransactions.addColumn(Transaction.COLUMN_DIRECTION, String.class).setRenderer(new HtmlRenderer());
-			gridTransactions.addColumn(Transaction.COLUMN_CONFIRMED, String.class).setRenderer(new HtmlRenderer());
-			gridTransactions.addColumn(Transaction.COLUMN_AMOUNT, String.class/* Double.class */)
-					.setRenderer(new HtmlRenderer()/* NumberRenderer(formatUsd), new UsdToHtmlConverter() */);
-			gridTransactions.addColumn(Transaction.COLUMN_DATE,
-					String.class/* Date.class */).setRenderer(new HtmlRenderer/* DateRenderer */());
-			gridTransactions.addColumn(Transaction.COLUMN_DESTINATION_ADDRESS, String.class)
-					.setRenderer(new HtmlRenderer()).setSortable(false);
-			gridTransactions.addColumn(Transaction.COLUMN_DESTINATION_TRANSACTION, String.class)
-					.setRenderer(new HtmlRenderer()).setSortable(false)/* .setWidth(0) */;
-
-			// gridTransactions.setFrozenColumnCount(2);
-
-			// Rows (Values)
-			for (final Transaction transactionsRow : newTransactionsData) {
-				gridTransactions.addRow(transactionsRow.getTypeAsString(), transactionsRow.getDirectionAsString(),
-						transactionsRow.getIsConfirmedAsString(),
-						defaultNumberFormat.format(transactionsRow.getAmount()), transactionsRow.getDateAsString(),
-						transactionsRow.getDestinationAddressAsString(), transactionsRow.getTransactionAsString());
-			}
-
-			gridTransactions.sort(Sort.by(Transaction.COLUMN_DATE, SortDirection.DESCENDING));
-
-			gridTransactions.setSizeFull();
-			this.panelGridTransactions.setContent(gridTransactions);
+		// May be null - not even gathered once
+		if (newTransactionsData == null) {
+			return;
 		}
+
+		final Grid gridTransactions = new Grid("Transactions:");
+		// final HeaderRow headerWallets =
+		// gridTransactions.prependHeaderRow();
+
+		// Formats
+		// final DecimalFormat formatUsd = new
+		// DecimalFormat(UsdToHtmlConverter.FORMAT_USD);
+
+		// Columns
+		gridTransactions.addColumn(Transaction.COLUMN_TYPE, String.class)
+				.setRenderer(new HtmlRenderer())/* .setHeaderCaption("") */;
+		gridTransactions.addColumn(Transaction.COLUMN_DIRECTION, String.class).setRenderer(new HtmlRenderer());
+		gridTransactions.addColumn(Transaction.COLUMN_CONFIRMED, String.class).setRenderer(new HtmlRenderer());
+		gridTransactions.addColumn(Transaction.COLUMN_AMOUNT, String.class/* Double.class */)
+				.setRenderer(new HtmlRenderer()/* NumberRenderer(formatUsd), new UsdToHtmlConverter() */);
+		gridTransactions.addColumn(Transaction.COLUMN_DATE,
+				String.class/* Date.class */).setRenderer(new HtmlRenderer/* DateRenderer */());
+		gridTransactions.addColumn(Transaction.COLUMN_DESTINATION_ADDRESS, String.class)
+				.setRenderer(new HtmlRenderer()).setSortable(false);
+		gridTransactions.addColumn(Transaction.COLUMN_DESTINATION_TRANSACTION, String.class)
+				.setRenderer(new HtmlRenderer()).setSortable(false)/* .setWidth(0) */;
+
+		// gridTransactions.setFrozenColumnCount(2);
+
+		// Rows (Values)
+		for (final Transaction transactionsRow : newTransactionsData) {
+			gridTransactions.addRow(transactionsRow.getTypeAsString(), transactionsRow.getDirectionAsString(),
+					transactionsRow.getIsConfirmedAsString(),
+					defaultNumberFormat.format(transactionsRow.getAmount()), transactionsRow.getDateAsString(),
+					transactionsRow.getDestinationAddressAsString(), transactionsRow.getTransactionAsString());
+		}
+
+		gridTransactions.sort(Sort.by(Transaction.COLUMN_DATE, SortDirection.DESCENDING));
+
+		gridTransactions.setSizeFull();
+		this.panelGridTransactions.setContent(gridTransactions);
 	}
 	
 	

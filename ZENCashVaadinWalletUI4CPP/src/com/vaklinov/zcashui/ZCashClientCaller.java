@@ -259,16 +259,6 @@ public class ZCashClientCaller implements IConfig
 			return allTransactions;
 		}
 	
-	private volatile Set<Transaction> lastTransactionsData = null;
-	
-	public synchronized boolean isTransactionsDataChanged () throws WalletCallException, IOException, InterruptedException
-	{
-		final Set<Transaction> newTransactionsData = getTransactionsDataFromWallet();
-		final boolean isTransactionsDataChanged = this.lastTransactionsData == null || newTransactionsData.size() > this.lastTransactionsData.size();
-		this.lastTransactionsData = newTransactionsData;
-		return isTransactionsDataChanged;
-	}
-
 	public synchronized String[] getWalletZAddresses()
 		throws WalletCallException, IOException, InterruptedException
 	{
@@ -1123,10 +1113,4 @@ public class ZCashClientCaller implements IConfig
 			map.put(name, val.toString());
 		}
 	}
-
-
-	public synchronized Set<Transaction> getLastTransactionsData() {
-		return this.lastTransactionsData;
-	}
-
 }
