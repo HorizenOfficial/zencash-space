@@ -54,7 +54,7 @@ public class MainView extends XdevView implements IWallet {
 	
 	private DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
 	
-	private Boolean walletIsEncrypted   = null;
+	private final Boolean walletIsEncrypted   = null;
 
 	private final String OSInfo              = null;
 
@@ -70,12 +70,12 @@ public class MainView extends XdevView implements IWallet {
 
 		try {
 
-			final WalletBalance balance = this.zenNode.clientCaller.getWalletInfo();
-			if (MainView.this.walletIsEncrypted == null)
-			{
-				MainView.this.walletIsEncrypted = MainView.this.zenNode.clientCaller.isWalletEncrypted();
-			}
-			updateWalletStatusLabel(balance);
+//			final WalletBalance balance = this.zenNode.clientCaller.getWalletInfo();
+//			if (MainView.this.walletIsEncrypted == null)
+//			{
+//				MainView.this.walletIsEncrypted = MainView.this.zenNode.clientCaller.isWalletEncrypted();
+//			}
+//			updateWalletStatusLabel(balance);
 			
 			// Thread and timer to update the wallet balance
 			this.walletBalanceGatheringThread = new DataGatheringThread<>(
@@ -106,7 +106,7 @@ public class MainView extends XdevView implements IWallet {
 				8000, true);
 			threads.add(this.walletBalanceGatheringThread);
 
-			updateWalletTransactionsTable(MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet());
+//			updateWalletTransactionsTable(MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet());
 			
 			// Thread and timer to update the transactions table
 			this.transactionGatheringThread = new DataGatheringThread<>(
@@ -134,7 +134,7 @@ public class MainView extends XdevView implements IWallet {
 						return null;
 					}
 				},
-				20000);
+				20000, true);
 			threads.add(this.transactionGatheringThread);
 
 						
@@ -748,6 +748,7 @@ public class MainView extends XdevView implements IWallet {
 		// operation
 		this.operationStatusCounter = 0;
 		final String amountFinal = amount;
+		final UI ui = getUI();
 		new Thread(new RunnableAccessWrapper(() -> {
 			try {
 				Boolean opComplete = null;
@@ -761,7 +762,7 @@ public class MainView extends XdevView implements IWallet {
 						// operation
 						opFollowingThread.setSuspended(true);
 
-						getUI().access(() -> {
+						ui.access(() -> {
 							try {
 								if (MainView.this.zenNode.clientCaller
 										.isCompletedOperationSuccessful(MainView.this.operationStatusID)) {
@@ -805,8 +806,9 @@ public class MainView extends XdevView implements IWallet {
 								log.error("Unexpected error: ", e);
 							}
 						});
+						ui.push();
 					} else {
-						getUI().access(() -> {
+						ui.access(() -> {
 							try {
 								// Update the progress
 								MainView.this.labelOperationStatus
@@ -826,6 +828,7 @@ public class MainView extends XdevView implements IWallet {
 								log.error("Unexpected error: ", e);
 							}
 						});
+						ui.push();
 					}
 					// SendCashPanel.this.repaint();
 
