@@ -6,11 +6,10 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import com.vaadin.data.sort.Sort;
 import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.server.ClientConnector;
 import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.shared.ui.label.ContentMode;
@@ -70,6 +69,14 @@ public class MainView extends XdevView implements IWallet {
 		usNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
 
 		try {
+
+			final WalletBalance balance = this.zenNode.clientCaller.getWalletInfo();
+			if (MainView.this.walletIsEncrypted == null)
+			{
+				MainView.this.walletIsEncrypted = MainView.this.zenNode.clientCaller.isWalletEncrypted();
+			}
+			updateWalletStatusLabel(balance);
+			
 			// Thread and timer to update the wallet balance
 			this.walletBalanceGatheringThread = new DataGatheringThread<>(
 				new DataGatheringThread.DataGatherer<WalletBalance>()
@@ -78,39 +85,28 @@ public class MainView extends XdevView implements IWallet {
 					public WalletBalance gatherData()
 						throws Exception
 					{
-						final long start = System.currentTimeMillis();
-						final WalletBalance balance = MainView.this.zenNode.clientCaller.getWalletInfo();
-						final long end = System.currentTimeMillis();
-						
-						// TODO: move this call to a dedicated one-off gathering thread - this is the wrong place
-						// it works but a better design is needed.
-						if (MainView.this.walletIsEncrypted == null)
-						{
-							MainView.this.walletIsEncrypted = MainView.this.zenNode.clientCaller.isWalletEncrypted();
+						final UI ui = getUI();
+						if (ui != null) {
+							final long start = System.currentTimeMillis();
+							final WalletBalance lastData = MainView.this.walletBalanceGatheringThread.getLastData();
+							final WalletBalance balance = MainView.this.zenNode.clientCaller.getWalletInfo();
+							final long end = System.currentTimeMillis();
+							log.info("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
+
+							if (lastData == null || !lastData.equals(balance)) {
+								updateWalletStatusLabel(balance);
+								ui.push();
+							}
+							
+							return balance;
 						}
-						
-						log.info("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
-						
-						return balance;
+						return null;
 					}
 				},
 				8000, true);
 			threads.add(this.walletBalanceGatheringThread);
-			
-//			getUI().access(() -> {});
-			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new RunnableAccessWrapper(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						updateWalletStatusLabel();
-					} catch (final Exception e) {
-						log.error("Unexpected error: ", e);
-					}
-				}
-			}), 1000, 2000 , TimeUnit.MILLISECONDS);
-//			this.timers.add(walletBalanceTimer); TODO LS
 
-//			updateWalletTransactionsTable(MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet());
+			updateWalletTransactionsTable(MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet());
 			
 			// Thread and timer to update the transactions table
 			this.transactionGatheringThread = new DataGatheringThread<>(
@@ -129,16 +125,8 @@ public class MainView extends XdevView implements IWallet {
 							log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
 
 							if (lastData == null || data.size() > lastData.size()) {
-						        new Thread(new RunnableAccessWrapper(()->{
-									ui.access(() -> {
-										try {
-											updateWalletTransactionsTable(data);
-										} catch (final Exception e) {
-											log.error("Unexpected error: ", e);
-										}
-									});
-									ui.push();
-						        })).start();
+								updateWalletTransactionsTable(data);
+								ui.push();
 							}
 							
 							return data;
@@ -151,50 +139,47 @@ public class MainView extends XdevView implements IWallet {
 
 						
 			//AddressesPanel
-						this.lastInteractiveRefresh = System.currentTimeMillis();
-						
-						//this.lastAddressBalanceData = getAddressBalanceDataFromWallet();
-						
-						updateWalletAddressBalanceTableInteractive();
+			this.lastInteractiveRefresh = System.currentTimeMillis();
+			
+			//this.lastAddressBalanceData = getAddressBalanceDataFromWallet();
+			
+			updateWalletAddressBalanceTableInteractive();
 						
 			//SendCashPanel
 						
-						//TODO LS
-						this.textFieldTransactionFee.setValue(defaultNumberFormat.format(Double.valueOf(0.0001)));
-						
-						// Update the balances via timer and data gathering thread
-						this.addressBalanceGatheringThread = new DataGatheringThread<>(
-							new DataGatheringThread.DataGatherer<String[][]>()
-							{
-								@Override
-								public String[][] gatherData()
-									throws Exception
-								{
-									final long start = System.currentTimeMillis();
-									final String[][] data = getAddressPositiveBalanceDataFromWallet();
-									final long end = System.currentTimeMillis();
-									log.info("Gathering of address/balance table data done in " + (end - start) + "ms." );
+			//TODO LS
+			this.textFieldTransactionFee.setValue(defaultNumberFormat.format(Double.valueOf(0.0001)));
+			
+			updateWalletAddressPositiveBalanceComboBox(MainView.this.zenNode.clientCaller.getAddressPositiveBalanceDataFromWallet());
+			
+			// Update the balances via timer and data gathering thread
+			this.addressBalanceGatheringThread = new DataGatheringThread<>(
+				new DataGatheringThread.DataGatherer<String[][]>()
+				{
+					@Override
+					public String[][] gatherData()
+						throws Exception
+					{
+						final UI ui = getUI();
+						if (ui != null) {
+							final long start = System.currentTimeMillis();
+							final String[][] lastData = MainView.this.addressBalanceGatheringThread.getLastData();
+							final String[][] data = MainView.this.zenNode.clientCaller.getAddressPositiveBalanceDataFromWallet();
+							final long end = System.currentTimeMillis();
+							log.info("Gathering of address/balance table data done in " + (end - start) + "ms." );
 
-									return data;
-								}
-							},
-							10000, true);
-						threads.add(this.addressBalanceGatheringThread);
-						
-//						getUI().access(() -> {});
-						Executors.newScheduledThreadPool(1).scheduleAtFixedRate(new RunnableAccessWrapper(new Runnable() {
-							@Override
-							public void run() {
-								try {
-									// TODO: if the user has opened the combo box - this
-									// closes it (maybe fix)
-									updateWalletAddressPositiveBalanceComboBox();
-								} catch (final Exception e) {
-									log.error("Unexpected error: ", e);
-								}
+							if (lastData == null || data.length > lastData.length) {
+								updateWalletAddressPositiveBalanceComboBox(data);
+								ui.push();
 							}
-						}), 3000, 5000 /*15000*/, TimeUnit.MILLISECONDS);
-//						this.timers.add(timerBalancesUpdater); TODO LS
+							
+							return data;
+						}
+						return null;
+					}
+				},
+				10000, true);
+			threads.add(this.addressBalanceGatheringThread);
 //
 //						// Add a popup menu to the destination address field - for convenience
 //						final JMenuItem paste = new JMenuItem("Paste address");
@@ -260,11 +245,9 @@ public class MainView extends XdevView implements IWallet {
 
 
 	
-	private void updateWalletStatusLabel()
+	private void updateWalletStatusLabel(final WalletBalance balance)
 			throws WalletCallException, IOException, InterruptedException
 		{
-			final WalletBalance balance = this.zenNode.clientCaller.getWalletInfo();
-			
 			this.labelTransparentBalance.setValue(defaultNumberFormat.format(balance.transparentBalance) + " ZEN");
 			this.labelPrivateBalance.setValue(defaultNumberFormat.format(balance.privateBalance) + " ZEN");
 			this.labelTotalBalance.setValue(defaultNumberFormat.format(balance.totalBalance) + " ZEN");
@@ -875,11 +858,9 @@ public class MainView extends XdevView implements IWallet {
 	}
 	
 	
-	private void updateWalletAddressPositiveBalanceComboBox()
+	private void updateWalletAddressPositiveBalanceComboBox(final String[][] newAddressBalanceData)
 		throws WalletCallException, IOException, InterruptedException
 	{
-		final String[][] newAddressBalanceData = this.addressBalanceGatheringThread.getLastData();
-		
 		boolean notChanged = true;
 		// The data may be null if nothing is yet obtained
 		if (newAddressBalanceData == null) {
@@ -933,69 +914,6 @@ public class MainView extends XdevView implements IWallet {
 		this.repaint();
 		*/
 	}
-
-
-	private String[][] getAddressPositiveBalanceDataFromWallet()
-		throws WalletCallException, IOException, InterruptedException
-	{
-		// Z Addresses - they are OK
-		final String[] zAddresses = this.zenNode.clientCaller.getWalletZAddresses();
-		
-		// T Addresses created inside wallet that may be empty
-		final String[] tAddresses = this.zenNode.clientCaller.getWalletAllPublicAddresses();
-		final Set<String> tStoredAddressSet = new HashSet<>();
-		for (final String address : tAddresses)
-		{
-			tStoredAddressSet.add(address);
-		}
-		
-		// T addresses with unspent outputs (even if not GUI created)...
-		final String[] tAddressesWithUnspentOuts = this.zenNode.clientCaller.getWalletPublicAddressesWithUnspentOutputs();
-		final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
-		for (final String address : tAddressesWithUnspentOuts)
-		{
-			tAddressSetWithUnspentOuts.add(address);
-		}
-		
-		// Combine all known T addresses
-		final Set<String> tAddressesCombined = new HashSet<>();
-		tAddressesCombined.addAll(tStoredAddressSet);
-		tAddressesCombined.addAll(tAddressSetWithUnspentOuts);
-		
-		final String[][] tempAddressBalances = new String[zAddresses.length + tAddressesCombined.size()][];
-		
-		int count = 0;
-
-		for (final String address : tAddressesCombined)
-		{
-			final String balance = this.zenNode.clientCaller.getBalanceForAddress(address);
-			if (Double.valueOf(balance) > 0)
-			{
-				tempAddressBalances[count++] = new String[]
-				{
-					balance, address
-				};
-			}
-		}
-		
-		for (final String address : zAddresses)
-		{
-			final String balance = this.zenNode.clientCaller.getBalanceForAddress(address);
-			if (Double.valueOf(balance) > 0)
-			{
-				tempAddressBalances[count++] = new String[]
-				{
-					balance, address
-				};
-			}
-		}
-
-		final String[][] addressBalances = new String[count][];
-		System.arraycopy(tempAddressBalances, 0, addressBalances, 0, count);
-		
-		return addressBalances;
-	}
-	
 
 
 	/**
@@ -1124,6 +1042,17 @@ public class MainView extends XdevView implements IWallet {
 	 */
 	private void menuItemLogOut_menuSelected(final MenuBar.MenuItem selectedItem) {
 		Authentication.logout();
+		stopThreadsAndTimers();
+	}
+
+	/**
+	 * Event handler delegate method for the {@link XdevView}.
+	 *
+	 * @see ClientConnector.DetachListener#detach(ClientConnector.DetachEvent)
+	 * @eventHandlerDelegate Do NOT delete, used by UI designer!
+	 */
+	private void this_detach(final ClientConnector.DetachEvent event) {
+		stopThreadsAndTimers();
 	}
 
 	/*
@@ -1344,6 +1273,7 @@ public class MainView extends XdevView implements IWallet {
 		this.setContent(this.gridLayout);
 		this.setSizeFull();
 	
+		this.addDetachListener(event -> this.this_detach(event));
 		this.menuItemLogOut.setCommand(selectedItem -> this.menuItemLogOut_menuSelected(selectedItem));
 		this.menuItemShowPrivateKey.setCommand(selectedItem -> this.menuItemShowPrivateKey_menuSelected(selectedItem));
 		this.buttonNewTAddress.addClickListener(event -> this.buttonNewTAddress_buttonClick(event));

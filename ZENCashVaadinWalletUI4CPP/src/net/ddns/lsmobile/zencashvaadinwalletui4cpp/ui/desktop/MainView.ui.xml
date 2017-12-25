@@ -17,6 +17,7 @@
 <?import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop.MainView.AddressWithBalance?>
 <XdevView xmlns:x="http://xml.xdev-software.com/xdevuiml" x:name="MainView">
     <x:constraints zpos="0" width="100%" height="100%" />
+    <x:event>detach.detach</x:event>
     <XdevGridLayout x:name="gridLayout" margin="">
         <x:constraints zpos="0" width="100%" height="100%" />
         <XdevMenuBar x:name="menuBar">

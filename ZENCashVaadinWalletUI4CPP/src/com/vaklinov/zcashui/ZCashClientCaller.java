@@ -247,17 +247,81 @@ public class ZCashClientCaller implements IConfig
 	 * */
 	public synchronized Set<Transaction> getTransactionsDataFromWallet()
 			throws WalletCallException, IOException, InterruptedException
-		{
-			final Set<Transaction> publicTransactions = getWalletPublicTransactions();
-			final Set<Transaction> zReceivedTransactions = getWalletZReceivedTransactions();
+	{
+		final Set<Transaction> publicTransactions = getWalletPublicTransactions();
+		final Set<Transaction> zReceivedTransactions = getWalletZReceivedTransactions();
 
-			final Set<Transaction> allTransactions = new HashSet<>();
-			
-			allTransactions.addAll(publicTransactions);
-			allTransactions.addAll(zReceivedTransactions);
-			
-			return allTransactions;
+		final Set<Transaction> allTransactions = new HashSet<>();
+		
+		allTransactions.addAll(publicTransactions);
+		allTransactions.addAll(zReceivedTransactions);
+		
+		return allTransactions;
+	}
+	
+	
+	//TODO LS AddressPositiveBalance String[][]>Type
+	public String[][] getAddressPositiveBalanceDataFromWallet()
+			throws WalletCallException, IOException, InterruptedException
+	{
+		// Z Addresses - they are OK
+		final String[] zAddresses = getWalletZAddresses();
+		
+		// T Addresses created inside wallet that may be empty
+		final String[] tAddresses = getWalletAllPublicAddresses();
+		final Set<String> tStoredAddressSet = new HashSet<>();
+		for (final String address : tAddresses)
+		{
+			tStoredAddressSet.add(address);
 		}
+		
+		// T addresses with unspent outputs (even if not GUI created)...
+		final String[] tAddressesWithUnspentOuts = getWalletPublicAddressesWithUnspentOutputs();
+		final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
+		for (final String address : tAddressesWithUnspentOuts)
+		{
+			tAddressSetWithUnspentOuts.add(address);
+		}
+		
+		// Combine all known T addresses
+		final Set<String> tAddressesCombined = new HashSet<>();
+		tAddressesCombined.addAll(tStoredAddressSet);
+		tAddressesCombined.addAll(tAddressSetWithUnspentOuts);
+		
+		final String[][] tempAddressBalances = new String[zAddresses.length + tAddressesCombined.size()][];
+		
+		int count = 0;
+
+		for (final String address : tAddressesCombined)
+		{
+			final String balance = getBalanceForAddress(address);
+			if (Double.valueOf(balance) > 0)
+			{
+				tempAddressBalances[count++] = new String[]
+				{
+					balance, address
+				};
+			}
+		}
+		
+		for (final String address : zAddresses)
+		{
+			final String balance = getBalanceForAddress(address);
+			if (Double.valueOf(balance) > 0)
+			{
+				tempAddressBalances[count++] = new String[]
+				{
+					balance, address
+				};
+			}
+		}
+
+		final String[][] addressBalances = new String[count][];
+		System.arraycopy(tempAddressBalances, 0, addressBalances, 0, count);
+		
+		return addressBalances;
+	}
+
 	
 	public synchronized String[] getWalletZAddresses()
 		throws WalletCallException, IOException, InterruptedException
