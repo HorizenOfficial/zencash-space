@@ -7,7 +7,6 @@ import com.vaadin.server.SessionInitEvent;
 import com.vaadin.server.UIClassSelectionEvent;
 import com.vaadin.server.UIProvider;
 import com.vaadin.ui.UI;
-import com.xdev.communication.RunnableAccessWrapper;
 import com.xdev.communication.XdevServlet;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
@@ -22,8 +21,7 @@ public class Servlet extends XdevServlet implements IConfig {
 	public Servlet() throws Exception {
 		super();
 		
-        new Thread(new RunnableAccessWrapper(()->this.zenNode.connect())).start();
-    
+		this.zenNode.connect();
 	}
 
 	@Override
