@@ -22,12 +22,6 @@ import com.vaadin.ui.Notification;
 import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.renderers.HtmlRenderer;
-import com.vaklinov.zcashui.DataGatheringThread;
-import com.vaklinov.zcashui.OSUtil;
-import com.vaklinov.zcashui.OSUtil.OS_TYPE;
-import com.vaklinov.zcashui.Util;
-import com.vaklinov.zcashui.ZCashClientCaller.WalletBalance;
-import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 import com.xdev.communication.RunnableAccessWrapper;
 import com.xdev.security.authentication.ui.Authentication;
 import com.xdev.ui.XdevButton;
@@ -43,9 +37,15 @@ import com.xdev.ui.XdevView;
 import com.xdev.ui.entitycomponent.combobox.XdevComboBox;
 import com.xdev.util.ConverterBuilder;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.DataGatheringThread;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IWallet;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Transaction;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Util;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZenNode;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletBalance;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletCallException;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 
 public class MainView extends XdevView implements IWallet {

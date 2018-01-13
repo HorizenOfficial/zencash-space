@@ -26,7 +26,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **********************************************************************************/
-package com.vaklinov.zcashui;
+package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
 
 import java.io.File;
@@ -37,9 +37,7 @@ import java.io.StringReader;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-import com.vaklinov.zcashui.OSUtil.OS_TYPE;
-
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
 
 
 /**

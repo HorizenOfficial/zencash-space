@@ -26,7 +26,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **********************************************************************************/
-package com.vaklinov.zcashui;
+package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
 
 import java.io.File;
@@ -49,10 +49,8 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.ParseException;
 import com.eclipsesource.json.WriterConfig;
-import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Transaction;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
 
 
 /**

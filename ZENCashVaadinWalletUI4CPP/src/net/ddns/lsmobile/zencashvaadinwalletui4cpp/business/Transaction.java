@@ -4,8 +4,7 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.Date;
 
-import com.vaklinov.zcashui.OSUtil;
-import com.vaklinov.zcashui.OSUtil.OS_TYPE;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
 
 public class Transaction implements IConfig {
 

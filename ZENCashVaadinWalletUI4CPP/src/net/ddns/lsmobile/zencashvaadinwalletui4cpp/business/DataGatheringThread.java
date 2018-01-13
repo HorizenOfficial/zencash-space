@@ -26,9 +26,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **********************************************************************************/
-package com.vaklinov.zcashui;
-
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
 /**
  * This thread may be used to periodically and asynchronously load data if the load operation

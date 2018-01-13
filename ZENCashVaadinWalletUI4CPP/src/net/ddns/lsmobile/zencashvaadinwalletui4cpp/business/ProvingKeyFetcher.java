@@ -1,4 +1,4 @@
-package com.vaklinov.zcashui;
+package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -18,9 +18,7 @@ import java.security.NoSuchAlgorithmException;
 //import javax.swing.ProgressMonitorInputStream;
 import javax.xml.bind.DatatypeConverter;
 
-import com.vaklinov.zcashui.OSUtil.OS_TYPE;
-
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
 
 
 /**

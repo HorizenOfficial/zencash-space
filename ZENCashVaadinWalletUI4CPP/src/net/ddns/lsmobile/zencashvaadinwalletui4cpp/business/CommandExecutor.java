@@ -5,7 +5,7 @@
  *  / /| |__| (_| \__ \ | | |___) \ V  V /| | | | | (_| |\ V  V / (_| | | |  __/ |_| |_| || |
  * /____\____\__,_|___/_| |_|____/ \_/\_/ |_|_| |_|\__, | \_/\_/ \__,_|_|_|\___|\__|\___/|___|
  *                                                 |___/
- *
+ * 
  * Copyright (c) 2016 Ivan Vaklinov <ivan@vaklinov.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -14,10 +14,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,98 +26,98 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **********************************************************************************/
-package com.vaklinov.zcashui;
+package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
 
-import static net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig.log;
-
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JPanel;
-import javax.swing.Timer;
-
-import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
-
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 
 /**
- * Base for all panels contained as wallet TABS.
- *
+ * Executes a command and retruns the result.
+ * 
  * @author Ivan Vaklinov <ivan@vaklinov.com>
  */
-public class WalletTabPanel
-	extends JPanel implements IConfig
+public class CommandExecutor
 {
-	// Lists of threads and timers that may be stopped if necessary
-	protected List<Timer> timers                   = null;
-	protected List<DataGatheringThread<?>> threads = null;
-
-
-	public WalletTabPanel()
-		throws IOException, InterruptedException, WalletCallException
-	{
-		super();
-		
-		this.timers = new ArrayList<>();
-		this.threads = new ArrayList<>();
-	}
-
+	private final String args[];
 	
-	public void stopThreadsAndTimers()
+	public CommandExecutor(final String args[])
+		throws IOException
 	{
-		for (final Timer t : this.timers)
-		{
-			t.stop();
-		}
-		
-		for (final DataGatheringThread<?> t : this.threads)
-		{
-			t.setSuspended(true);
-		}
+		this.args = args;
 	}
 	
 	
-	// Interval is in milliseconds
-	// Returns true if all threads have ended, else false
-	public boolean waitForEndOfThreads(final long interval)
+	public Process startChildProcess()
+		throws IOException
 	{
-		synchronized (this)
-		{
-			final long startWait = System.currentTimeMillis();
-			long endWait = startWait;
-			do
+	    return Runtime.getRuntime().exec(this.args);
+	}
+	
+	
+	public String execute()
+		throws IOException, InterruptedException
+	{
+		final StringBuffer result = new StringBuffer();
+		
+		final Runtime rt = Runtime.getRuntime();
+		final Process proc = rt.exec(this.args);
+
+		final Reader in = new InputStreamReader(new BufferedInputStream(proc.getInputStream()));
+
+		final Reader err = new InputStreamReader(proc.getErrorStream());
+
+		final Thread inThread = new Thread(
+			new Runnable()
 			{
-				boolean allEnded = true;
-				for (final DataGatheringThread<?> t : this.threads)
+				@Override
+				public void run()
 				{
-					if (t.isAlive())
+					try
 					{
-						allEnded = false;
+						int c;
+						while ((c = in.read()) != -1)
+						{
+						    result.append((char)c);
+						}
+					} catch (final IOException ioe)
+					{
+						// TODO: log or handle the exception
 					}
 				}
-				
-				if (allEnded)
+			}
+		);
+		inThread.start();
+
+		final Thread errThread =  new Thread(
+			new Runnable()
+			{
+			    @Override
+				public void run()
 				{
-					return true; // End here
+			    	try
+				    {
+						int c;
+						while ((c = err.read()) != -1)
+						{
+							result.append((char)c);
+						}
+					} catch (final IOException ioe)
+					{
+						// TODO: log or handle the exception
+					}
 				}
-				
-				try
-				{
-					this.wait(100);
-				} catch (final InterruptedException ie)
-				{
-					// One of the rare cases where we do nothing
-					log.error("Unexpected error: ", ie);
-				}
-				
-				endWait = System.currentTimeMillis();
-			} while ((endWait - startWait) <= interval);
-		}
+			}
+		);
+		errThread.start();
 		
-		return false;
+		proc.waitFor();
+		inThread.join();
+		errThread.join();
+		
+		return result.toString();
 	}
-	
-} // End class
+}

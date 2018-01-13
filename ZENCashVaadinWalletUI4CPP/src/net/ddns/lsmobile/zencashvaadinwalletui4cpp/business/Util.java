@@ -26,7 +26,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **********************************************************************************/
-package com.vaklinov.zcashui;
+package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

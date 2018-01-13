@@ -4,21 +4,25 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Random;
 
-import com.vaklinov.zcashui.OSUtil;
-import com.vaklinov.zcashui.OSUtil.OS_TYPE;
-import com.vaklinov.zcashui.StartupProgressDialog;
-import com.vaklinov.zcashui.ZCashClientCaller;
-import com.vaklinov.zcashui.ZCashClientCaller.NetworkAndBlockchainInfo;
-import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
-import com.vaklinov.zcashui.ZCashInstallationObserver;
-import com.vaklinov.zcashui.ZCashInstallationObserver.DAEMON_STATUS;
-import com.vaklinov.zcashui.ZCashInstallationObserver.DaemonInfo;
-import com.vaklinov.zcashui.ZCashInstallationObserver.InstallationDetectionException;
+import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
+
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.NetworkAndBlockchainInfo;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletCallException;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashInstallationObserver.DAEMON_STATUS;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashInstallationObserver.DaemonInfo;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashInstallationObserver.InstallationDetectionException;
 
 public class ZenNode implements IConfig{
+	
+    private static final int POLL_PERIOD = 1500;
+    private static final int STARTUP_ERROR_CODE = -28;
 
 	public ZCashInstallationObserver installationObserver;
 	public ZCashClientCaller         clientCaller;
@@ -72,14 +76,11 @@ public class ZenNode implements IConfig{
                 }
             }
             
-            StartupProgressDialog startupBar = null;
             if ((zcashdInfo.status != DAEMON_STATUS.RUNNING) || (daemonStartInProgress))
             {
             	log.info(
             		"zend is not runing at the moment or has not started/synchronized 100% - showing splash...");
-	            startupBar = new StartupProgressDialog(this.clientCaller);
-//	            startupBar.setVisible(true);
-	            startupBar.waitForStartup();
+	            waitForStartup();
             }
             
             // Main GUI is created here
@@ -203,5 +204,175 @@ public class ZenNode implements IConfig{
     		}
         }
 	
+    
+    
+    public void waitForStartup() throws IOException,
+        InterruptedException,WalletCallException,InvocationTargetException {
+        
+        // special handling of Windows/Mac OS app launch
+    	final OS_TYPE os = OSUtil.getOSType();
+        if ((os == OS_TYPE.WINDOWS) || (os == OS_TYPE.MAC_OS))
+        {
+            final ProvingKeyFetcher keyFetcher = new ProvingKeyFetcher();
+            keyFetcher.fetchIfMissing(/*this*/);
+        }
+        
+        log.info("Splash: checking if zend is already running...");
+        boolean shouldStartZCashd = false;
+        try {
+            this.clientCaller.getDaemonRawRuntimeInfo();
+        } catch (final IOException e) {
+        	// Relying on a general exception may be unreliable
+        	// may be thrown for an unexpected reason!!! - so message is checked
+        	if (e.getMessage() != null &&
+        		e.getMessage().toLowerCase(Locale.ROOT).contains("error: couldn't connect to server"))
+        	{
+        		shouldStartZCashd = true;
+        	}
+        }
+        
+        if (!shouldStartZCashd) {
+        	log.info("Splash: zend already running...");
+            // What if started by hand but taking long to initialize???
+//            doDispose();
+//            return;
+        } else
+        {
+        	log.info("Splash: zend will be started...");
+        }
+        
+        final Process daemonProcess =
+        	shouldStartZCashd ? this.clientCaller.startDaemon() : null;
+        
+        Thread.sleep(POLL_PERIOD); // just a little extra
+        
+        int iteration = 0;
+        while(true) {
+        	iteration++;
+            Thread.sleep(POLL_PERIOD);
+            
+            JsonObject info = null;
+            
+            try
+            {
+            	info = this.clientCaller.getDaemonRawRuntimeInfo();
+            } catch (final IOException e)
+            {
+            	if (iteration > 4)
+            	{
+            		throw e;
+            	} else
+            	{
+            		continue;
+            	}
+            }
+            
+            final JsonValue code = info.get("code");
+            if (code == null || (code.asInt() != STARTUP_ERROR_CODE)) {
+				break;
+			}
+            final String message = info.getString("message", "???");
+//            setProgressText(message);
+            
+        }
 
+        // doDispose(); - will be called later by the main GUI
+        
+        if (daemonProcess != null) {
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+			    @Override
+				public void run() {
+			    	log.info("Stopping zend because we started it - now it is alive: " +
+			    			ZenNode.this.isAlive(daemonProcess));
+			        try
+			        {
+			        	ZenNode.this.clientCaller.stopDaemon();
+			            final long start = System.currentTimeMillis();
+			            
+			            while (!ZenNode.this.waitFor(daemonProcess, 3000))
+			            {
+			            	final long end = System.currentTimeMillis();
+			            	log.info("Waiting for " + ((end - start) / 1000) + " seconds for zend to exit...");
+			            	
+			            	if (end - start > 10 * 1000)
+			            	{
+			            		ZenNode.this.clientCaller.stopDaemon();
+			            		daemonProcess.destroy();
+			            	}
+			            	
+			            	if (end - start > 1 * 60 * 1000)
+			            	{
+			            		break;
+			            	}
+			            }
+			        
+			            if (ZenNode.this.isAlive(daemonProcess)) {
+			            	log.info("zend is still alive although we tried to stop it. " +
+			                                       "Hopefully it will stop later!");
+			                    //System.out.println("zend is still alive, killing forcefully");
+			                    //daemonProcess.destroyForcibly();
+			                } else {
+							log.info("zend shut down successfully");
+						}
+			        } catch (final Exception bad) {
+			        	log.error("Couldn't stop zend!", bad);
+			        }
+			    }
+			});
+		}
+        
+    }
+    
+    
+    // Custom code - to allow JDK7 compilation.
+    public boolean isAlive(final Process p)
+    {
+    	if (p == null)
+    	{
+    		return false;
+    	}
+    	
+        try
+        {
+            final int val = p.exitValue();
+            
+            return false;
+        } catch (final IllegalThreadStateException itse)
+        {
+            return true;
+        }
+    }
+    
+    
+    // Custom code - to allow JDK7 compilation.
+    public boolean waitFor(final Process p, final long interval)
+    {
+		synchronized (this)
+		{
+			final long startWait = System.currentTimeMillis();
+			long endWait = startWait;
+			do
+			{
+				final boolean ended = !isAlive(p);
+				
+				if (ended)
+				{
+					return true; // End here
+				}
+				
+				try
+				{
+					this.wait(100);
+				} catch (final InterruptedException ie)
+				{
+					// One of the rare cases where we do nothing
+					log.error("Unexpected error: ", ie);
+				}
+				
+				endWait = System.currentTimeMillis();
+			} while ((endWait - startWait) <= interval);
+		}
+		
+		return false;
+    }
 }

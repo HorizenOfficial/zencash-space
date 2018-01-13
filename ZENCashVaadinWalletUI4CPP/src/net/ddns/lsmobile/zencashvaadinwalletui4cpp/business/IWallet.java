@@ -5,8 +5,6 @@ import java.util.List;
 
 import javax.swing.Timer;
 
-import com.vaklinov.zcashui.DataGatheringThread;
-
 public interface IWallet extends IConfig {
 	// Lists of threads and timers that may be stopped if necessary
 	static List<Timer> timers                   = new ArrayList<>();

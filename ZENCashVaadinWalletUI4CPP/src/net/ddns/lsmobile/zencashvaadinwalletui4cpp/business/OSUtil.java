@@ -26,14 +26,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  **********************************************************************************/
-package com.vaklinov.zcashui;
+package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
-
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 
 
 /**
