@@ -29,9 +29,6 @@
 package com.vaklinov.zcashui;
 
 import java.awt.Cursor;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
 
@@ -53,9 +50,6 @@ public class WalletOperations implements IConfig
 {
 	private final ZCashUI parent;
 	private final JTabbedPane tabs;
-	private final DashboardPanel dashboard;
-	private final SendCashPanel  sendCash;
-	private final AddressesPanel addresses;
 	
 	private final ZCashInstallationObserver installationObserver;
 	private final ZCashClientCaller         clientCaller;
@@ -63,9 +57,6 @@ public class WalletOperations implements IConfig
 
 	public WalletOperations(final ZCashUI parent,
 			                final JTabbedPane tabs,
-			                final DashboardPanel dashboard,
-			                final AddressesPanel addresses,
-			                final SendCashPanel  sendCash,
 			                
 			                final ZCashInstallationObserver installationObserver,
 			                final ZCashClientCaller clientCaller)
@@ -73,138 +64,11 @@ public class WalletOperations implements IConfig
 	{
 		this.parent    = parent;
 		this.tabs      = tabs;
-		this.dashboard = dashboard;
-		this.addresses = addresses;
-		this.sendCash  = sendCash;
 		
 		this.installationObserver = installationObserver;
 		this.clientCaller = clientCaller;
 	}
 
-	
-	public void encryptWallet()
-	{
-		try
-		{
-			if (this.clientCaller.isWalletEncrypted())
-			{
-		        JOptionPane.showMessageDialog(
-		            this.parent,
-		            "The wallet.dat file being used is already encrypted. " +
-		            "This \noperation may be performed only on a wallet that " +
-		            "is not\nyet encrypted!",
-		            "Wallet is already encrypted...",
-		            JOptionPane.ERROR_MESSAGE);
-		        return;
-			}
-			
-			final PasswordEncryptionDialog pd = new PasswordEncryptionDialog(this.parent);
-			pd.setVisible(true);
-			
-			if (!pd.isOKPressed())
-			{
-				return;
-			}
-			
-			final Cursor oldCursor = this.parent.getCursor();
-			try
-			{
-				
-				this.parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-				
-				this.dashboard.stopThreadsAndTimers();
-				this.sendCash.stopThreadsAndTimers();
-				
-				this.clientCaller.encryptWallet(pd.getPassword());
-				
-				this.parent.setCursor(oldCursor);
-			} catch (final WalletCallException wce)
-			{
-				this.parent.setCursor(oldCursor);
-				log.error("Unexpected error: ", wce);
-				
-				JOptionPane.showMessageDialog(
-					this.parent,
-					"An unexpected error occurred while encrypting the wallet!\n" +
-					"It is recommended to stop and restart both zend and the GUI wallet! \n" +
-					"\n" + wce.getMessage().replace(",", ",\n"),
-					"Error in encrypting wallet...", JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-			
-			JOptionPane.showMessageDialog(
-				this.parent,
-				"The wallet has been encrypted sucessfully and zend has stopped.\n" +
-				"The GUI wallet will be stopped as well. Please restart both. In\n" +
-				"addtion the internal wallet keypool has been flushed. You need\n" +
-				"to make a new backup..." +
-				"\n",
-				"Wallet is now encrypted...", JOptionPane.INFORMATION_MESSAGE);
-			
-			this.parent.exitProgram();
-			
-		} catch (final Exception e)
-		{
-			log.error(e);
-		}
-	}
-	
-	
-	public void backupWallet()
-	{
-		try
-		{
-			this.issueBackupDirectoryWarning();
-			
-			final JFileChooser fileChooser = new JFileChooser();
-			fileChooser.setDialogTitle("Backup wallet to file...");
-			fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			fileChooser.setCurrentDirectory(OSUtil.getUserHomeDirectory());
-			 
-			final int result = fileChooser.showSaveDialog(this.parent);
-			 
-			if (result != JFileChooser.APPROVE_OPTION)
-			{
-			    return;
-			}
-			
-			final File f = fileChooser.getSelectedFile();
-			
-			final Cursor oldCursor = this.parent.getCursor();
-			String path = null;
-			try
-			{
-				this.parent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-							
-				path = this.clientCaller.backupWallet(f.getName());
-				
-				this.parent.setCursor(oldCursor);
-			} catch (final WalletCallException wce)
-			{
-				this.parent.setCursor(oldCursor);
-				log.error("Unexpected error: ", wce);
-				
-				JOptionPane.showMessageDialog(
-					this.parent,
-					"An unexpected error occurred while backing up the wallet!" +
-					"\n" + wce.getMessage().replace(",", ",\n"),
-					"Error in backing up wallet...", JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-			
-			JOptionPane.showMessageDialog(
-				this.parent,
-				"The wallet has been backed up successfully to file: " + f.getName() + "\n" +
-				"in the backup directory provided to zend (-exportdir=<dir>).\nFull path is: " +
-				path,
-				"Wallet is backed up...", JOptionPane.INFORMATION_MESSAGE);
-			
-		} catch (final Exception e)
-		{
-			log.error(e);
-		}
-	}
-	
 	
 	public void exportWalletPrivateKeys()
 	{
@@ -330,77 +194,6 @@ public class WalletOperations implements IConfig
 		} catch (final Exception e)
 		{
 			log.error(e);
-		}
-	}
-	
-	
-	public void showPrivateKey()
-	{
-		if (this.tabs.getSelectedIndex() != 1)
-		{
-			JOptionPane.showMessageDialog(
-				this.parent,
-				"Please select an address in the \"Own addresses\" tab " +
-				"to view its private key",
-				"Please select an address...", JOptionPane.INFORMATION_MESSAGE);
-			this.tabs.setSelectedIndex(1);
-			return;
-		}
-		
-		final String address = this.addresses.getSelectedAddress();
-		
-		if (address == null)
-		{
-			JOptionPane.showMessageDialog(
-				this.parent,
-				"Please select an address in the table of addresses " +
-				"to view its private key",
-				"Please select an address...", JOptionPane.INFORMATION_MESSAGE);
-			return;
-		}
-		
-		try
-		{
-			// Check for encrypted wallet
-			final boolean bEncryptedWallet = this.clientCaller.isWalletEncrypted();
-			if (bEncryptedWallet)
-			{
-				final PasswordDialog pd = new PasswordDialog((this.parent));
-				pd.setVisible(true);
-				
-				if (!pd.isOKPressed())
-				{
-					return;
-				}
-				
-				this.clientCaller.unlockWallet(pd.getPassword());
-			}
-			
-			final boolean isZAddress = Util.isZAddress(address);
-			
-			final String privateKey = isZAddress ?
-				this.clientCaller.getZPrivateKey(address) : this.clientCaller.getTPrivateKey(address);
-				
-			// Lock the wallet again
-			if (bEncryptedWallet)
-			{
-				this.clientCaller.lockWallet();
-			}
-				
-			final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-			clipboard.setContents(new StringSelection(privateKey), null);
-			
-			JOptionPane.showMessageDialog(
-				this.parent,
-				(isZAddress ? "Z (Private)" : "T (Transparent)") +  " address:\n" +
-				address + "\n" +
-				"has private key:\n" +
-				privateKey + "\n\n" +
-				"The private key has also been copied to the clipboard.",
-				"Private key information", JOptionPane.INFORMATION_MESSAGE);
-		} catch (final Exception ex)
-		{
-			log.error(ex);
 		}
 	}
 	

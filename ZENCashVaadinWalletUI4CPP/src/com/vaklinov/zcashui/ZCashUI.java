@@ -51,8 +51,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import com.vaklinov.zcashui.OSUtil.OS_TYPE;
 import com.vaklinov.zcashui.ZCashClientCaller.NetworkAndBlockchainInfo;
@@ -60,7 +58,6 @@ import com.vaklinov.zcashui.ZCashClientCaller.WalletCallException;
 import com.vaklinov.zcashui.ZCashInstallationObserver.DAEMON_STATUS;
 import com.vaklinov.zcashui.ZCashInstallationObserver.DaemonInfo;
 import com.vaklinov.zcashui.ZCashInstallationObserver.InstallationDetectionException;
-import com.vaklinov.zcashui.msg.MessagingPanel;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
 
@@ -93,11 +90,7 @@ public class ZCashUI
     private JMenuItem menuItemRemoveContactIdentity;
     private JMenuItem menuItemMessagingOptions;
 
-    private DashboardPanel   dashboard;
-    private AddressesPanel   addresses;
-    private SendCashPanel    sendPanel;
-    private AddressBookPanel addressBookPanel;
-    private MessagingPanel   messagingPanel;
+//    private AddressBookPanel addressBookPanel;
     
     JTabbedPane tabs;
 
@@ -242,28 +235,6 @@ public class ZCashUI
             }
         );
 
-        this.menuItemBackup.addActionListener(
-        	new ActionListener()
-            {
-                @Override
-                public void actionPerformed(final ActionEvent e)
-                {
-                    ZCashUI.this.walletOps.backupWallet();
-                }
-            }
-        );
-        
-        this.menuItemEncrypt.addActionListener(
-            new ActionListener()
-            {
-                @Override
-                public void actionPerformed(final ActionEvent e)
-                {
-                    ZCashUI.this.walletOps.encryptWallet();
-                }
-            }
-        );
-
         this.menuItemExportKeys.addActionListener(
             new ActionListener()
             {
@@ -286,17 +257,6 @@ public class ZCashUI
             }
        );
        
-       this.menuItemShowPrivateKey.addActionListener(
-            new ActionListener()
-            {
-                @Override
-                public void actionPerformed(final ActionEvent e)
-                {
-                    ZCashUI.this.walletOps.showPrivateKey();
-                }
-            }
-       );
-       
        this.menuItemImportOnePrivateKey.addActionListener(
            new ActionListener()
            {
@@ -308,72 +268,9 @@ public class ZCashUI
            }
        );
        
-       this.menuItemOwnIdentity.addActionListener(
-               new ActionListener()
-               {
-                   @Override
-                   public void actionPerformed(final ActionEvent e)
-                   {
-            			ZCashUI.this.messagingPanel.openOwnIdentityDialog();
-                   }
-               }
-        );
-       
-       this.menuItemExportOwnIdentity.addActionListener(
-               new ActionListener()
-               {
-                   @Override
-                   public void actionPerformed(final ActionEvent e)
-                   {
-            			ZCashUI.this.messagingPanel.exportOwnIdentity();
-                   }
-               }
-        );
 
-       this.menuItemImportContactIdentity.addActionListener(
-               new ActionListener()
-               {
-                   @Override
-                   public void actionPerformed(final ActionEvent e)
-                   {
-            			ZCashUI.this.messagingPanel.importContactIdentity();
-                   }
-               }
-        );
-              
-       this.menuItemAddMessagingGroup.addActionListener(
-               new ActionListener()
-               {
-                   @Override
-                   public void actionPerformed(final ActionEvent e)
-                   {
-            			ZCashUI.this.messagingPanel.addMessagingGroup();
-                   }
-               }
-        );
 
        
-       this.menuItemRemoveContactIdentity.addActionListener(
-               new ActionListener()
-               {
-                   @Override
-                   public void actionPerformed(final ActionEvent e)
-                   {
-            			ZCashUI.this.messagingPanel.removeSelectedContact();
-                   }
-               }
-        );
-       
-       this.menuItemMessagingOptions.addActionListener(
-               new ActionListener()
-               {
-                   @Override
-                   public void actionPerformed(final ActionEvent e)
-                   {
-            			ZCashUI.this.messagingPanel.openOptionsDialog();
-                   }
-               }
-        );
 
        
         // Close operation
@@ -434,21 +331,6 @@ public class ZCashUI
 //        	progressDialog.doDispose();
 //        }
         
-        // Notify the messaging TAB that it is being selected - every time
-        this.tabs.addChangeListener(
-            new ChangeListener()
-            {
-    			@Override
-    			public void stateChanged(final ChangeEvent e)
-    			{
-    				final JTabbedPane tabs = (JTabbedPane)e.getSource();
-    				if (tabs.getSelectedIndex() == 4)
-    				{
-    					ZCashUI.this.messagingPanel.tabSelected();
-    				}
-    			}
-    		}
-        );
   
     }
 
@@ -458,10 +340,7 @@ public class ZCashUI
 
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         
-        this.dashboard.stopThreadsAndTimers();
-        this.addresses.stopThreadsAndTimers();
-        this.sendPanel.stopThreadsAndTimers();
-        this.messagingPanel.stopThreadsAndTimers();
+//        this.addresses.stopThreadsAndTimers();
         
         ZCashUI.this.setVisible(false);
         ZCashUI.this.dispose();

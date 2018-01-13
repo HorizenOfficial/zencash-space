@@ -34,32 +34,6 @@ public class StartupProgressDialog /*extends JFrame*/  implements IConfig {
     {
         this.clientCaller = clientCaller;
         
-//        final URL iconUrl = this.getClass().getClassLoader().getResource("images/ZEN-yellow.orange-logo.png");
-//        this.imageIcon = new ImageIcon(iconUrl);
-//        this.imageLabel.setIcon(this.imageIcon);
-//        this.imageLabel.setBorder(BorderFactory.createEmptyBorder(16, 16, 0, 16));
-//        final Container contentPane = getContentPane();
-//        contentPane.setLayout(this.borderLayout1);
-//        this.southPanel.setLayout(this.southPanelLayout);
-//        this.southPanel.setBorder(BorderFactory.createEmptyBorder(0, 16, 16, 16));
-//        contentPane.add(this.imageLabel, BorderLayout.NORTH);
-//		final JLabel zcashWalletLabel = new JLabel(
-//			"<html><span style=\"font-style:italic;font-weight:bold;font-size:2.2em\">" +
-//		    "ZENCash Wallet</span></html>");
-//		zcashWalletLabel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
-//		// todo - place in a panel with flow center
-//		final JPanel tempPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
-//		tempPanel.add(zcashWalletLabel);
-//		contentPane.add(tempPanel, BorderLayout.CENTER);
-//        contentPane.add(this.southPanel, BorderLayout.SOUTH);
-//        this.progressBar.setIndeterminate(true);
-//        this.southPanel.add(this.progressBar, BorderLayout.NORTH);
-//        this.progressLabel.setText("Starting...");
-//        this.southPanel.add(this.progressLabel, BorderLayout.SOUTH);
-//        pack();
-//        setLocationRelativeTo(null);
-//
-//        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
     
     public void waitForStartup() throws IOException,
