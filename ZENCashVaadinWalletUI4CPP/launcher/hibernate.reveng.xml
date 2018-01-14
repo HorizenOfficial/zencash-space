@@ -11,6 +11,8 @@
         <sql-type jdbc-type="TINYINT" hibernate-type="java.lang.Short" />
     </type-mapping>
     <table-filter match-catalog="zenwallet" match-name="users" />
+    <table-filter match-catalog="zenwallet" match-name="addresses" />
     <table catalog="zenwallet" name="users" class="net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.User" />
+    <table catalog="zenwallet" name="addresses" class="net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.Address" />
 </hibernate-reverse-engineering>
 

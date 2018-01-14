@@ -10,6 +10,9 @@
 		<class>
 			net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.User
 		</class>
+		<class>
+			net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.Address
+		</class>
 		<exclude-unlisted-classes>true</exclude-unlisted-classes>
 		<properties>
 			<property name="hibernate.hbm2ddl.auto" value="none" />
@@ -32,7 +35,8 @@
 				value="false" />
 			<property name="javax.persistence.jdbc.url"
 				value="jdbc:mysql://localhost:3306/zenwallet" />
-			<property name="javax.persistence.jdbc.user" value="zenadmin" />
+			<property name="javax.persistence.jdbc.user"
+				value="zenadmin" />
 			<property name="hibernate.show_sql" value="false" />
 			<property name="hibernate.cache.region.factory_class"
 				value="org.hibernate.cache.jcache.JCacheRegionFactory" />

@@ -1,15 +1,22 @@
 package net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities;
 
+import static javax.persistence.GenerationType.IDENTITY;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
-import static javax.persistence.GenerationType.IDENTITY;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 import com.xdev.dal.DAO;
 import com.xdev.security.authentication.CredentialsUsernamePassword;
 import com.xdev.util.Caption;
-import javax.persistence.Id;
-import javax.persistence.Table;
+
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.dal.UserDAO;
 
 /**
@@ -25,6 +32,7 @@ public class User implements java.io.Serializable, CredentialsUsernamePassword {
 	private String username;
 	private byte[] password;
 	private byte[] wallet;
+	private Set<Address> addresses = new HashSet<>(0);
 
 	public User() {
 	}
@@ -72,6 +80,16 @@ public class User implements java.io.Serializable, CredentialsUsernamePassword {
 		this.wallet = wallet;
 	}
 
+	@Caption("Addresses")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "user1")
+	public Set<Address> getAddresses() {
+		return this.addresses;
+	}
+
+	public void setAddresses(final Set<Address> addresses) {
+		this.addresses = addresses;
+	}
+	
 	@Override
 	public String username() {
 		return this.getUsername();
