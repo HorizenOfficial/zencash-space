@@ -40,19 +40,17 @@ import com.xdev.util.ConverterBuilder;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.DataGatheringThread;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IWallet;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Transaction;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Util;
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZenNode;
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletBalance;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletCallException;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZenNode;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 
 public class MainView extends XdevView implements IWallet {
 	
 	protected ZenNode zenNode;
-	
-	private DataGatheringThread<WalletBalance> walletBalanceGatheringThread = null;
 	
 	private final Boolean walletIsEncrypted   = null;
 
@@ -63,7 +61,12 @@ public class MainView extends XdevView implements IWallet {
 	public MainView() {
 		super();
 		this.initUI();
-		
+	}
+	
+	@Override
+	public void enter(final ViewChangeListener.ViewChangeEvent event) {
+		super.enter(event);
+	
 		this.zenNode = ((Servlet) Servlet.getCurrent()).zenNode;
 		defaultNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
 		usNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
@@ -76,37 +79,6 @@ public class MainView extends XdevView implements IWallet {
 //				MainView.this.walletIsEncrypted = MainView.this.zenNode.clientCaller.isWalletEncrypted();
 //			}
 //			updateWalletStatusLabel(balance);
-			
-			// Thread and timer to update the wallet balance
-			this.walletBalanceGatheringThread = new DataGatheringThread<>(
-				new DataGatheringThread.DataGatherer<WalletBalance>()
-				{
-					@Override
-					public WalletBalance gatherData()
-						throws Exception
-					{
-						final UI ui = getUI();
-						if (ui != null) {
-							final long start = System.currentTimeMillis();
-							final WalletBalance lastData = MainView.this.walletBalanceGatheringThread.getLastData();
-							final WalletBalance balance = MainView.this.zenNode.clientCaller.getWalletInfo();
-							final long end = System.currentTimeMillis();
-							log.info("Gathering of dashboard wallet balance data done in " + (end - start) + "ms." );
-
-							if (lastData == null || !lastData.equals(balance)) {
-								updateWalletStatusLabel(balance);
-								ui.push();
-							}
-							
-							return balance;
-						}
-						return null;
-					}
-				},
-				8000, true);
-			threads.add(this.walletBalanceGatheringThread);
-
-//			updateWalletTransactionsTable(MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet());
 			
 			// Thread and timer to update the transactions table
 			this.transactionGatheringThread = new DataGatheringThread<>(
@@ -125,6 +97,7 @@ public class MainView extends XdevView implements IWallet {
 							log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
 
 							if (lastData == null || data.size() > lastData.size()) {
+								updateWalletStatusLabel(MainView.this.zenNode.clientCaller.getWalletInfo());
 								updateWalletTransactionsTable(data);
 								ui.push();
 							}
@@ -236,13 +209,6 @@ public class MainView extends XdevView implements IWallet {
 			log.error(e, e);
 		}
 	}
-	
-	@Override
-	public void enter(final ViewChangeListener.ViewChangeEvent event) {
-		super.enter(event);
-	
-	}
-
 
 	
 	private void updateWalletStatusLabel(final WalletBalance balance)
