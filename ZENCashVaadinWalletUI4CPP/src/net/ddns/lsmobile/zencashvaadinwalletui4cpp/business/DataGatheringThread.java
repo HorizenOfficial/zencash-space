@@ -28,6 +28,8 @@
  **********************************************************************************/
 package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
+import com.xdev.communication.RunnableAccessWrapper;
+
 /**
  * This thread may be used to periodically and asynchronously load data if the load operation
  * takes considerable time. The creator of the thread may obtain the latest gathered data
@@ -94,7 +96,7 @@ public class DataGatheringThread<T>
 		this.lastGatheredData = null;
 				
 		// Start the thread to gather
-		this.start();
+		new Thread(new RunnableAccessWrapper(this)).start();
 	}
 	
 	

@@ -1,0 +1,10 @@
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.Address
+findAllAddresses4User(net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.User user)
+{
+    select * from Address as a where a.user1 = :user  
+}
+
+isAddressFromUser(net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.User user, String address)
+{
+    select * from Address as a where a.user1 = :user and a.address like :address
+}

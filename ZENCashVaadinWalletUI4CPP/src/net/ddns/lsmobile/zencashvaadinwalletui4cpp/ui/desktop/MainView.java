@@ -10,6 +10,7 @@ import java.util.Set;
 import com.vaadin.data.sort.Sort;
 import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.server.ClientConnector;
+import com.vaadin.server.VaadinSession;
 import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.shared.ui.label.ContentMode;
@@ -46,9 +47,12 @@ import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Util;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletBalance;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletCallException;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZenNode;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.dal.AddressDAO;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 
 public class MainView extends XdevView implements IWallet {
+	
+	protected VaadinSession session;
 	
 	protected ZenNode zenNode;
 	
@@ -67,6 +71,8 @@ public class MainView extends XdevView implements IWallet {
 	public void enter(final ViewChangeListener.ViewChangeEvent event) {
 		super.enter(event);
 	
+		this.session = getSession();
+		this.session.setAttribute(AddressDAO.class, new AddressDAO ());
 		this.zenNode = ((Servlet) Servlet.getCurrent()).zenNode;
 		defaultNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
 		usNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
@@ -92,14 +98,21 @@ public class MainView extends XdevView implements IWallet {
 						if (ui != null) {
 							final long start = System.currentTimeMillis();
 							final Set<Transaction> lastData = MainView.this.transactionGatheringThread.getLastData();
-							final Set<Transaction> data =  MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet();
+							final Set<Transaction> data = MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet(MainView.this.session);
 							final long end = System.currentTimeMillis();
 							log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
 
 							if (lastData == null || data.size() > lastData.size()) {
-								updateWalletStatusLabel(MainView.this.zenNode.clientCaller.getWalletInfo());
-								updateWalletTransactionsTable(data);
-								ui.push();
+								ui.access(()->{
+									try {
+										updateWalletStatusLabel(MainView.this.zenNode.clientCaller.getWalletInfo(MainView.this.session));
+										updateWalletTransactionsTable(data);
+										updateWalletAddressPositiveBalanceComboBox(MainView.this.zenNode.clientCaller.getAddressPositiveBalanceDataFromWallet(MainView.this.session));
+										ui.push();
+									} catch (final Exception e) {
+										log.error(e, e);
+									}
+								});
 							}
 							
 							return data;
@@ -122,37 +135,6 @@ public class MainView extends XdevView implements IWallet {
 						
 			//TODO LS
 			this.textFieldTransactionFee.setValue(defaultNumberFormat.format(Double.valueOf(0.0001)));
-			
-			updateWalletAddressPositiveBalanceComboBox(MainView.this.zenNode.clientCaller.getAddressPositiveBalanceDataFromWallet());
-			
-			// Update the balances via timer and data gathering thread
-			this.addressBalanceGatheringThread = new DataGatheringThread<>(
-				new DataGatheringThread.DataGatherer<String[][]>()
-				{
-					@Override
-					public String[][] gatherData()
-						throws Exception
-					{
-						final UI ui = getUI();
-						if (ui != null) {
-							final long start = System.currentTimeMillis();
-							final String[][] lastData = MainView.this.addressBalanceGatheringThread.getLastData();
-							final String[][] data = MainView.this.zenNode.clientCaller.getAddressPositiveBalanceDataFromWallet();
-							final long end = System.currentTimeMillis();
-							log.info("Gathering of address/balance table data done in " + (end - start) + "ms." );
-
-							if (lastData == null || data.length > lastData.length) {
-								updateWalletAddressPositiveBalanceComboBox(data);
-								ui.push();
-							}
-							
-							return data;
-						}
-						return null;
-					}
-				},
-				10000, true);
-			threads.add(this.addressBalanceGatheringThread);
 //
 //						// Add a popup menu to the destination address field - for convenience
 //						final JMenuItem paste = new JMenuItem("Paste address");
@@ -478,10 +460,10 @@ public class MainView extends XdevView implements IWallet {
 		throws WalletCallException, IOException, InterruptedException
 	{
 		// Z Addresses - they are OK
-		final String[] zAddresses = this.zenNode.clientCaller.getWalletZAddresses();
+		final String[] zAddresses = this.zenNode.clientCaller.getWalletZAddresses(this.session);
 		
 		// T Addresses listed with the list received by addr comamnd
-		final String[] tAddresses = this.zenNode.clientCaller.getWalletAllPublicAddresses();
+		final String[] tAddresses = this.zenNode.clientCaller.getWalletAllPublicAddresses(this.session);
 		final Set<String> tStoredAddressSet = new HashSet<>();
 		for (final String address : tAddresses)
 		{
@@ -489,7 +471,7 @@ public class MainView extends XdevView implements IWallet {
 		}
 		
 		// T addresses with unspent outputs - just in case they are different
-		final String[] tAddressesWithUnspentOuts = this.zenNode.clientCaller.getWalletPublicAddressesWithUnspentOutputs();
+		final String[] tAddressesWithUnspentOuts = this.zenNode.clientCaller.getWalletPublicAddressesWithUnspentOutputs(this.session);
 		final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
 		for (final String address : tAddressesWithUnspentOuts)
 		{
@@ -557,7 +539,7 @@ public class MainView extends XdevView implements IWallet {
 	
 	private String[][] lastAddressBalanceData  = null;
 	private AddressWithBalance[]   comboBoxItems           = null;
-	private DataGatheringThread<String[][]> addressBalanceGatheringThread = null;
+	private final DataGatheringThread<String[][]> addressBalanceGatheringThread = null;
 	
 //	private Timer        operationStatusTimer        = null;
 	private String       operationStatusID           = null;

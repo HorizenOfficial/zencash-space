@@ -49,8 +49,11 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import com.eclipsesource.json.ParseException;
 import com.eclipsesource.json.WriterConfig;
+import com.vaadin.server.VaadinSession;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.dal.AddressDAO;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.User;
 
 
 /**
@@ -192,7 +195,7 @@ public class ZCashClientCaller implements IConfig
 	}
 
 	
-	public synchronized WalletBalance getWalletInfo()
+	public synchronized WalletBalance getWalletInfo(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final WalletBalance balance = new WalletBalance();
@@ -213,9 +216,11 @@ public class ZCashClientCaller implements IConfig
 	}
 
 
-	public synchronized Set<Transaction> getWalletPublicTransactions()
+	public synchronized Set<Transaction> getWalletPublicTransactions(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
+		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
+		final AddressDAO addressDAO = session.getAttribute(AddressDAO.class);
 		
 	    final JsonArray jsonTransactions = executeCommandAndGetJsonArray(
 	    	"listtransactions", wrapStringParameter(""), "300");
@@ -223,18 +228,19 @@ public class ZCashClientCaller implements IConfig
 	    for (final JsonValue jsonValue : jsonTransactions)
 	    {
 	    	final JsonObject jsonObject = jsonValue.asObject();
-
-	    	final Transaction transaction = new Transaction ();
-	    	// Needs to be the same as in getWalletZReceivedTransactions()
-	    	// TODO: some day refactor to use object containers
-	    	transaction.setType(Transaction.Type.PUBLIC);
-	    	transaction.setDirection(jsonObject.getString("category", null));
-	    	transaction.setIsConfirmed(jsonObject.get("confirmations").toString());
-	    	transaction.setAmount(jsonObject.get("amount").toString());
-	    	transaction.setDate(jsonObject.get("time").toString());
-	    	transaction.setDestinationAddress(jsonObject.getString("address", null));
-	    	transaction.setTransaction(jsonObject.get("txid").toString().replaceAll("\"", ""));
-	    	transactions.add(transaction);
+	    	if (!addressDAO.isAddressFromUser(user, jsonObject.getString("address", null)).isEmpty()) {
+		    	final Transaction transaction = new Transaction ();
+		    	// Needs to be the same as in getWalletZReceivedTransactions()
+		    	// TODO: some day refactor to use object containers
+		    	transaction.setType(Transaction.Type.PUBLIC);
+		    	transaction.setDirection(jsonObject.getString("category", null));
+		    	transaction.setIsConfirmed(jsonObject.get("confirmations").toString());
+		    	transaction.setAmount(jsonObject.get("amount").toString());
+		    	transaction.setDate(jsonObject.get("time").toString());
+		    	transaction.setDestinationAddress(jsonObject.getString("address", null));
+		    	transaction.setTransaction(jsonObject.get("txid").toString().replaceAll("\"", ""));
+		    	transactions.add(transaction);
+	    	}
 	    }
 
 	    return transactions;
@@ -242,12 +248,13 @@ public class ZCashClientCaller implements IConfig
 	
 	/**
 	 * Get available public+private transactions and unify them
+	 * @param user
 	 * */
-	public synchronized Set<Transaction> getTransactionsDataFromWallet()
+	public synchronized Set<Transaction> getTransactionsDataFromWallet(final VaadinSession session)
 			throws WalletCallException, IOException, InterruptedException
 	{
-		final Set<Transaction> publicTransactions = getWalletPublicTransactions();
-		final Set<Transaction> zReceivedTransactions = getWalletZReceivedTransactions();
+		final Set<Transaction> publicTransactions = getWalletPublicTransactions(session);
+		final Set<Transaction> zReceivedTransactions = getWalletZReceivedTransactions(session);
 
 		final Set<Transaction> allTransactions = new HashSet<>();
 		
@@ -259,14 +266,14 @@ public class ZCashClientCaller implements IConfig
 	
 	
 	//TODO LS AddressPositiveBalance String[][]>Type
-	public String[][] getAddressPositiveBalanceDataFromWallet()
+	public String[][] getAddressPositiveBalanceDataFromWallet(final VaadinSession session)
 			throws WalletCallException, IOException, InterruptedException
 	{
 		// Z Addresses - they are OK
-		final String[] zAddresses = getWalletZAddresses();
+		final String[] zAddresses = getWalletZAddresses(session);
 		
 		// T Addresses created inside wallet that may be empty
-		final String[] tAddresses = getWalletAllPublicAddresses();
+		final String[] tAddresses = getWalletAllPublicAddresses(session);
 		final Set<String> tStoredAddressSet = new HashSet<>();
 		for (final String address : tAddresses)
 		{
@@ -274,7 +281,7 @@ public class ZCashClientCaller implements IConfig
 		}
 		
 		// T addresses with unspent outputs (even if not GUI created)...
-		final String[] tAddressesWithUnspentOuts = getWalletPublicAddressesWithUnspentOutputs();
+		final String[] tAddressesWithUnspentOuts = getWalletPublicAddressesWithUnspentOutputs(session);
 		final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
 		for (final String address : tAddressesWithUnspentOuts)
 		{
@@ -321,7 +328,7 @@ public class ZCashClientCaller implements IConfig
 	}
 
 	
-	public synchronized String[] getWalletZAddresses()
+	public synchronized String[] getWalletZAddresses(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final JsonArray jsonAddresses = executeCommandAndGetJsonArray("z_listaddresses", null);
@@ -335,10 +342,10 @@ public class ZCashClientCaller implements IConfig
 	}
 
 
-	public synchronized Set<Transaction> getWalletZReceivedTransactions()
+	public synchronized Set<Transaction> getWalletZReceivedTransactions(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
-		final String[] zAddresses = this.getWalletZAddresses();
+		final String[] zAddresses = this.getWalletZAddresses(session);
 
 		final Set<Transaction> zReceivedTransactions = new HashSet<>();
 
@@ -388,7 +395,7 @@ public class ZCashClientCaller implements IConfig
 	
 
 	// ./src/zcash-cli listunspent only returns T addresses it seems
-	public synchronized String[] getWalletPublicAddressesWithUnspentOutputs()
+	public synchronized String[] getWalletPublicAddressesWithUnspentOutputs(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final JsonArray jsonUnspentOutputs = executeCommandAndGetJsonArray("listunspent", "0");
@@ -405,7 +412,7 @@ public class ZCashClientCaller implements IConfig
 
 
 	// ./zcash-cli listreceivedbyaddress 0 true
-	public synchronized String[] getWalletAllPublicAddresses()
+	public synchronized String[] getWalletAllPublicAddresses(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final JsonArray jsonReceivedOutputs = executeCommandAndGetJsonArray("listreceivedbyaddress", "0", "true");

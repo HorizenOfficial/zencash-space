@@ -13,6 +13,8 @@ public interface IConfig {
 	// TODO LS: in config file
 
 	public final static String ZEN_BIN = "ZEN_BIN";
+	
+	public final static String AUTHENTICATION_RESULT = "AUTHENTICATION_RESULT";
 
 	public final static String ADDRESSES_COLUMN_BALANCE = "Balance";
 	public final static String ADDRESSES_COLUMN_CONFIRMED = "Confirmed?";
