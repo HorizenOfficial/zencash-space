@@ -47,7 +47,6 @@ import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Util;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletBalance;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletCallException;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZenNode;
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.dal.AddressDAO;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 
 public class MainView extends XdevView implements IWallet {
@@ -72,7 +71,6 @@ public class MainView extends XdevView implements IWallet {
 		super.enter(event);
 	
 		this.session = getSession();
-		this.session.setAttribute(AddressDAO.class, new AddressDAO ());
 		this.zenNode = ((Servlet) Servlet.getCurrent()).zenNode;
 		defaultNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
 		usNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);

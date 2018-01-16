@@ -6,6 +6,8 @@ import java.util.Locale;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.dal.AddressDAO;
+
 public interface IConfig {
 
 	final Logger log = LogManager.getLogger(IConfig.class);
@@ -24,5 +26,7 @@ public interface IConfig {
 
 	public final NumberFormat defaultNumberFormat = NumberFormat.getNumberInstance();
 	public final NumberFormat usNumberFormat = java.text.NumberFormat.getNumberInstance(Locale.US);
+	
+	public final AddressDAO addressDAO = new AddressDAO ();
 
 }

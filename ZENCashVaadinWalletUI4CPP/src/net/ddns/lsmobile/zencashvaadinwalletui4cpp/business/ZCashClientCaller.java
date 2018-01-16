@@ -52,7 +52,6 @@ import com.eclipsesource.json.WriterConfig;
 import com.vaadin.server.VaadinSession;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
-import net.ddns.lsmobile.zencashvaadinwalletui4cpp.dal.AddressDAO;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.User;
 
 
@@ -122,33 +121,6 @@ public class ZCashClientCaller implements IConfig
 		    	"The ZENCash command line utility " + this.zcashcli.getCanonicalPath() +
 		    	" was found, but zend was not found!");
 		}
-	}
-
-	
-	public synchronized Process startDaemon()
-		throws IOException, InterruptedException
-	{
-		final String exportDir = OSUtil.getUserHomeDirectory().getCanonicalPath();
-		
-	    final CommandExecutor starter = new CommandExecutor(
-	        new String[]
-	        {
-	        	this.zcashd.getCanonicalPath(),
-	        	"-exportdir=" + exportDir
-	        });
-	    
-	    return starter.startChildProcess();
-	}
-	
-	
-	public /*synchronized*/ void stopDaemon()
-		throws IOException,InterruptedException
-	{
-	    final CommandExecutor stopper = new CommandExecutor(
-	            new String[] { this.zcashcli.getCanonicalPath(), "stop" });
-	    
-	    final String result = stopper.execute();
-	    log.info("Stop command issued: " + result);
 	}
 	
 
@@ -220,9 +192,8 @@ public class ZCashClientCaller implements IConfig
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
-		final AddressDAO addressDAO = session.getAttribute(AddressDAO.class);
-		
-	    final JsonArray jsonTransactions = executeCommandAndGetJsonArray(
+
+		final JsonArray jsonTransactions = executeCommandAndGetJsonArray(
 	    	"listtransactions", wrapStringParameter(""), "300");
 	    final Set<Transaction> transactions = new HashSet<> ();
 	    for (final JsonValue jsonValue : jsonTransactions)
@@ -903,39 +874,6 @@ public class ZCashClientCaller implements IConfig
 		log.info("Result of wallet encryption is: \n" + response);
 		// If no exception - obviously successful
 	}
-	
-	
-	public synchronized String backupWallet(final String fileName)
-		throws WalletCallException, IOException, InterruptedException
-	{
-		log.info("Backup up wallet to location: " + fileName);
-		final String response = this.executeCommandAndGetSingleStringResponse(
-			"backupwallet", wrapStringParameter(fileName));
-		// If no exception - obviously successful
-		return response;
-	}
-	
-	
-	public synchronized String exportWallet(final String fileName)
-		throws WalletCallException, IOException, InterruptedException
-	{
-		log.info("Export wallet keys to location: " + fileName);
-		final String response = this.executeCommandAndGetSingleStringResponse(
-			"z_exportwallet", wrapStringParameter(fileName));
-		// If no exception - obviously successful
-		return response;
-	}
-	
-	
-	public synchronized void importWallet(final String fileName)
-		throws WalletCallException, IOException, InterruptedException
-	{
-		log.info("Import wallet keys from location: " + fileName);
-		final String response = this.executeCommandAndGetSingleStringResponse(
-			"z_importwallet", wrapStringParameter(fileName));
-		// If no exception - obviously successful
-	}
-	
 	
 	public synchronized String getTPrivateKey(final String address)
 		throws WalletCallException, IOException, InterruptedException

@@ -9,9 +9,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
 
-import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
-
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.NetworkAndBlockchainInfo;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletCallException;
@@ -238,89 +235,8 @@ public class ZenNode implements IConfig{
 //            return;
         } else
         {
-        	log.info("Splash: zend will be started...");
+        	new InstallationDetectionException ("Splash: zend must be started...");
         }
-        
-        final Process daemonProcess =
-        	shouldStartZCashd ? this.clientCaller.startDaemon() : null;
-        
-        Thread.sleep(POLL_PERIOD); // just a little extra
-        
-        int iteration = 0;
-        while(true) {
-        	iteration++;
-            Thread.sleep(POLL_PERIOD);
-            
-            JsonObject info = null;
-            
-            try
-            {
-            	info = this.clientCaller.getDaemonRawRuntimeInfo();
-            } catch (final IOException e)
-            {
-            	if (iteration > 4)
-            	{
-            		throw e;
-            	} else
-            	{
-            		continue;
-            	}
-            }
-            
-            final JsonValue code = info.get("code");
-            if (code == null || (code.asInt() != STARTUP_ERROR_CODE)) {
-				break;
-			}
-            final String message = info.getString("message", "???");
-//            setProgressText(message);
-            
-        }
-
-        // doDispose(); - will be called later by the main GUI
-        
-        if (daemonProcess != null) {
-			Runtime.getRuntime().addShutdownHook(new Thread() {
-			    @Override
-				public void run() {
-			    	log.info("Stopping zend because we started it - now it is alive: " +
-			    			ZenNode.this.isAlive(daemonProcess));
-			        try
-			        {
-			        	ZenNode.this.clientCaller.stopDaemon();
-			            final long start = System.currentTimeMillis();
-			            
-			            while (!ZenNode.this.waitFor(daemonProcess, 3000))
-			            {
-			            	final long end = System.currentTimeMillis();
-			            	log.info("Waiting for " + ((end - start) / 1000) + " seconds for zend to exit...");
-			            	
-			            	if (end - start > 10 * 1000)
-			            	{
-			            		ZenNode.this.clientCaller.stopDaemon();
-			            		daemonProcess.destroy();
-			            	}
-			            	
-			            	if (end - start > 1 * 60 * 1000)
-			            	{
-			            		break;
-			            	}
-			            }
-			        
-			            if (ZenNode.this.isAlive(daemonProcess)) {
-			            	log.info("zend is still alive although we tried to stop it. " +
-			                                       "Hopefully it will stop later!");
-			                    //System.out.println("zend is still alive, killing forcefully");
-			                    //daemonProcess.destroyForcibly();
-			                } else {
-							log.info("zend shut down successfully");
-						}
-			        } catch (final Exception bad) {
-			        	log.error("Couldn't stop zend!", bad);
-			        }
-			    }
-			});
-		}
-        
     }
     
     
