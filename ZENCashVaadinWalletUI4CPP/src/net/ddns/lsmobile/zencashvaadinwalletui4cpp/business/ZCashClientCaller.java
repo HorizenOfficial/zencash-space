@@ -302,14 +302,17 @@ public class ZCashClientCaller implements IConfig
 	public synchronized String[] getWalletZAddresses(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
+		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
+
 		final JsonArray jsonAddresses = executeCommandAndGetJsonArray("z_listaddresses", null);
-		final String strAddresses[] = new String[jsonAddresses.size()];
+		final Set<String> listAddresses = new HashSet<> ();
 		for (int i = 0; i < jsonAddresses.size(); i++)
 		{
-		    strAddresses[i] = jsonAddresses.get(i).asString();
+	    	if (!addressDAO.isAddressFromUser(user, jsonAddresses.get(i).asString()).isEmpty()) {
+	    		listAddresses.add(jsonAddresses.get(i).asString());
+	    	}
 		}
-
-	    return strAddresses;
+	    return listAddresses.toArray(new String[0]);
 	}
 
 
@@ -369,13 +372,18 @@ public class ZCashClientCaller implements IConfig
 	public synchronized String[] getWalletPublicAddressesWithUnspentOutputs(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
+		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
+
 		final JsonArray jsonUnspentOutputs = executeCommandAndGetJsonArray("listunspent", "0");
 
 		final Set<String> addresses = new HashSet<>();
 	    for (int i = 0; i < jsonUnspentOutputs.size(); i++)
 	    {
 	    	final JsonObject outp = jsonUnspentOutputs.get(i).asObject();
-	    	addresses.add(outp.getString("address", "ERROR!"));
+		   	final String address = outp.getString("address", "ERROR!");
+	    	if (!addressDAO.isAddressFromUser(user, address).isEmpty()) {
+			   	addresses.add(address);
+	    	}
 	    }
 
 	    return addresses.toArray(new String[0]);
@@ -386,13 +394,18 @@ public class ZCashClientCaller implements IConfig
 	public synchronized String[] getWalletAllPublicAddresses(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
+		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
+
 		final JsonArray jsonReceivedOutputs = executeCommandAndGetJsonArray("listreceivedbyaddress", "0", "true");
 
 		final Set<String> addresses = new HashSet<>();
 		for (int i = 0; i < jsonReceivedOutputs.size(); i++)
 		{
 		   	final JsonObject outp = jsonReceivedOutputs.get(i).asObject();
-		   	addresses.add(outp.getString("address", "ERROR!"));
+		   	final String address = outp.getString("address", "ERROR!");
+	    	if (!addressDAO.isAddressFromUser(user, address).isEmpty()) {
+			   	addresses.add(address);
+	    	}
 		}
 
 		return addresses.toArray(new String[0]);
