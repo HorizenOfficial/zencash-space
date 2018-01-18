@@ -39,6 +39,7 @@ import java.lang.reflect.Method;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
@@ -80,6 +81,59 @@ public class Util
 			{
 				final String s1 = ar1[i][j];
 				final String s2 = ar2[i][j];
+				
+				if (s1 == null)
+				{
+					if (s2 != null)
+					{
+						return true;
+					}
+				} else if (s2 == null)
+				{
+					return true;
+				} else
+				{
+					if (!s1.equals(s2))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	// Compares two string arrays (two dimensional).
+	public static boolean listsAreDifferent(final List<String[]> ar1, final List<String[]> ar2)
+	{
+		if (ar1 == null)
+		{
+			if (ar2 != null)
+			{
+				return true;
+			}
+		} else if (ar2 == null)
+		{
+			return true;
+		}
+		
+		if (ar1.size() != ar2.size())
+		{
+			return true;
+		}
+		
+		for (int i = 0; i < ar1.size(); i++)
+		{
+			if (ar1.get(i).length != ar2.get(i).length)
+			{
+				return true;
+			}
+			
+			for (int j = 0; j < ar1.get(i).length; j++)
+			{
+				final String s1 = ar1.get(i)[j];
+				final String s2 = ar2.get(i)[j];
 				
 				if (s1 == null)
 				{

@@ -3,6 +3,7 @@ package net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -103,7 +104,11 @@ public class MainView extends XdevView implements IWallet {
 								ui.access(()->{
 									try {
 										updateWalletStatusLabel(MainView.this.zenNode.clientCaller.getWalletInfo(MainView.this.session));
+										ui.push();
 										updateWalletTransactionsTable(data);
+										ui.push();
+										updateWalletAddressBalanceTable();
+										ui.push();
 										updateWalletAddressPositiveBalanceComboBox(MainView.this.zenNode.clientCaller.getAddressPositiveBalanceDataFromWallet(MainView.this.session));
 										ui.push();
 									} catch (final Exception e) {
@@ -122,11 +127,6 @@ public class MainView extends XdevView implements IWallet {
 
 						
 			//AddressesPanel
-			this.lastInteractiveRefresh = System.currentTimeMillis();
-			
-			//this.lastAddressBalanceData = getAddressBalanceDataFromWallet();
-			
-			updateWalletAddressBalanceTableInteractive();
 						
 			//SendCashPanel
 						
@@ -305,11 +305,7 @@ public class MainView extends XdevView implements IWallet {
 	
 	protected Grid addressBalanceTable = null;
 	
-	String[][] lastAddressBalanceFullData = null;
-	
-	private final DataGatheringThread<String[][]> balanceGatheringThread = null;
-	
-	private long lastInteractiveRefresh;
+	List<String[]> lastAddressBalanceFullData = null;
 	
 	protected String selectedAddress = null;
 	
@@ -362,7 +358,7 @@ public class MainView extends XdevView implements IWallet {
 			Notification.show("Address created", "A new " + (isZAddress ? "Z (Private)" : "T (Transparent)")
 					+ " address has been created cuccessfully:\n" + address, Type.HUMANIZED_MESSAGE);
 
-			this.updateWalletAddressBalanceTableInteractive();
+			this.updateWalletAddressBalanceTable();
 		} catch (final Exception e)
 		{
 			log.error("Unexpected error: ", e);
@@ -370,46 +366,15 @@ public class MainView extends XdevView implements IWallet {
 	}
 
 	// Interactive and non-interactive are mutually exclusive
-	private synchronized void updateWalletAddressBalanceTableInteractive()
+	private synchronized void updateWalletAddressBalanceTable()
 		throws WalletCallException, IOException, InterruptedException
 	{
-		this.lastInteractiveRefresh = System.currentTimeMillis();
-		
-		final String[][] newAddressBalanceData = this.getAddressBalanceDataFromWallet();
-
-		if (Util.arraysAreDifferent(this.lastAddressBalanceFullData, newAddressBalanceData))
-		{
-			log.info("Updating table of addresses/balances I...");
-			this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(newAddressBalanceData));
-			this.lastAddressBalanceFullData = newAddressBalanceData;
-
-		}
+		log.info("Updating table of addresses/balances I...");
+		this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(this.getAddressBalanceDataFromWallet()));
 	}
 	
 
-	// Interactive and non-interactive are mutually exclusive
-	private synchronized void updateWalletAddressBalanceTableAutomated()
-		throws WalletCallException, IOException, InterruptedException
-	{
-		// Make sure it is > 1 min since the last interactive refresh
-		if ((System.currentTimeMillis() - this.lastInteractiveRefresh) < (60 * 1000))
-		{
-			return;
-		}
-		
-		final String[][] newAddressBalanceData = this.balanceGatheringThread.getLastData();
-		
-		if ((newAddressBalanceData != null) &&
-			Util.arraysAreDifferent(this.lastAddressBalanceFullData, newAddressBalanceData))
-		{
-			log.info("Updating table of addresses/balances A...");
-			this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(newAddressBalanceData));
-			this.lastAddressBalanceFullData = newAddressBalanceData;
-		}
-	}
-
-
-	private Grid createAddressBalanceTable(final String rowData[][])
+	private Grid createAddressBalanceTable(final List<String[]> addressBalanceData)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		this.addressBalanceTable = new Grid(/*"Addresses:"*/);
@@ -426,7 +391,7 @@ public class MainView extends XdevView implements IWallet {
 //		gridTransactions.setFrozenColumnCount(2);
 
 		// Rows (Values)
-		for (final String[] row : rowData) {
+		for (final String[] row : addressBalanceData) {
 			this.addressBalanceTable.addRow(row);
 		}
 
@@ -453,7 +418,7 @@ public class MainView extends XdevView implements IWallet {
 	}
 
 
-	private String[][] getAddressBalanceDataFromWallet()
+	private List<String[]> getAddressBalanceDataFromWallet()
 		throws WalletCallException, IOException, InterruptedException
 	{
 		// Z Addresses - they are OK
@@ -466,7 +431,7 @@ public class MainView extends XdevView implements IWallet {
 		// T addresses with unspent outputs - just in case they are different
 		tAddressesCombined.addAll(this.zenNode.clientCaller.getWalletPublicAddressesWithUnspentOutputs(this.session));
 		
-		final String[][] addressBalances = new String[zAddresses.size() + tAddressesCombined.size()][];
+		final List<String[]> addressBalances = new ArrayList<> ();
 		
 		String confirmed    = "\u2690";
 		String notConfirmed = "\u2691";
@@ -480,8 +445,6 @@ public class MainView extends XdevView implements IWallet {
 			notConfirmed = " \u25B6";
 		}
 		
-		int i = 0;
-
 		for (final String address : tAddressesCombined)
 		{
 			final String confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
@@ -490,12 +453,12 @@ public class MainView extends XdevView implements IWallet {
 			final String balanceToShow = defaultNumberFormat.format(Double.valueOf(
 				isConfirmed ? confirmedBalance : unconfirmedBalance));
 			
-			addressBalances[i++] = new String[]
-			{
-				balanceToShow,
-				isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
-				address
-			};
+			addressBalances.add(new String[]
+				{
+					balanceToShow,
+					isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
+					address
+				});
 		}
 		
 		for (final String address : zAddresses)
@@ -506,12 +469,12 @@ public class MainView extends XdevView implements IWallet {
 			final String balanceToShow = defaultNumberFormat.format(Double.valueOf(
 				isConfirmed ? confirmedBalance : unconfirmedBalance));
 			
-			addressBalances[i++] = new String[]
+			addressBalances.add(new String[]
 			{
 				balanceToShow,
 				isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
 				address
-			};
+			});
 		}
 
 		return addressBalances;
