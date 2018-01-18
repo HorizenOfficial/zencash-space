@@ -28,5 +28,7 @@ public interface IConfig {
 	public final NumberFormat usNumberFormat = java.text.NumberFormat.getNumberInstance(Locale.US);
 	
 	public final AddressDAO addressDAO = new AddressDAO ();
+	
+	public final static String PLEASE_WAIT = "Please wait...";
 
 }

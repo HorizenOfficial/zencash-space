@@ -5,6 +5,7 @@
 <?template BROWSER_XGA?>
 <?import com.xdev.ui.XdevButton?>
 <?import com.xdev.ui.XdevGridLayout?>
+<?import com.xdev.ui.XdevImage?>
 <?import com.xdev.ui.XdevLabel?>
 <?import com.xdev.ui.XdevMenuBar?>
 <?import com.xdev.ui.XdevMenuBar.XdevMenuItem?>
@@ -12,6 +13,7 @@
 <?import com.xdev.ui.XdevProgressBar?>
 <?import com.xdev.ui.XdevTabSheet?>
 <?import com.xdev.ui.XdevTextField?>
+<?import com.xdev.ui.XdevVerticalLayout?>
 <?import com.xdev.ui.XdevView?>
 <?import com.xdev.ui.entitycomponent.combobox.XdevComboBox?>
 <?import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop.MainView.AddressWithBalance?>
@@ -54,29 +56,52 @@
                 <XdevLabel x:name="labelTransparentBalanceCaption" value="Transparent (T) balance:">
                     <x:constraints gridx="1" gridy="1" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />
                 </XdevLabel>
-                <XdevLabel x:name="labelTransparentBalance" value="0">
+                <XdevLabel x:name="labelTransparentBalance">
                     <x:constraints gridx="2" gridy="1" weighty="0.0" weightx="0.1" />
+                    <value x:content="code">PLEASE_WAIT</value>
                 </XdevLabel>
                 <XdevLabel x:name="labelPrivateBalanceCaption" value="Private (Z) balance:">
                     <x:constraints gridx="1" gridy="2" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />
                 </XdevLabel>
-                <XdevLabel x:name="labelPrivateBalance" value="0">
+                <XdevLabel x:name="labelPrivateBalance">
                     <x:constraints gridx="2" gridy="2" weighty="0.0" weightx="0.1" />
+                    <value x:content="code">PLEASE_WAIT</value>
                 </XdevLabel>
                 <XdevLabel x:name="labelTotalBalanceCaption" value="Total (T+Z) balance:">
                     <x:constraints gridx="1" gridy="3" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />
                 </XdevLabel>
-                <XdevLabel styleName="bold" x:name="labelTotalBalance" value="0">
+                <XdevLabel styleName="bold" x:name="labelTotalBalance">
                     <x:constraints gridx="2" gridy="3" weighty="0.0" weightx="0.1" />
+                    <value x:content="code">PLEASE_WAIT</value>
                 </XdevLabel>
                 <XdevPanel x:name="panelGridTransactions">
                     <x:constraints gridx="1" gridy="4" weighty="0.1" weightx="0.1" width="100%" gridWidth="2" height="100%" />
+                    <XdevVerticalLayout x:name="verticalLayout">
+                        <x:constraints zpos="0" width="100%" height="100%" />
+                        <XdevLabel x:name="labelPleaseWait1">
+                            <x:constraints weighty="0.1" alignment="BOTTOM_CENTER" />
+                            <value x:content="code">PLEASE_WAIT</value>
+                        </XdevLabel>
+                        <XdevImage source="WebContent/WEB-INF/resources/images/loading.gif" x:name="image">
+                            <x:constraints weighty="0.1" width="100px" alignment="TOP_CENTER" height="100px" />
+                        </XdevImage>
+                    </XdevVerticalLayout>
                 </XdevPanel>
             </XdevGridLayout>
             <XdevGridLayout caption="Own addresses" x:name="tabOwnAddresses">
                 <x:constraints width="100%" height="100%" />
                 <XdevPanel x:name="panelGridOwnAddresses">
                     <x:constraints gridx="1" gridy="1" weighty="0.1" weightx="0.1" width="100%" gridWidth="2" height="100%" />
+                    <XdevVerticalLayout x:name="verticalLayout2">
+                        <x:constraints zpos="0" width="100%" height="100%" />
+                        <XdevLabel x:name="labelPleaseWait2">
+                            <x:constraints top="141px" left="220px" weighty="0.1" alignment="BOTTOM_CENTER" />
+                            <value x:content="code">PLEASE_WAIT</value>
+                        </XdevLabel>
+                        <XdevImage source="WebContent/WEB-INF/resources/images/loading.gif" x:name="image2">
+                            <x:constraints top="141px" left="220px" weighty="0.1" width="100px" alignment="TOP_CENTER" height="100px" />
+                        </XdevImage>
+                    </XdevVerticalLayout>
                 </XdevPanel>
                 <XdevButton caption="New T (Transparent) address" x:name="buttonNewTAddress">
                     <x:constraints gridx="1" gridy="2" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />

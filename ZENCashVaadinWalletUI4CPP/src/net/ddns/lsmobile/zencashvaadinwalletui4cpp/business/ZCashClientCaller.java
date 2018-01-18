@@ -64,13 +64,35 @@ public class ZCashClientCaller implements IConfig
 {
 	public static class WalletBalance
 	{
-		public double transparentBalance;
-		public double privateBalance;
-		public double totalBalance;
+		public BigDecimal transparentBalance = BigDecimal.ZERO;
+		public BigDecimal privateBalance = BigDecimal.ZERO;
 
-		public double transparentUnconfirmedBalance;
-		public double privateUnconfirmedBalance;
-		public double totalUnconfirmedBalance;
+		public BigDecimal transparentUnconfirmedBalance = BigDecimal.ZERO;
+		public BigDecimal privateUnconfirmedBalance = BigDecimal.ZERO;
+		
+		public BigDecimal getTotalBalance() {
+			return BigDecimal.ZERO.add(this.transparentBalance).add(this.privateBalance);
+		}
+		public BigDecimal getTotalUnconfirmedBalance() {
+			return BigDecimal.ZERO.add(this.transparentUnconfirmedBalance).add(this.privateUnconfirmedBalance);
+		}
+	}
+	
+	public static class AddressWithBalance
+	{
+		public String address;
+		public BigDecimal balance = BigDecimal.ZERO;
+		
+	    @Override
+		public String toString() {
+	    	return defaultNumberFormat.format(this.balance)  +
+					" - " + this.address;
+	    }
+	    
+	    @Override
+	    public boolean equals(final Object obj) {
+	        return (obj instanceof AddressWithBalance && ((AddressWithBalance)obj).address.equals(this.address) && ((AddressWithBalance)obj).balance.equals(this.balance));
+	    }
 	}
 
 
@@ -171,18 +193,53 @@ public class ZCashClientCaller implements IConfig
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final WalletBalance balance = new WalletBalance();
-
-		JsonObject objResponse = this.executeCommandAndGetJsonObject("z_gettotalbalance", null);
-
-    	balance.transparentBalance = Double.valueOf(objResponse.getString("transparent", "-1"));
-    	balance.privateBalance     = Double.valueOf(objResponse.getString("private", "-1"));
-    	balance.totalBalance       = Double.valueOf(objResponse.getString("total", "-1"));
-
-        objResponse = this.executeCommandAndGetJsonObject("z_gettotalbalance", "0");
-
-    	balance.transparentUnconfirmedBalance = Double.valueOf(objResponse.getString("transparent", "-1"));
-    	balance.privateUnconfirmedBalance     = Double.valueOf(objResponse.getString("private", "-1"));
-    	balance.totalUnconfirmedBalance       = Double.valueOf(objResponse.getString("total", "-1"));
+		
+		// Z Addresses - they are OK
+		final Set<String> zAddresses = getWalletZAddresses(session);
+		
+		// Combine all known T addresses
+		final Set<String> tAddressesCombined = new HashSet<>();
+		// T Addresses listed with the list received by addr comamnd
+		tAddressesCombined.addAll(getWalletAllPublicAddresses(session));
+		// T addresses with unspent outputs - just in case they are different
+		tAddressesCombined.addAll(getWalletPublicAddressesWithUnspentOutputs(session));
+		
+		final List<String[]> addressBalances = new ArrayList<> ();
+		
+		for (final String address : tAddressesCombined)
+		{
+			final BigDecimal confirmedBalance = getBalanceForAddress(address);
+			final BigDecimal unconfirmedBalance = getUnconfirmedBalanceForAddress(address);
+			if (confirmedBalance.equals(unconfirmedBalance)) {
+				balance.transparentBalance = balance.transparentBalance.add(confirmedBalance);
+			}
+			else {
+				balance.transparentUnconfirmedBalance = balance.transparentUnconfirmedBalance.add(unconfirmedBalance);
+			}
+		}
+		
+		for (final String address : zAddresses)
+		{
+			final BigDecimal confirmedBalance = getBalanceForAddress(address);
+			final BigDecimal unconfirmedBalance = getUnconfirmedBalanceForAddress(address);
+			if (confirmedBalance.equals(unconfirmedBalance)) {
+				balance.privateBalance = balance.privateBalance.add(confirmedBalance);
+			}
+			else {
+				balance.privateUnconfirmedBalance = balance.privateUnconfirmedBalance.add(unconfirmedBalance);
+			}
+		}
+//    	JsonObject objResponse = this.executeCommandAndGetJsonObject("z_gettotalbalance", null);
+//
+//    	balance.transparentBalance = Double.valueOf(objResponse.getString("transparent", "-1"));
+//    	balance.privateBalance     = Double.valueOf(objResponse.getString("private", "-1"));
+//    	balance.totalBalance       = Double.valueOf(objResponse.getString("total", "-1"));
+//
+//        objResponse = this.executeCommandAndGetJsonObject("z_gettotalbalance", "0");
+//
+//    	balance.transparentUnconfirmedBalance = Double.valueOf(objResponse.getString("transparent", "-1"));
+//    	balance.privateUnconfirmedBalance     = Double.valueOf(objResponse.getString("private", "-1"));
+//    	balance.totalUnconfirmedBalance       = Double.valueOf(objResponse.getString("total", "-1"));
 
 		return balance;
 	}
@@ -237,7 +294,7 @@ public class ZCashClientCaller implements IConfig
 	
 	
 	//TODO LS AddressPositiveBalance String[][]>Type
-	public List<String[]> getAddressPositiveBalanceDataFromWallet(final VaadinSession session)
+	public List<AddressWithBalance> getAddressPositiveBalanceDataFromWallet(final VaadinSession session)
 			throws WalletCallException, IOException, InterruptedException
 	{
 		// Z Addresses - they are OK
@@ -250,33 +307,33 @@ public class ZCashClientCaller implements IConfig
 		// T addresses with unspent outputs (even if not GUI created)...
 		tAddressesCombined.addAll(getWalletPublicAddressesWithUnspentOutputs(session));
 		
-		final List<String[]> addressBalances = new ArrayList<> ();
+		final List<AddressWithBalance> addressesWithBalances = new ArrayList<> ();
 		
 		for (final String address : tAddressesCombined)
 		{
-			final String balance = getBalanceForAddress(address);
-			if (Double.valueOf(balance) > 0)
+			final BigDecimal balance = getBalanceForAddress(address);
+			if (balance.doubleValue() > 0)
 			{
-				addressBalances.add(new String[]
-				{
-					balance, address
-				});
+				final AddressWithBalance newAddressWithBalance = new AddressWithBalance();
+				newAddressWithBalance.address = address;
+				newAddressWithBalance.balance = balance;
+				addressesWithBalances.add(newAddressWithBalance);
 			}
 		}
 		
 		for (final String address : zAddresses)
 		{
-			final String balance = getBalanceForAddress(address);
-			if (Double.valueOf(balance) > 0)
+			final BigDecimal balance = getBalanceForAddress(address);
+			if (balance.doubleValue() > 0)
 			{
-				addressBalances.add(new String[]
-				{
-					balance, address
-				});
+				final AddressWithBalance newAddressWithBalance = new AddressWithBalance();
+				newAddressWithBalance.address = address;
+				newAddressWithBalance.balance = balance;
+				addressesWithBalances.add(newAddressWithBalance);
 			}
 		}
 
-		return addressBalances;
+		return addressesWithBalances;
 	}
 
 	
@@ -472,21 +529,21 @@ public class ZCashClientCaller implements IConfig
 	
 
 	// Returns confirmed balance only!
-	public synchronized String getBalanceForAddress(final String address)
+	public synchronized BigDecimal getBalanceForAddress(final String address)
 		throws WalletCallException, IOException, InterruptedException
 	{
 	    final JsonValue response = this.executeCommandAndGetJsonValue("z_getbalance", wrapStringParameter(address));
 
-		return String.valueOf(response.toString());
+		return BigDecimal.valueOf(response.asDouble());
 	}
 
 
-	public synchronized String getUnconfirmedBalanceForAddress(final String address)
+	public synchronized BigDecimal getUnconfirmedBalanceForAddress(final String address)
 		throws WalletCallException, IOException, InterruptedException
 	{
 	    final JsonValue response = this.executeCommandAndGetJsonValue("z_getbalance", wrapStringParameter(address), "0");
 
-		return String.valueOf(response.toString());
+		return BigDecimal.valueOf(response.asDouble());
 	}
 
 

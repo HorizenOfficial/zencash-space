@@ -2,9 +2,9 @@
 package net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,9 +26,11 @@ import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.renderers.HtmlRenderer;
 import com.xdev.communication.RunnableAccessWrapper;
+import com.xdev.res.ApplicationResource;
 import com.xdev.security.authentication.ui.Authentication;
 import com.xdev.ui.XdevButton;
 import com.xdev.ui.XdevGridLayout;
+import com.xdev.ui.XdevImage;
 import com.xdev.ui.XdevLabel;
 import com.xdev.ui.XdevMenuBar;
 import com.xdev.ui.XdevMenuBar.XdevMenuItem;
@@ -36,6 +38,7 @@ import com.xdev.ui.XdevPanel;
 import com.xdev.ui.XdevProgressBar;
 import com.xdev.ui.XdevTabSheet;
 import com.xdev.ui.XdevTextField;
+import com.xdev.ui.XdevVerticalLayout;
 import com.xdev.ui.XdevView;
 import com.xdev.ui.entitycomponent.combobox.XdevComboBox;
 import com.xdev.util.ConverterBuilder;
@@ -46,6 +49,7 @@ import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Transaction;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.Util;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.AddressWithBalance;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletBalance;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller.WalletCallException;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZenNode;
@@ -195,7 +199,7 @@ public class MainView extends XdevView implements IWallet {
 		{
 			this.labelTransparentBalance.setValue(defaultNumberFormat.format(balance.transparentBalance) + " ZEN");
 			this.labelPrivateBalance.setValue(defaultNumberFormat.format(balance.privateBalance) + " ZEN");
-			this.labelTotalBalance.setValue(defaultNumberFormat.format(balance.totalBalance) + " ZEN");
+			this.labelTotalBalance.setValue(defaultNumberFormat.format(balance.getTotalBalance()) + " ZEN");
 			
 			/* TODO LS
 			
@@ -447,15 +451,14 @@ public class MainView extends XdevView implements IWallet {
 		
 		for (final String address : tAddressesCombined)
 		{
-			final String confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
-			final String unconfirmedBalance = this.zenNode.clientCaller.getUnconfirmedBalanceForAddress(address);
+			final BigDecimal confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
+			final BigDecimal unconfirmedBalance = this.zenNode.clientCaller.getUnconfirmedBalanceForAddress(address);
 			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
-			final String balanceToShow = defaultNumberFormat.format(Double.valueOf(
-				isConfirmed ? confirmedBalance : unconfirmedBalance));
 			
 			addressBalances.add(new String[]
 				{
-					balanceToShow,
+					defaultNumberFormat.format(
+							isConfirmed ? confirmedBalance : unconfirmedBalance),
 					isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
 					address
 				});
@@ -463,18 +466,17 @@ public class MainView extends XdevView implements IWallet {
 		
 		for (final String address : zAddresses)
 		{
-			final String confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
-			final String unconfirmedBalance = this.zenNode.clientCaller.getUnconfirmedBalanceForAddress(address);
+			final BigDecimal confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
+			final BigDecimal unconfirmedBalance = this.zenNode.clientCaller.getUnconfirmedBalanceForAddress(address);
 			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
-			final String balanceToShow = defaultNumberFormat.format(Double.valueOf(
-				isConfirmed ? confirmedBalance : unconfirmedBalance));
 			
 			addressBalances.add(new String[]
-			{
-				balanceToShow,
-				isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
-				address
-			});
+				{
+					defaultNumberFormat.format(
+							isConfirmed ? confirmedBalance : unconfirmedBalance),
+					isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
+					address
+				});
 		}
 
 		return addressBalances;
@@ -483,8 +485,7 @@ public class MainView extends XdevView implements IWallet {
 
 	// SendCashPanel
 	
-	private List<String[]> lastAddressBalanceData  = null;
-	private AddressWithBalance[]   comboBoxItems           = null;
+	private List<AddressWithBalance> lastAddressWithBalanceData  = null;
 	private final DataGatheringThread<String[][]> addressBalanceGatheringThread = null;
 	
 //	private Timer        operationStatusTimer        = null;
@@ -738,60 +739,32 @@ public class MainView extends XdevView implements IWallet {
 	{
 	    this.textFieldDestinationAddress.setValue(address);
 	}
+
 	
-	public static class AddressWithBalance {
-		String address;
-		String balance;
-		public AddressWithBalance(final String address, final String balance) {
-			super();
-			this.address = address;
-			this.balance = balance;
-		}
-	    @Override
-		public String toString() {
-	    	return defaultNumberFormat.format(Double.valueOf(this.balance))  +
-					" - " + this.address;
-	    }
-	}
-	
-	
-	private void updateWalletAddressPositiveBalanceComboBox(final List<String[]> list)
+	private void updateWalletAddressPositiveBalanceComboBox(final List<AddressWithBalance> addressWithBalanceData)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		boolean notChanged = true;
 		// The data may be null if nothing is yet obtained
-		if (list == null) {
+		if (addressWithBalanceData == null) {
 		}
-		else if (this.lastAddressBalanceData == null) {
+		else if (this.lastAddressWithBalanceData == null) {
 			notChanged = false;
 		}
-		else if (this.lastAddressBalanceData.size() != list.size()) {
+		else if (this.lastAddressWithBalanceData.size() != addressWithBalanceData.size()) {
 			notChanged = false;
 		}
-		else {
-			for (int i = 0; i < list.size(); i++) {
-				if (!Arrays.equals(list.get(i), this.lastAddressBalanceData.get(i))) {
-					notChanged = false;
-					break;
-				}
-			}
+		else if (this.lastAddressWithBalanceData.containsAll(addressWithBalanceData) && addressWithBalanceData.containsAll(this.lastAddressWithBalanceData)) {
+				notChanged = false;
 		}
 		
 		if (notChanged) {
 			return;
 		}
 		
-		this.lastAddressBalanceData = list;
-		
-		this.comboBoxItems = new AddressWithBalance[this.lastAddressBalanceData.size()];
-		for (int i = 0; i < this.lastAddressBalanceData.size(); i++)
-		{
-			// Do numeric formatting or else we may get 1.1111E-5
-			this.comboBoxItems[i] = new AddressWithBalance (this.lastAddressBalanceData.get(i)[1], this.lastAddressBalanceData.get(i)[0]);
-		}
-		
+		this.lastAddressWithBalanceData = addressWithBalanceData;
 		this.comboBoxBalanceAddress.removeAllItems();
-		this.comboBoxBalanceAddress.addItems(Arrays.asList(this.comboBoxItems));
+		this.comboBoxBalanceAddress.addItems(addressWithBalanceData);
 
 		/* TODO LS
 		final int selectedIndex = this.comboBoxBalanceAddress.getSelectedIndex();
@@ -986,8 +959,14 @@ public class MainView extends XdevView implements IWallet {
 		this.labelTotalBalanceCaption = new XdevLabel();
 		this.labelTotalBalance = new XdevLabel();
 		this.panelGridTransactions = new XdevPanel();
+		this.verticalLayout = new XdevVerticalLayout();
+		this.labelPleaseWait1 = new XdevLabel();
+		this.image = new XdevImage();
 		this.tabOwnAddresses = new XdevGridLayout();
 		this.panelGridOwnAddresses = new XdevPanel();
+		this.verticalLayout2 = new XdevVerticalLayout();
+		this.labelPleaseWait2 = new XdevLabel();
+		this.image2 = new XdevImage();
 		this.buttonNewTAddress = new XdevButton();
 		this.buttonNewZAddress = new XdevButton();
 		this.tabSendCash = new XdevGridLayout();
@@ -1022,12 +1001,16 @@ public class MainView extends XdevView implements IWallet {
 		this.menuItemOptions.setEnabled(false);
 		this.tabSheet.setStyleName("framed");
 		this.labelTransparentBalanceCaption.setValue("Transparent (T) balance:");
-		this.labelTransparentBalance.setValue("0");
+		this.labelTransparentBalance.setValue(PLEASE_WAIT);
 		this.labelPrivateBalanceCaption.setValue("Private (Z) balance:");
-		this.labelPrivateBalance.setValue("0");
+		this.labelPrivateBalance.setValue(PLEASE_WAIT);
 		this.labelTotalBalanceCaption.setValue("Total (T+Z) balance:");
 		this.labelTotalBalance.setStyleName("bold");
-		this.labelTotalBalance.setValue("0");
+		this.labelTotalBalance.setValue(PLEASE_WAIT);
+		this.labelPleaseWait1.setValue(PLEASE_WAIT);
+		this.image.setSource(new ApplicationResource(this.getClass(), "WebContent/WEB-INF/resources/images/loading.gif"));
+		this.labelPleaseWait2.setValue(PLEASE_WAIT);
+		this.image2.setSource(new ApplicationResource(this.getClass(), "WebContent/WEB-INF/resources/images/loading.gif"));
 		this.buttonNewTAddress.setCaption("New T (Transparent) address");
 		this.buttonNewZAddress.setCaption("New Z (Private) address");
 		this.comboBoxBalanceAddress.setTextInputAllowed(false);
@@ -1066,6 +1049,17 @@ public class MainView extends XdevView implements IWallet {
 		this.tabMessaging.setEnabled(false);
 		this.tabMessaging.setVisible(false);
 	
+		this.labelPleaseWait1.setSizeUndefined();
+		this.verticalLayout.addComponent(this.labelPleaseWait1);
+		this.verticalLayout.setComponentAlignment(this.labelPleaseWait1, Alignment.BOTTOM_CENTER);
+		this.verticalLayout.setExpandRatio(this.labelPleaseWait1, 10.0F);
+		this.image.setWidth(100, Unit.PIXELS);
+		this.image.setHeight(100, Unit.PIXELS);
+		this.verticalLayout.addComponent(this.image);
+		this.verticalLayout.setComponentAlignment(this.image, Alignment.TOP_CENTER);
+		this.verticalLayout.setExpandRatio(this.image, 10.0F);
+		this.verticalLayout.setSizeFull();
+		this.panelGridTransactions.setContent(this.verticalLayout);
 		this.tabOverview.setColumns(2);
 		this.tabOverview.setRows(4);
 		this.labelTransparentBalanceCaption.setSizeUndefined();
@@ -1088,6 +1082,17 @@ public class MainView extends XdevView implements IWallet {
 		this.tabOverview.setColumnExpandRatio(0, 10.0F);
 		this.tabOverview.setColumnExpandRatio(1, 10.0F);
 		this.tabOverview.setRowExpandRatio(3, 10.0F);
+		this.labelPleaseWait2.setSizeUndefined();
+		this.verticalLayout2.addComponent(this.labelPleaseWait2);
+		this.verticalLayout2.setComponentAlignment(this.labelPleaseWait2, Alignment.BOTTOM_CENTER);
+		this.verticalLayout2.setExpandRatio(this.labelPleaseWait2, 10.0F);
+		this.image2.setWidth(100, Unit.PIXELS);
+		this.image2.setHeight(100, Unit.PIXELS);
+		this.verticalLayout2.addComponent(this.image2);
+		this.verticalLayout2.setComponentAlignment(this.image2, Alignment.TOP_CENTER);
+		this.verticalLayout2.setExpandRatio(this.image2, 10.0F);
+		this.verticalLayout2.setSizeFull();
+		this.panelGridOwnAddresses.setContent(this.verticalLayout2);
 		this.tabOwnAddresses.setColumns(2);
 		this.tabOwnAddresses.setRows(2);
 		this.panelGridOwnAddresses.setSizeFull();
@@ -1179,13 +1184,13 @@ public class MainView extends XdevView implements IWallet {
 	} // </generated-code>
 
 
-
 	// <generated-code name="variables">
 	private XdevLabel labelTransparentBalanceCaption, labelTransparentBalance, labelPrivateBalanceCaption,
-			labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance, label, label2, label3, label4,
+			labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance, labelPleaseWait1, labelPleaseWait2, label, label2, label3, label4,
 			labelOperationStatus, label5;
 	private XdevButton buttonNewTAddress, buttonNewZAddress, buttonSend;
 	private XdevMenuBar menuBar;
+	private XdevImage image, image2;
 	private XdevMenuItem menuItemMain, menuItemAbout, menuItemLogOut, menuItemWallet, menuItemBackup, menuItemEncrypt,
 			menuItemExportPrivateKeys, menuItemImportPrivateKeys, menuItemShowPrivateKey, menuItemImportOnePrivateKey,
 			menuItemMessaging, menuItemOwnIdentity, menuItemExportOwnIdentity, menuItemAddMessagingGroup,
@@ -1196,6 +1201,7 @@ public class MainView extends XdevView implements IWallet {
 	private XdevGridLayout gridLayout, tabOverview, tabOwnAddresses, tabSendCash, tabAddressBook, tabMessaging;
 	private XdevTextField textFieldDestinationAddress, textFieldDestinationMemo, textFieldDestinationAmount,
 			textFieldTransactionFee;
+	private XdevVerticalLayout verticalLayout, verticalLayout2;
 	private XdevComboBox<AddressWithBalance> comboBoxBalanceAddress;
 	// </generated-code>
 
