@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.vaadin.data.sort.Sort;
@@ -77,12 +78,10 @@ public class MainView extends XdevView implements IWallet {
 
 		try {
 
-//			final WalletBalance balance = this.zenNode.clientCaller.getWalletInfo();
 //			if (MainView.this.walletIsEncrypted == null)
 //			{
 //				MainView.this.walletIsEncrypted = MainView.this.zenNode.clientCaller.isWalletEncrypted();
 //			}
-//			updateWalletStatusLabel(balance);
 			
 			// Thread and timer to update the transactions table
 			this.transactionGatheringThread = new DataGatheringThread<>(
@@ -458,30 +457,16 @@ public class MainView extends XdevView implements IWallet {
 		throws WalletCallException, IOException, InterruptedException
 	{
 		// Z Addresses - they are OK
-		final String[] zAddresses = this.zenNode.clientCaller.getWalletZAddresses(this.session);
-		
-		// T Addresses listed with the list received by addr comamnd
-		final String[] tAddresses = this.zenNode.clientCaller.getWalletAllPublicAddresses(this.session);
-		final Set<String> tStoredAddressSet = new HashSet<>();
-		for (final String address : tAddresses)
-		{
-			tStoredAddressSet.add(address);
-		}
-		
-		// T addresses with unspent outputs - just in case they are different
-		final String[] tAddressesWithUnspentOuts = this.zenNode.clientCaller.getWalletPublicAddressesWithUnspentOutputs(this.session);
-		final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
-		for (final String address : tAddressesWithUnspentOuts)
-		{
-			tAddressSetWithUnspentOuts.add(address);
-		}
+		final Set<String> zAddresses = this.zenNode.clientCaller.getWalletZAddresses(this.session);
 		
 		// Combine all known T addresses
 		final Set<String> tAddressesCombined = new HashSet<>();
-		tAddressesCombined.addAll(tStoredAddressSet);
-		tAddressesCombined.addAll(tAddressSetWithUnspentOuts);
+		// T Addresses listed with the list received by addr comamnd
+		tAddressesCombined.addAll(this.zenNode.clientCaller.getWalletAllPublicAddresses(this.session));
+		// T addresses with unspent outputs - just in case they are different
+		tAddressesCombined.addAll(this.zenNode.clientCaller.getWalletPublicAddressesWithUnspentOutputs(this.session));
 		
-		final String[][] addressBalances = new String[zAddresses.length + tAddressesCombined.size()][];
+		final String[][] addressBalances = new String[zAddresses.size() + tAddressesCombined.size()][];
 		
 		String confirmed    = "\u2690";
 		String notConfirmed = "\u2691";
@@ -535,7 +520,7 @@ public class MainView extends XdevView implements IWallet {
 
 	// SendCashPanel
 	
-	private String[][] lastAddressBalanceData  = null;
+	private List<String[]> lastAddressBalanceData  = null;
 	private AddressWithBalance[]   comboBoxItems           = null;
 	private final DataGatheringThread<String[][]> addressBalanceGatheringThread = null;
 	
@@ -807,22 +792,22 @@ public class MainView extends XdevView implements IWallet {
 	}
 	
 	
-	private void updateWalletAddressPositiveBalanceComboBox(final String[][] newAddressBalanceData)
+	private void updateWalletAddressPositiveBalanceComboBox(final List<String[]> list)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		boolean notChanged = true;
 		// The data may be null if nothing is yet obtained
-		if (newAddressBalanceData == null) {
+		if (list == null) {
 		}
 		else if (this.lastAddressBalanceData == null) {
 			notChanged = false;
 		}
-		else if (this.lastAddressBalanceData.length != newAddressBalanceData.length) {
+		else if (this.lastAddressBalanceData.size() != list.size()) {
 			notChanged = false;
 		}
 		else {
-			for (int i = 0; i < newAddressBalanceData.length; i++) {
-				if (!Arrays.equals(newAddressBalanceData[i], this.lastAddressBalanceData[i])) {
+			for (int i = 0; i < list.size(); i++) {
+				if (!Arrays.equals(list.get(i), this.lastAddressBalanceData.get(i))) {
 					notChanged = false;
 					break;
 				}
@@ -833,13 +818,13 @@ public class MainView extends XdevView implements IWallet {
 			return;
 		}
 		
-		this.lastAddressBalanceData = newAddressBalanceData;
+		this.lastAddressBalanceData = list;
 		
-		this.comboBoxItems = new AddressWithBalance[this.lastAddressBalanceData.length];
-		for (int i = 0; i < this.lastAddressBalanceData.length; i++)
+		this.comboBoxItems = new AddressWithBalance[this.lastAddressBalanceData.size()];
+		for (int i = 0; i < this.lastAddressBalanceData.size(); i++)
 		{
 			// Do numeric formatting or else we may get 1.1111E-5
-			this.comboBoxItems[i] = new AddressWithBalance (this.lastAddressBalanceData[i][1], this.lastAddressBalanceData[i][0]);
+			this.comboBoxItems[i] = new AddressWithBalance (this.lastAddressBalanceData.get(i)[1], this.lastAddressBalanceData.get(i)[0]);
 		}
 		
 		this.comboBoxBalanceAddress.removeAllItems();

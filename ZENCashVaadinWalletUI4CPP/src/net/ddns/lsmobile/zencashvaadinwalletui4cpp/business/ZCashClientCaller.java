@@ -237,46 +237,30 @@ public class ZCashClientCaller implements IConfig
 	
 	
 	//TODO LS AddressPositiveBalance String[][]>Type
-	public String[][] getAddressPositiveBalanceDataFromWallet(final VaadinSession session)
+	public List<String[]> getAddressPositiveBalanceDataFromWallet(final VaadinSession session)
 			throws WalletCallException, IOException, InterruptedException
 	{
 		// Z Addresses - they are OK
-		final String[] zAddresses = getWalletZAddresses(session);
-		
-		// T Addresses created inside wallet that may be empty
-		final String[] tAddresses = getWalletAllPublicAddresses(session);
-		final Set<String> tStoredAddressSet = new HashSet<>();
-		for (final String address : tAddresses)
-		{
-			tStoredAddressSet.add(address);
-		}
-		
-		// T addresses with unspent outputs (even if not GUI created)...
-		final String[] tAddressesWithUnspentOuts = getWalletPublicAddressesWithUnspentOutputs(session);
-		final Set<String> tAddressSetWithUnspentOuts = new HashSet<>();
-		for (final String address : tAddressesWithUnspentOuts)
-		{
-			tAddressSetWithUnspentOuts.add(address);
-		}
+		final Set<String> zAddresses = getWalletZAddresses(session);
 		
 		// Combine all known T addresses
 		final Set<String> tAddressesCombined = new HashSet<>();
-		tAddressesCombined.addAll(tStoredAddressSet);
-		tAddressesCombined.addAll(tAddressSetWithUnspentOuts);
+		// T Addresses created inside wallet that may be empty
+		tAddressesCombined.addAll(getWalletAllPublicAddresses(session));
+		// T addresses with unspent outputs (even if not GUI created)...
+		tAddressesCombined.addAll(getWalletPublicAddressesWithUnspentOutputs(session));
 		
-		final String[][] tempAddressBalances = new String[zAddresses.length + tAddressesCombined.size()][];
+		final List<String[]> addressBalances = new ArrayList<> ();
 		
-		int count = 0;
-
 		for (final String address : tAddressesCombined)
 		{
 			final String balance = getBalanceForAddress(address);
 			if (Double.valueOf(balance) > 0)
 			{
-				tempAddressBalances[count++] = new String[]
+				addressBalances.add(new String[]
 				{
 					balance, address
-				};
+				});
 			}
 		}
 		
@@ -285,21 +269,18 @@ public class ZCashClientCaller implements IConfig
 			final String balance = getBalanceForAddress(address);
 			if (Double.valueOf(balance) > 0)
 			{
-				tempAddressBalances[count++] = new String[]
+				addressBalances.add(new String[]
 				{
 					balance, address
-				};
+				});
 			}
 		}
 
-		final String[][] addressBalances = new String[count][];
-		System.arraycopy(tempAddressBalances, 0, addressBalances, 0, count);
-		
 		return addressBalances;
 	}
 
 	
-	public synchronized String[] getWalletZAddresses(final VaadinSession session)
+	public synchronized Set<String> getWalletZAddresses(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
@@ -312,14 +293,14 @@ public class ZCashClientCaller implements IConfig
 	    		listAddresses.add(jsonAddresses.get(i).asString());
 	    	}
 		}
-	    return listAddresses.toArray(new String[0]);
+	    return listAddresses;
 	}
 
 
 	public synchronized Set<Transaction> getWalletZReceivedTransactions(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
-		final String[] zAddresses = this.getWalletZAddresses(session);
+		final Set<String> zAddresses = this.getWalletZAddresses(session);
 
 		final Set<Transaction> zReceivedTransactions = new HashSet<>();
 
@@ -369,7 +350,7 @@ public class ZCashClientCaller implements IConfig
 	
 
 	// ./src/zcash-cli listunspent only returns T addresses it seems
-	public synchronized String[] getWalletPublicAddressesWithUnspentOutputs(final VaadinSession session)
+	public synchronized Set<String> getWalletPublicAddressesWithUnspentOutputs(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
@@ -386,12 +367,12 @@ public class ZCashClientCaller implements IConfig
 	    	}
 	    }
 
-	    return addresses.toArray(new String[0]);
+	    return addresses;
      }
 
 
 	// ./zcash-cli listreceivedbyaddress 0 true
-	public synchronized String[] getWalletAllPublicAddresses(final VaadinSession session)
+	public synchronized Set<String> getWalletAllPublicAddresses(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
@@ -408,7 +389,7 @@ public class ZCashClientCaller implements IConfig
 	    	}
 		}
 
-		return addresses.toArray(new String[0]);
+		return addresses;
     }
 
 	
