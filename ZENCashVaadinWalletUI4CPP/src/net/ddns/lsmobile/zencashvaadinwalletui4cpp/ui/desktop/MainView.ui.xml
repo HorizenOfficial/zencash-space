@@ -16,7 +16,7 @@
 <?import com.xdev.ui.XdevVerticalLayout?>
 <?import com.xdev.ui.XdevView?>
 <?import com.xdev.ui.entitycomponent.combobox.XdevComboBox?>
-<?import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop.MainView.AddressWithBalance?>
+<?import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller$AddressWithBalance?>
 <XdevView xmlns:x="http://xml.xdev-software.com/xdevuiml" x:name="MainView">
     <x:constraints zpos="0" width="100%" height="100%" />
     <x:event>detach.detach</x:event>
@@ -56,21 +56,21 @@
                 <XdevLabel x:name="labelTransparentBalanceCaption" value="Transparent (T) balance:">
                     <x:constraints gridx="1" gridy="1" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />
                 </XdevLabel>
-                <XdevLabel x:name="labelTransparentBalance">
+                <XdevLabel x:name="labelTransparentBalance" contentMode="com.vaadin.shared.ui.label.ContentMode.HTML">
                     <x:constraints gridx="2" gridy="1" weighty="0.0" weightx="0.1" />
                     <value x:content="code">PLEASE_WAIT</value>
                 </XdevLabel>
                 <XdevLabel x:name="labelPrivateBalanceCaption" value="Private (Z) balance:">
                     <x:constraints gridx="1" gridy="2" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />
                 </XdevLabel>
-                <XdevLabel x:name="labelPrivateBalance">
+                <XdevLabel x:name="labelPrivateBalance" contentMode="com.vaadin.shared.ui.label.ContentMode.HTML">
                     <x:constraints gridx="2" gridy="2" weighty="0.0" weightx="0.1" />
                     <value x:content="code">PLEASE_WAIT</value>
                 </XdevLabel>
-                <XdevLabel x:name="labelTotalBalanceCaption" value="Total (T+Z) balance:">
+                <XdevLabel styleName="bold" x:name="labelTotalBalanceCaption" value="Total (T+Z) balance:">
                     <x:constraints gridx="1" gridy="3" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />
                 </XdevLabel>
-                <XdevLabel styleName="bold" x:name="labelTotalBalance">
+                <XdevLabel styleName="bold" x:name="labelTotalBalance" contentMode="com.vaadin.shared.ui.label.ContentMode.HTML">
                     <x:constraints gridx="2" gridy="3" weighty="0.0" weightx="0.1" />
                     <value x:content="code">PLEASE_WAIT</value>
                 </XdevLabel>
@@ -117,7 +117,7 @@
                 <XdevComboBox textInputAllowed="false" caption="Send cash from:" required="true" x:name="comboBoxBalanceAddress">
                     <x:constraints gridx="1" gridy="1" weighty="0.0" weightx="0.2" width="100%" gridWidth="4" />
                     <x:typeArguments>
-                        <typeArgument type="AddressWithBalance" />
+                        <typeArgument type="ZCashClientCaller$AddressWithBalance" />
                     </x:typeArguments>
                 </XdevComboBox>
                 <XdevLabel styleName="tiny" x:name="label" value="* Only addresses with a confirmed balance are shown as sources for sending!">

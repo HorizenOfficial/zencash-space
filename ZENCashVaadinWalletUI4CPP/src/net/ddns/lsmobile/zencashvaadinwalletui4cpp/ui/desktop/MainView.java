@@ -2,10 +2,8 @@
 package net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -107,13 +105,14 @@ public class MainView extends XdevView implements IWallet {
 							if (lastData == null || data.size() > lastData.size()) {
 								ui.access(()->{
 									try {
-										updateWalletStatusLabel(MainView.this.zenNode.clientCaller.getWalletInfo(MainView.this.session));
-										ui.push();
 										updateWalletTransactionsTable(data);
 										ui.push();
-										updateWalletAddressBalanceTable();
+										final List<AddressWithBalance> addressesWithBalance = MainView.this.zenNode.clientCaller.getAddressBalanceDataFromWallet(MainView.this.session);
+										updateWalletStatusLabel(MainView.this.zenNode.clientCaller.getWalletInfo(addressesWithBalance));
 										ui.push();
-										updateWalletAddressPositiveBalanceComboBox(MainView.this.zenNode.clientCaller.getAddressPositiveBalanceDataFromWallet(MainView.this.session));
+										updateWalletAddressBalanceTable(addressesWithBalance);
+										ui.push();
+										updateWalletAddressPositiveBalanceComboBox(addressesWithBalance);
 										ui.push();
 									} catch (final Exception e) {
 										log.error(e, e);
@@ -135,7 +134,7 @@ public class MainView extends XdevView implements IWallet {
 			//SendCashPanel
 						
 			//TODO LS
-			this.textFieldTransactionFee.setValue(defaultNumberFormat.format(Double.valueOf(0.0001)));
+			this.textFieldTransactionFee.setValue(defaultFee);
 //
 //						// Add a popup menu to the destination address field - for convenience
 //						final JMenuItem paste = new JMenuItem("Paste address");
@@ -197,52 +196,34 @@ public class MainView extends XdevView implements IWallet {
 	private void updateWalletStatusLabel(final WalletBalance balance)
 			throws WalletCallException, IOException, InterruptedException
 		{
-			this.labelTransparentBalance.setValue(defaultNumberFormat.format(balance.transparentBalance) + " ZEN");
-			this.labelPrivateBalance.setValue(defaultNumberFormat.format(balance.privateBalance) + " ZEN");
-			this.labelTotalBalance.setValue(defaultNumberFormat.format(balance.getTotalBalance()) + " ZEN");
+			final String transparentBalance = defaultNumberFormat.format(balance.transparentBalance) + " ZEN";
+			final String privateBalance = defaultNumberFormat.format(balance.privateBalance) + " ZEN";
+			final String totalBalance = defaultNumberFormat.format(balance.getTotalBalance()) + " ZEN";
 			
-			/* TODO LS
-			
-			final WalletBalance balance = this.walletBalanceGatheringThread.getLastData();
-			
-			// It is possible there has been no gathering initially
-			if (balance == null)
-			{
-				return;
-			}
-			
-			// Format double numbers - else sometimes we get exponential notation 1E-4 ZEN
-			final DecimalFormat df = new DecimalFormat("########0.00######");
-			
-			final String transparentBalance = df.format(balance.transparentBalance);
-			final String privateBalance = df.format(balance.privateBalance);
-			final String totalBalance = df.format(balance.totalBalance);
-			
-			final String transparentUCBalance = df.format(balance.transparentUnconfirmedBalance);
-			final String privateUCBalance = df.format(balance.privateUnconfirmedBalance);
-			final String totalUCBalance = df.format(balance.totalUnconfirmedBalance);
+			final String transparentUCBalance = defaultNumberFormat.format(balance.transparentUnconfirmedBalance) + " ZEN";
+			final String privateUCBalance = defaultNumberFormat.format(balance.privateUnconfirmedBalance) + " ZEN";
+			final String totalUCBalance = defaultNumberFormat.format(balance.getTotalUnconfirmedBalance()) + " ZEN";
 
-			final String color1 = transparentBalance.equals(transparentUCBalance) ? "" : "color:#cc3300;";
-			final String color2 = privateBalance.equals(privateUCBalance)         ? "" : "color:#cc3300;";
-			final String color3 = totalBalance.equals(totalUCBalance)             ? "" : "color:#cc3300;";
-			
-			final String text =
-				"<html>" +
-			    "<span style=\"font-family:monospace;font-size:1em;" + color1 + "\">Transparent balance: <span style=\"font-size:1.1em;\">" +
-					transparentUCBalance + " ZEN </span></span><br/> " +
-				"<span style=\"font-family:monospace;font-size:1em;" + color2 + "\">Private (Z) balance: <span style=\"font-weight:bold;font-size:1.1em;\">" +
-			    	privateUCBalance + " ZEN </span></span><br/> " +
-				"<span style=\"font-family:monospace;;font-size:1em;" + color3 + "\">Total (Z+T) balance: <span style=\"font-weight:bold;font-size:1.35em;\">" +
-			    	totalUCBalance + " ZEN </span></span>" +
-				"<br/>  </html>";
-			
-			this.labelTotalBalance.setValue(text);
-			
 			String toolTip = null;
-			if ((!transparentBalance.equals(transparentUCBalance)) ||
-			    (!privateBalance.equals(privateUCBalance))         ||
-			    (!totalBalance.equals(totalUCBalance)))
+			if ((transparentBalance.equals(transparentUCBalance)) &&
+			    (privateBalance.equals(privateUCBalance))         &&
+			    (totalBalance.equals(totalUCBalance)))
 			{
+				this.labelTransparentBalance.setValue(transparentBalance);
+				this.labelPrivateBalance.setValue(privateBalance);
+				this.labelTotalBalance.setValue(totalBalance);
+			}
+			else {
+				this.labelTransparentBalance.setValue("<span style=\""
+						+ (transparentBalance.equals(transparentUCBalance) ? "" : "color:#cc3300;") + "\">"
+						+ transparentUCBalance + " </span>");
+				this.labelPrivateBalance.setValue("<span style=\""
+						+ (privateBalance.equals(privateUCBalance) ? "" : "color:#cc3300;") + "\">"
+						+ privateUCBalance + " </span>");
+				this.labelTotalBalance.setValue("<span style=\""
+						+ (totalBalance.equals(totalUCBalance) ? "" : "color:#cc3300;") + "\">"
+						+ totalUCBalance + " </span>");
+				
 				toolTip = "<html>" +
 						  "Unconfirmed (unspendable) balance is being shown due to an<br/>" +
 			              "ongoing transaction! Actual confirmed (spendable) balance is:<br/>" +
@@ -253,8 +234,10 @@ public class MainView extends XdevView implements IWallet {
 						  "</html>";
 			}
 			
+
+			this.labelTransparentBalance.setDescription(toolTip);
+			this.labelPrivateBalance.setDescription(toolTip);
 			this.labelTotalBalance.setDescription(toolTip);
-			*/
 		}
 	
 	private void updateWalletTransactionsTable(final Set<Transaction> newTransactionsData) throws WalletCallException, IOException, InterruptedException {
@@ -362,7 +345,7 @@ public class MainView extends XdevView implements IWallet {
 			Notification.show("Address created", "A new " + (isZAddress ? "Z (Private)" : "T (Transparent)")
 					+ " address has been created cuccessfully:\n" + address, Type.HUMANIZED_MESSAGE);
 
-			this.updateWalletAddressBalanceTable();
+			this.updateWalletAddressBalanceTable(this.zenNode.clientCaller.getAddressBalanceDataFromWallet(MainView.this.session));
 		} catch (final Exception e)
 		{
 			log.error("Unexpected error: ", e);
@@ -370,15 +353,17 @@ public class MainView extends XdevView implements IWallet {
 	}
 
 	// Interactive and non-interactive are mutually exclusive
-	private synchronized void updateWalletAddressBalanceTable()
+	private synchronized void updateWalletAddressBalanceTable(final List<AddressWithBalance> addressesWithBalance)
 		throws WalletCallException, IOException, InterruptedException
 	{
-		log.info("Updating table of addresses/balances I...");
-		this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(this.getAddressBalanceDataFromWallet()));
+		log.info("Updating table of addresses/balances...");
+		
+
+		this.panelGridOwnAddresses.setContent(this.createAddressBalanceTable(addressesWithBalance));
 	}
 	
 
-	private Grid createAddressBalanceTable(final List<String[]> addressBalanceData)
+	private Grid createAddressBalanceTable(final List<AddressWithBalance> addressesWithBalance)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		this.addressBalanceTable = new Grid(/*"Addresses:"*/);
@@ -394,8 +379,26 @@ public class MainView extends XdevView implements IWallet {
 		
 //		gridTransactions.setFrozenColumnCount(2);
 
+		String confirmed    = "\u2690";
+		String notConfirmed = "\u2691";
+		
+		// Windows does not support the flag symbol (Windows 7 by default)
+		// TODO: isolate OS-specific symbol codes in a separate class
+		final OS_TYPE os = OSUtil.getOSType();
+		if (os == OS_TYPE.WINDOWS)
+		{
+			confirmed = " \u25B7";
+			notConfirmed = " \u25B6";
+		}
+
 		// Rows (Values)
-		for (final String[] row : addressBalanceData) {
+		for (final AddressWithBalance addressWithBalance : addressesWithBalance) {
+			final Object[] row = new Object[]
+			{
+					defaultNumberFormat.format(addressWithBalance.isConfirmed() ? addressWithBalance.confirmedBalance : addressWithBalance.unconfirmedBalance),
+					addressWithBalance.isConfirmed() ? ("Yes " + confirmed) : ("No  " + notConfirmed),
+					addressWithBalance.address
+			};
 			this.addressBalanceTable.addRow(row);
 		}
 
@@ -422,71 +425,7 @@ public class MainView extends XdevView implements IWallet {
 	}
 
 
-	private List<String[]> getAddressBalanceDataFromWallet()
-		throws WalletCallException, IOException, InterruptedException
-	{
-		// Z Addresses - they are OK
-		final Set<String> zAddresses = this.zenNode.clientCaller.getWalletZAddresses(this.session);
-		
-		// Combine all known T addresses
-		final Set<String> tAddressesCombined = new HashSet<>();
-		// T Addresses listed with the list received by addr comamnd
-		tAddressesCombined.addAll(this.zenNode.clientCaller.getWalletAllPublicAddresses(this.session));
-		// T addresses with unspent outputs - just in case they are different
-		tAddressesCombined.addAll(this.zenNode.clientCaller.getWalletPublicAddressesWithUnspentOutputs(this.session));
-		
-		final List<String[]> addressBalances = new ArrayList<> ();
-		
-		String confirmed    = "\u2690";
-		String notConfirmed = "\u2691";
-		
-		// Windows does not support the flag symbol (Windows 7 by default)
-		// TODO: isolate OS-specific symbol codes in a separate class
-		final OS_TYPE os = OSUtil.getOSType();
-		if (os == OS_TYPE.WINDOWS)
-		{
-			confirmed = " \u25B7";
-			notConfirmed = " \u25B6";
-		}
-		
-		for (final String address : tAddressesCombined)
-		{
-			final BigDecimal confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
-			final BigDecimal unconfirmedBalance = this.zenNode.clientCaller.getUnconfirmedBalanceForAddress(address);
-			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
-			
-			addressBalances.add(new String[]
-				{
-					defaultNumberFormat.format(
-							isConfirmed ? confirmedBalance : unconfirmedBalance),
-					isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
-					address
-				});
-		}
-		
-		for (final String address : zAddresses)
-		{
-			final BigDecimal confirmedBalance = this.zenNode.clientCaller.getBalanceForAddress(address);
-			final BigDecimal unconfirmedBalance = this.zenNode.clientCaller.getUnconfirmedBalanceForAddress(address);
-			final boolean isConfirmed =  (confirmedBalance.equals(unconfirmedBalance));
-			
-			addressBalances.add(new String[]
-				{
-					defaultNumberFormat.format(
-							isConfirmed ? confirmedBalance : unconfirmedBalance),
-					isConfirmed ? ("Yes " + confirmed) : ("No  " + notConfirmed),
-					address
-				});
-		}
-
-		return addressBalances;
-	}
-
-
 	// SendCashPanel
-	
-	private List<AddressWithBalance> lastAddressWithBalanceData  = null;
-	private final DataGatheringThread<String[][]> addressBalanceGatheringThread = null;
 	
 //	private Timer        operationStatusTimer        = null;
 	private String       operationStatusID           = null;
@@ -741,30 +680,17 @@ public class MainView extends XdevView implements IWallet {
 	}
 
 	
-	private void updateWalletAddressPositiveBalanceComboBox(final List<AddressWithBalance> addressWithBalanceData)
+	private void updateWalletAddressPositiveBalanceComboBox(final List<AddressWithBalance> addressesWithBalance)
 		throws WalletCallException, IOException, InterruptedException
 	{
-		boolean notChanged = true;
-		// The data may be null if nothing is yet obtained
-		if (addressWithBalanceData == null) {
+		final List<AddressWithBalance> data = new ArrayList<>();
+		for (final AddressWithBalance addressWithBalance : addressesWithBalance) {
+			if (addressWithBalance.confirmedBalance.doubleValue() > 0) {
+				data.add(addressWithBalance);
+			}
 		}
-		else if (this.lastAddressWithBalanceData == null) {
-			notChanged = false;
-		}
-		else if (this.lastAddressWithBalanceData.size() != addressWithBalanceData.size()) {
-			notChanged = false;
-		}
-		else if (this.lastAddressWithBalanceData.containsAll(addressWithBalanceData) && addressWithBalanceData.containsAll(this.lastAddressWithBalanceData)) {
-				notChanged = false;
-		}
-		
-		if (notChanged) {
-			return;
-		}
-		
-		this.lastAddressWithBalanceData = addressWithBalanceData;
 		this.comboBoxBalanceAddress.removeAllItems();
-		this.comboBoxBalanceAddress.addItems(addressWithBalanceData);
+		this.comboBoxBalanceAddress.addItems(data);
 
 		/* TODO LS
 		final int selectedIndex = this.comboBoxBalanceAddress.getSelectedIndex();
@@ -1002,11 +928,15 @@ public class MainView extends XdevView implements IWallet {
 		this.tabSheet.setStyleName("framed");
 		this.labelTransparentBalanceCaption.setValue("Transparent (T) balance:");
 		this.labelTransparentBalance.setValue(PLEASE_WAIT);
+		this.labelTransparentBalance.setContentMode(ContentMode.HTML);
 		this.labelPrivateBalanceCaption.setValue("Private (Z) balance:");
 		this.labelPrivateBalance.setValue(PLEASE_WAIT);
+		this.labelPrivateBalance.setContentMode(ContentMode.HTML);
+		this.labelTotalBalanceCaption.setStyleName("bold");
 		this.labelTotalBalanceCaption.setValue("Total (T+Z) balance:");
 		this.labelTotalBalance.setStyleName("bold");
 		this.labelTotalBalance.setValue(PLEASE_WAIT);
+		this.labelTotalBalance.setContentMode(ContentMode.HTML);
 		this.labelPleaseWait1.setValue(PLEASE_WAIT);
 		this.image.setSource(new ApplicationResource(this.getClass(), "WebContent/WEB-INF/resources/images/loading.gif"));
 		this.labelPleaseWait2.setValue(PLEASE_WAIT);
@@ -1186,11 +1116,12 @@ public class MainView extends XdevView implements IWallet {
 
 	// <generated-code name="variables">
 	private XdevLabel labelTransparentBalanceCaption, labelTransparentBalance, labelPrivateBalanceCaption,
-			labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance, labelPleaseWait1, labelPleaseWait2, label, label2, label3, label4,
-			labelOperationStatus, label5;
+			labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance, labelPleaseWait1, labelPleaseWait2, label,
+			label2, label3, label4, labelOperationStatus, label5;
 	private XdevButton buttonNewTAddress, buttonNewZAddress, buttonSend;
 	private XdevMenuBar menuBar;
 	private XdevImage image, image2;
+	private XdevComboBox<AddressWithBalance> comboBoxBalanceAddress;
 	private XdevMenuItem menuItemMain, menuItemAbout, menuItemLogOut, menuItemWallet, menuItemBackup, menuItemEncrypt,
 			menuItemExportPrivateKeys, menuItemImportPrivateKeys, menuItemShowPrivateKey, menuItemImportOnePrivateKey,
 			menuItemMessaging, menuItemOwnIdentity, menuItemExportOwnIdentity, menuItemAddMessagingGroup,
@@ -1202,7 +1133,6 @@ public class MainView extends XdevView implements IWallet {
 	private XdevTextField textFieldDestinationAddress, textFieldDestinationMemo, textFieldDestinationAmount,
 			textFieldTransactionFee;
 	private XdevVerticalLayout verticalLayout, verticalLayout2;
-	private XdevComboBox<AddressWithBalance> comboBoxBalanceAddress;
 	// </generated-code>
 
 }

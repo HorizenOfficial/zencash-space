@@ -22,11 +22,12 @@ public interface IConfig {
 	public final static String ADDRESSES_COLUMN_CONFIRMED = "Confirmed?";
 	public final static String ADDRESSES_COLUMN_ADDRESS = "Address";
 
-	public final static int MAXIMUM_FRACTION_DIGITS = 8;
-
 	public final NumberFormat defaultNumberFormat = NumberFormat.getNumberInstance();
 	public final NumberFormat usNumberFormat = java.text.NumberFormat.getNumberInstance(Locale.US);
 	
+	public final static String defaultFee = defaultNumberFormat.format(Double.valueOf(0.0001));
+	public final static int MAXIMUM_FRACTION_DIGITS = 8;
+
 	public final AddressDAO addressDAO = new AddressDAO ();
 	
 	public final static String PLEASE_WAIT = "Please wait...";
