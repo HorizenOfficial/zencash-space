@@ -1111,6 +1111,8 @@ public class ZCashClientCaller implements IConfig
 		}
 
 	    final CommandExecutor caller = new CommandExecutor(params);
+	    
+//	    log.info(command1 + "#" + command2 + "#" + command3 + "#" + command4);
 
 		final String strResponse = caller.execute();
 		if (strResponse.trim().toLowerCase(Locale.ROOT).startsWith("error:")       ||
