@@ -52,6 +52,7 @@ import com.eclipsesource.json.WriterConfig;
 import com.vaadin.server.VaadinSession;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.Address;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.User;
 
 
@@ -528,12 +529,18 @@ public class ZCashClientCaller implements IConfig
 	}
 
 
-	public synchronized String createNewAddress(final boolean isZAddress)
+	public synchronized String createNewAddress(final boolean isZAddress, final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
-	    final String strResponse = this.executeCommandAndGetSingleStringResponse((isZAddress ? "z_" : "") + "getnewaddress");
+	    final String newAddress = this.executeCommandAndGetSingleStringResponse((isZAddress ? "z_" : "") + "getnewaddress").trim();
+	    
+	    final Address addressDB = new Address ();
+	    addressDB.setUser1((User) session.getAttribute(AUTHENTICATION_RESULT));
+	    addressDB.setAddress(newAddress);
+	    addressDAO.save(addressDB);
+	    addressDAO.commit();
 
-		return strResponse.trim();
+		return newAddress;
 	}
 
 

@@ -107,7 +107,11 @@ public class MainView extends XdevView implements IWallet {
 									try {
 										updateWalletTransactionsTable(data);
 										ui.push();
-										final List<AddressWithBalance> addressesWithBalance = MainView.this.zenNode.clientCaller.getAddressBalanceDataFromWallet(MainView.this.session);
+										List<AddressWithBalance> addressesWithBalance = MainView.this.zenNode.clientCaller.getAddressBalanceDataFromWallet(MainView.this.session);
+										if (addressesWithBalance.size() == 0) {
+											MainView.this.zenNode.clientCaller.createNewAddress(false, MainView.this.session);
+											addressesWithBalance = MainView.this.zenNode.clientCaller.getAddressBalanceDataFromWallet(MainView.this.session);
+										}
 										updateWalletStatusLabel(MainView.this.zenNode.clientCaller.getWalletInfo(addressesWithBalance));
 										ui.push();
 										updateWalletAddressBalanceTable(addressesWithBalance);
@@ -333,7 +337,7 @@ public class MainView extends XdevView implements IWallet {
 				this.servlet.clientCaller.unlockWallet(pd.getPassword());
 			}
 			*/
-			final String address = this.zenNode.clientCaller.createNewAddress(isZAddress);
+			final String address = this.zenNode.clientCaller.createNewAddress(isZAddress, this.session);
 			
 			/*TODO LS bEncryptedWallet
 			// Lock the wallet again
@@ -345,7 +349,7 @@ public class MainView extends XdevView implements IWallet {
 			Notification.show("Address created", "A new " + (isZAddress ? "Z (Private)" : "T (Transparent)")
 					+ " address has been created cuccessfully:\n" + address, Type.HUMANIZED_MESSAGE);
 
-			this.updateWalletAddressBalanceTable(this.zenNode.clientCaller.getAddressBalanceDataFromWallet(MainView.this.session));
+			this.updateWalletAddressBalanceTable(this.zenNode.clientCaller.getAddressBalanceDataFromWallet(this.session));
 		} catch (final Exception e)
 		{
 			log.error("Unexpected error: ", e);
