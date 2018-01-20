@@ -530,12 +530,19 @@ public class ZCashClientCaller implements IConfig
 
 
 	public synchronized String createNewAddress(final boolean isZAddress, final VaadinSession session)
+			throws WalletCallException, IOException, InterruptedException
+	{
+		return createNewAddress(isZAddress, (User) session.getAttribute(AUTHENTICATION_RESULT));
+	}
+	
+
+	public synchronized String createNewAddress(final boolean isZAddress, final User user)
 		throws WalletCallException, IOException, InterruptedException
 	{
 	    final String newAddress = this.executeCommandAndGetSingleStringResponse((isZAddress ? "z_" : "") + "getnewaddress").trim();
 	    
 	    final Address addressDB = new Address ();
-	    addressDB.setUser1((User) session.getAttribute(AUTHENTICATION_RESULT));
+	    addressDB.setUser1(user);
 	    addressDB.setAddress(newAddress);
 	    addressDAO.save(addressDB);
 	    addressDAO.commit();

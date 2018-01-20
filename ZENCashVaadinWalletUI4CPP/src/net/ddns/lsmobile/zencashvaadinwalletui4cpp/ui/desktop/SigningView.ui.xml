@@ -13,22 +13,25 @@
     <x:constraints zpos="0" width="100%" height="100%" />
     <XdevGridLayout x:name="gridLayout">
         <x:constraints zpos="0" width="100%" height="100%" />
-        <XdevPanel caption="Login" tabIndex="0" x:name="panel">
+        <XdevPanel caption="Sign" tabIndex="0" x:name="panel">
             <x:constraints gridx="1" gridy="1" weighty="0.1" weightx="0.1" alignment="MIDDLE_CENTER" />
             <XdevGridLayout x:name="gridLayout2">
                 <x:constraints gridHeight="1" gridx="1" zpos="0" gridy="2" weighty="0.1" weightx="0.1" width="100%" alignment="MIDDLE_CENTER" gridWidth="1" height="100%" />
-                <XdevTextField columns="20" caption="Username" x:name="txtUsername">
+                <XdevTextField columns="20" caption="Username" required="true" x:name="txtUsername">
                     <x:constraints gridx="1" gridy="1" weighty="0.0" weightx="0.1" width="100%" gridWidth="2" />
                 </XdevTextField>
-                <XdevPasswordField columns="20" caption="Password" x:name="txtPassword">
+                <XdevPasswordField columns="20" caption="Password" required="true" x:name="txtPassword">
                     <x:constraints gridx="1" gridy="2" weighty="0.0" weightx="0.1" width="100%" gridWidth="2" />
                 </XdevPasswordField>
-                <XdevButton caption="Sign" styleName="link" x:name="linkSign">
-                    <x:constraints gridx="1" gridy="3" top="46px" left="-1px" weighty="0.0" weightx="0.0" />
+                <XdevPasswordField columns="20" caption="Repeat password" required="true" x:name="txtRepeatPassword">
+                    <x:constraints gridx="1" gridy="3" top="46px" left="-1px" weighty="0.0" weightx="0.1" width="100%" gridWidth="2" />
+                </XdevPasswordField>
+                <XdevButton caption="Login" styleName="link" x:name="linkLogin">
+                    <x:constraints gridx="1" gridy="4" top="46px" left="-1px" weighty="0.0" weightx="0.0" />
                     <x:event>click.buttonClick</x:event>
                 </XdevButton>
-                <XdevButton caption="Login" styleName="friendly" x:name="cmdLogin" x:shortcut="ENTER">
-                    <x:constraints gridx="2" gridy="3" weighty="0.0" weightx="0.1" alignment="MIDDLE_RIGHT" />
+                <XdevButton caption="Sign" styleName="friendly" x:name="cmdSign" x:shortcut="ENTER">
+                    <x:constraints gridx="2" gridy="4" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />
                     <x:event>click.buttonClick</x:event>
                 </XdevButton>
             </XdevGridLayout>

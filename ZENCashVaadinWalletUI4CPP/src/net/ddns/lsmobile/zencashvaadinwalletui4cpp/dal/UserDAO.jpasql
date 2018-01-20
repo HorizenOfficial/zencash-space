@@ -1,0 +1,5 @@
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.User
+findUsers(String username)
+{
+	select * from User where username like :username
+}

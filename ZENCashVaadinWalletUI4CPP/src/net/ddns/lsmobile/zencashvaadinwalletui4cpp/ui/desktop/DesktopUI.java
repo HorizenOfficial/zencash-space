@@ -37,6 +37,7 @@ public class DesktopUI extends XdevUI {
 		this.navigator.addView("", LoginView.class);
 		this.navigator.addView("loading", LoadingView.class);
 		this.navigator.addView("home", MainView.class);
+		this.navigator.addView("signing", SigningView.class);
 	
 		this.setSizeFull();
 	} // </generated-code>

@@ -7,6 +7,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.dal.AddressDAO;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.dal.UserDAO;
 
 public interface IConfig {
 
@@ -29,6 +30,7 @@ public interface IConfig {
 	public final static int MAXIMUM_FRACTION_DIGITS = 8;
 
 	public final AddressDAO addressDAO = new AddressDAO ();
+	public final UserDAO userDAO = new UserDAO ();
 	
 	public final static String PLEASE_WAIT = "Please wait...";
 

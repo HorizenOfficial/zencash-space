@@ -6,7 +6,7 @@
 	<artifactId>zencashvaadinwalletui4cpp</artifactId>
 	<packaging>war</packaging>
 	<name>ZENCashVaadinWalletUI4CPP</name>
-	<version>0.1.5-SNAPSHOT</version>
+	<version>0.1.8-SNAPSHOT</version>
 	<build>
 		<resources>
 			<resource>
