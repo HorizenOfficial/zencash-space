@@ -18,6 +18,7 @@ import com.xdev.ui.XdevView;
 import com.xdev.ui.navigation.Navigation;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.ZCashClientCaller;
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.entities.User;
 
 public class SigningView extends XdevView implements com.xdev.security.authentication.ui.LoginView, IConfig {
@@ -69,28 +70,14 @@ public class SigningView extends XdevView implements com.xdev.security.authentic
         userDAO.save(user);
         userDAO.commit();
         
+        try {
+			ZCashClientCaller.getInstance().createNewAddress(false, user);
+		} catch (final Exception e) {
+			log.error(e, e);
+		}
+        
 		Notification.show("You are signed");
-//		try {
-//			Thread.sleep(2000);
-//		} catch (final Exception e) {
-//			log.error("Unexpected error: ", e);
-//		}
 		Navigation.to("").navigate();
-//		this.cmdSign.setEnabled(false);
-//		final UI ui = getUI();
-//		new Thread(new RunnableAccessWrapper(() -> {
-//			try {
-//				ui.access(() -> {
-//					try {
-////						ui.push();
-//					} catch (final Exception e) {
-//						log.error("Unexpected error: ", e);
-//					}
-//				});
-//			} catch (final Exception ex) {
-//				log.error("Unexpected error: ", ex);
-//			}
-//		})).start();
 	}
 
 	/**

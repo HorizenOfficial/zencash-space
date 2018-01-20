@@ -61,12 +61,21 @@ public class ZCashInstallationObserver implements IConfig
 		NOT_RUNNING,
 		UNABLE_TO_ASCERTAIN;
 	}
-
-	private String args[];
+	
+	private static ZCashInstallationObserver instance;
 	
 	private Boolean isOnTestNet = null;
+	
+	
+    public static synchronized ZCashInstallationObserver getInstance() throws IOException {
+        if( instance == null ) {
+			instance = new ZCashInstallationObserver();
+		}
+        return instance;
+    }
 
-	public ZCashInstallationObserver()
+    
+	private ZCashInstallationObserver()
 		throws IOException
 	{
 		final File zcashd = OSUtil.findZCashCommand(OSUtil.getZCashd());

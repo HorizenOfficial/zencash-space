@@ -45,10 +45,10 @@ public class ZenNode implements IConfig{
             // If zend is currently not running, do a startup of the daemon as a child process
             // It may be started but not ready - then also show dialog
         	this.installationObserver =
-            	new ZCashInstallationObserver();
+            	ZCashInstallationObserver.getInstance();
             final DaemonInfo zcashdInfo = this.installationObserver.getDaemonInfo();
             
-            this.clientCaller = new ZCashClientCaller();
+            this.clientCaller = ZCashClientCaller.getInstance();
             boolean daemonStartInProgress = false;
             try
             {

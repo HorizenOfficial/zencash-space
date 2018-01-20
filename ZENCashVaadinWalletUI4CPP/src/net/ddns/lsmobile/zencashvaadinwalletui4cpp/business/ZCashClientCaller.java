@@ -136,41 +136,52 @@ public class ZCashClientCaller implements IConfig
 			super(message, cause);
 		}
 	}
+	
+	
+	private static ZCashClientCaller instance;
 
-
+	
 	// ZCash client program and daemon
-	private final File zcashcli, zcashd;
+	private static File zcashcli, zcashd;
+	
+	
+    public static synchronized ZCashClientCaller getInstance() throws IOException {
+        if( instance == null ) {
+			instance = new ZCashClientCaller();
+		}
+        return instance;
+    }
 
 
-	public ZCashClientCaller()
+	private ZCashClientCaller()
 		throws IOException
 	{
 		// Detect daemon and client tools installation
-		this.zcashcli = OSUtil.findZCashCommand(OSUtil.getZCashCli());
+		zcashcli = OSUtil.findZCashCommand(OSUtil.getZCashCli());
 
-		if ((this.zcashcli == null) || (!this.zcashcli.exists()))
+		if ((zcashcli == null) || (!zcashcli.exists()))
 		{
 			throw new IOException(
 				"The ZENCash installation directory needs to contain " +
 				"the command line utilities zend and zen-cli. zen-cli is missing!");
 		}
 		
-	    this.zcashd = OSUtil.findZCashCommand(OSUtil.getZCashd());
+	    zcashd = OSUtil.findZCashCommand(OSUtil.getZCashd());
 		
-		if (this.zcashd == null || (!this.zcashd.exists()))
+		if (zcashd == null || (!zcashd.exists()))
 		{
 		    throw new IOException(
-		    	"The ZENCash command line utility " + this.zcashcli.getCanonicalPath() +
+		    	"The ZENCash command line utility " + zcashcli.getCanonicalPath() +
 		    	" was found, but zend was not found!");
 		}
 	}
 	
 
-	public synchronized JsonObject getDaemonRawRuntimeInfo()
+	public static synchronized JsonObject getDaemonRawRuntimeInfo()
 		throws IOException, InterruptedException, WalletCallException
 	{
 	    final CommandExecutor infoGetter = new CommandExecutor(
-	            new String[] { this.zcashcli.getCanonicalPath(), "getinfo"} );
+	            new String[] { zcashcli.getCanonicalPath(), "getinfo"} );
 	    String info = infoGetter.execute();
 	    
 	    log.info("zcashcli.getinfo " + info);
@@ -209,7 +220,7 @@ public class ZCashClientCaller implements IConfig
 	}
 
 	
-	public synchronized WalletBalance getWalletInfo(final List<AddressWithBalance> addressesWithBalance)
+	public WalletBalance getWalletInfo(final List<AddressWithBalance> addressesWithBalance)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final WalletBalance balance = new WalletBalance();
@@ -241,7 +252,7 @@ public class ZCashClientCaller implements IConfig
 	}
 
 
-	public synchronized Set<Transaction> getWalletPublicTransactions(final VaadinSession session)
+	public Set<Transaction> getWalletPublicTransactions(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
@@ -274,7 +285,7 @@ public class ZCashClientCaller implements IConfig
 	 * Get available public+private transactions and unify them
 	 * @param user
 	 * */
-	public synchronized Set<Transaction> getTransactionsDataFromWallet(final VaadinSession session)
+	public Set<Transaction> getTransactionsDataFromWallet(final VaadinSession session)
 			throws WalletCallException, IOException, InterruptedException
 	{
 		final Set<Transaction> publicTransactions = getWalletPublicTransactions(session);
@@ -319,7 +330,7 @@ public class ZCashClientCaller implements IConfig
 	}
 
 	
-	public synchronized Set<String> getWalletZAddresses(final VaadinSession session)
+	public Set<String> getWalletZAddresses(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
@@ -336,7 +347,7 @@ public class ZCashClientCaller implements IConfig
 	}
 
 
-	public synchronized Set<Transaction> getWalletZReceivedTransactions(final VaadinSession session)
+	public Set<Transaction> getWalletZReceivedTransactions(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final Set<String> zAddresses = this.getWalletZAddresses(session);
@@ -372,7 +383,7 @@ public class ZCashClientCaller implements IConfig
 	}
 
 	
-	public synchronized JsonObject[] getTransactionMessagingDataForZaddress(final String ZAddress)
+	public JsonObject[] getTransactionMessagingDataForZaddress(final String ZAddress)
 		throws WalletCallException, IOException, InterruptedException
 	{
 	    final JsonArray jsonTransactions = executeCommandAndGetJsonArray(
@@ -389,7 +400,7 @@ public class ZCashClientCaller implements IConfig
 	
 
 	// ./src/zcash-cli listunspent only returns T addresses it seems
-	public synchronized Set<String> getWalletPublicAddressesWithUnspentOutputs(final VaadinSession session)
+	public Set<String> getWalletPublicAddressesWithUnspentOutputs(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
@@ -411,7 +422,7 @@ public class ZCashClientCaller implements IConfig
 
 
 	// ./zcash-cli listreceivedbyaddress 0 true
-	public synchronized Set<String> getWalletAllPublicAddresses(final VaadinSession session)
+	public Set<String> getWalletAllPublicAddresses(final VaadinSession session)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final User user = (User) session.getAttribute(AUTHENTICATION_RESULT);
@@ -432,7 +443,7 @@ public class ZCashClientCaller implements IConfig
     }
 
 	
-	public synchronized Map<String, String> getRawTransactionDetails(final String txID)
+	public Map<String, String> getRawTransactionDetails(final String txID)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
@@ -448,7 +459,7 @@ public class ZCashClientCaller implements IConfig
 		return map;
 	}
 	
-    public synchronized String getMemoField(final String acc, final String txID)
+    public String getMemoField(final String acc, final String txID)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final JsonArray jsonTransactions = this.executeCommandAndGetJsonArray(
@@ -479,7 +490,7 @@ public class ZCashClientCaller implements IConfig
 	}
 	
 	
-	public synchronized String getRawTransaction(final String txID)
+	public String getRawTransaction(final String txID)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
@@ -490,7 +501,7 @@ public class ZCashClientCaller implements IConfig
 
 
 	// return UNIX time as tring
-	public synchronized String getWalletTransactionTime(final String txID)
+	public String getWalletTransactionTime(final String txID)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
@@ -500,7 +511,7 @@ public class ZCashClientCaller implements IConfig
 	}
 	
 	
-	public synchronized String getWalletTransactionConfirmations(final String txID)
+	public String getWalletTransactionConfirmations(final String txID)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final JsonObject jsonTransaction = this.executeCommandAndGetJsonObject(
@@ -511,7 +522,7 @@ public class ZCashClientCaller implements IConfig
 	
 
 	// Returns confirmed balance only!
-	public synchronized BigDecimal getBalanceForAddress(final String address)
+	public BigDecimal getBalanceForAddress(final String address)
 		throws WalletCallException, IOException, InterruptedException
 	{
 	    final JsonValue response = this.executeCommandAndGetJsonValue("z_getbalance", wrapStringParameter(address));
@@ -520,7 +531,7 @@ public class ZCashClientCaller implements IConfig
 	}
 
 
-	public synchronized BigDecimal getUnconfirmedBalanceForAddress(final String address)
+	public BigDecimal getUnconfirmedBalanceForAddress(final String address)
 		throws WalletCallException, IOException, InterruptedException
 	{
 	    final JsonValue response = this.executeCommandAndGetJsonValue("z_getbalance", wrapStringParameter(address), "0");
@@ -529,14 +540,14 @@ public class ZCashClientCaller implements IConfig
 	}
 
 
-	public synchronized String createNewAddress(final boolean isZAddress, final VaadinSession session)
+	public String createNewAddress(final boolean isZAddress, final VaadinSession session)
 			throws WalletCallException, IOException, InterruptedException
 	{
 		return createNewAddress(isZAddress, (User) session.getAttribute(AUTHENTICATION_RESULT));
 	}
 	
 
-	public synchronized String createNewAddress(final boolean isZAddress, final User user)
+	public String createNewAddress(final boolean isZAddress, final User user)
 		throws WalletCallException, IOException, InterruptedException
 	{
 	    final String newAddress = this.executeCommandAndGetSingleStringResponse((isZAddress ? "z_" : "") + "getnewaddress").trim();
@@ -611,7 +622,7 @@ public class ZCashClientCaller implements IConfig
 		
 		final String[] sendCashParameters = new String[]
 	    {
-		    this.zcashcli.getCanonicalPath(), "z_sendmany", wrapStringParameter(from),
+		    zcashcli.getCanonicalPath(), "z_sendmany", wrapStringParameter(from),
 		    wrapStringParameter(toManyArrayStr),
 		    // Default min confirmations for the input transactions is 1
 		    "1",
@@ -681,7 +692,7 @@ public class ZCashClientCaller implements IConfig
 		final String toManyArrayStr =	toMany.toString();
 		final String[] sendCashParameters = new String[]
 	    {
-		    this.zcashcli.getCanonicalPath(), "z_sendmany", wrapStringParameter(from),
+		    zcashcli.getCanonicalPath(), "z_sendmany", wrapStringParameter(from),
 		    wrapStringParameter(toManyArrayStr),
 		    // Default min confirmations for the input transactions is 1
 		    "1",
@@ -850,7 +861,7 @@ public class ZCashClientCaller implements IConfig
 	public synchronized boolean isWalletEncrypted()
    		throws WalletCallException, IOException, InterruptedException
     {
-		final String[] params = new String[] { this.zcashcli.getCanonicalPath(), "walletlock" };
+		final String[] params = new String[] { zcashcli.getCanonicalPath(), "walletlock" };
 		final CommandExecutor caller = new CommandExecutor(params);
     	final String strResult = caller.execute();
 
@@ -921,7 +932,7 @@ public class ZCashClientCaller implements IConfig
 		// If no exception - obviously successful
 	}
 	
-	public synchronized String getTPrivateKey(final String address)
+	public String getTPrivateKey(final String address)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final String response = this.executeCommandAndGetSingleStringResponse(
@@ -931,7 +942,7 @@ public class ZCashClientCaller implements IConfig
 	}
 	
 	
-	public synchronized String getZPrivateKey(final String address)
+	public String getZPrivateKey(final String address)
 	    throws WalletCallException, IOException, InterruptedException
 	{
 		final String response = this.executeCommandAndGetSingleStringResponse(
@@ -948,7 +959,7 @@ public class ZCashClientCaller implements IConfig
 		// First try a Z key
 		final String[] params = new String[]
 		{
-			this.zcashcli.getCanonicalPath(),
+			zcashcli.getCanonicalPath(),
 			"-rpcclienttimeout=5000",
 			"z_importkey",
 			wrapStringParameter(key)
@@ -1098,23 +1109,23 @@ public class ZCashClientCaller implements IConfig
 	}
 
 
-	private String executeCommandAndGetSingleStringResponse(
+	private synchronized String executeCommandAndGetSingleStringResponse(
 			                        final String command1, final String command2, final String command3, final String command4)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		String[] params;
 		if (command4 != null)
 		{
-			params = new String[] { this.zcashcli.getCanonicalPath(), command1, command2, command3, command4 };
+			params = new String[] { zcashcli.getCanonicalPath(), command1, command2, command3, command4 };
 		} else if (command3 != null)
 		{
-			params = new String[] { this.zcashcli.getCanonicalPath(), command1, command2, command3 };
+			params = new String[] { zcashcli.getCanonicalPath(), command1, command2, command3 };
 		} else if (command2 != null)
 		{
-			params = new String[] { this.zcashcli.getCanonicalPath(), command1, command2 };
+			params = new String[] { zcashcli.getCanonicalPath(), command1, command2 };
 		} else
 		{
-			params = new String[] { this.zcashcli.getCanonicalPath(), command1 };
+			params = new String[] { zcashcli.getCanonicalPath(), command1 };
 		}
 
 	    final CommandExecutor caller = new CommandExecutor(params);
