@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+
+<?xdevuiml version="1.0"?>
+<?template BROWSER_VGA?>
+<?import com.xdev.ui.XdevButton?>
+<?import com.xdev.ui.XdevGridLayout?>
+<?import com.xdev.ui.XdevLabel?>
+<?import com.xdev.ui.XdevView?>
+<XdevView xmlns:x="http://xml.xdev-software.com/xdevuiml" caption="Private key information" x:name="ShowPrivateKeyView">
+    <x:constraints zpos="0" width="640px" height="270px" />
+    <XdevGridLayout x:name="gridLayout">
+        <x:constraints zpos="0" width="100%" height="100%" />
+        <XdevLabel caption="Z (Private) or T (Transparent) address:" x:name="labelSelectedAddress" value="selected address">
+            <x:constraints gridx="1" gridy="1" weighty="0.0" weightx="0.1" />
+        </XdevLabel>
+        <XdevLabel caption="has private key:" x:name="labelPrivateKey" value="private key">
+            <x:constraints gridx="1" gridy="2" weighty="0.0" weightx="0.1" />
+        </XdevLabel>
+        <XdevButton caption="Copy to clipboard" x:name="buttonCopyToClipboard">
+            <x:constraints gridx="1" gridy="3" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />
+        </XdevButton>
+    </XdevGridLayout>
+</XdevView>
+

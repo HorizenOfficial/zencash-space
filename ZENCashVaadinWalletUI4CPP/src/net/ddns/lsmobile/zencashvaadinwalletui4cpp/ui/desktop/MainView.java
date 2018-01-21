@@ -26,6 +26,7 @@ import com.vaadin.ui.renderers.HtmlRenderer;
 import com.xdev.communication.RunnableAccessWrapper;
 import com.xdev.res.ApplicationResource;
 import com.xdev.security.authentication.ui.Authentication;
+import com.xdev.ui.PopupWindow;
 import com.xdev.ui.XdevButton;
 import com.xdev.ui.XdevGridLayout;
 import com.xdev.ui.XdevImage;
@@ -822,11 +823,14 @@ public class MainView extends XdevView implements IWallet {
 			final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 			clipboard.setContents(new StringSelection(privateKey), null);
 */
+			PopupWindow.For(new ShowPrivateKeyView(isZAddress, this.selectedAddress, privateKey))
+			.closable(true).draggable(true).resizable(true).modal(true).show();
+			UI.getCurrent().push();
+/*
 			Notification.show("Private key information", isZAddress ? "Z (Private)" : "T (Transparent)" + " address:\n" +
-					this.selectedAddress + "\n" +
-					"has private key:\n" +
-					privateKey + "\n\n" +
+					this.selectedAddress + "\n" + "has private key:\n" + privateKey + "\n\n" +
 					"The private key has also been copied to the clipboard.", Type.HUMANIZED_MESSAGE);
+*/
 		} catch (final Exception ex)
 		{
 			log.error("", ex);

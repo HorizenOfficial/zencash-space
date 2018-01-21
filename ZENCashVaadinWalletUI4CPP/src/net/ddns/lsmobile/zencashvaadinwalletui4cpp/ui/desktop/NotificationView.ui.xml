@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+
+<?xdevuiml version="1.0"?>
+<?template BROWSER_VGA?>
+<?import com.xdev.ui.XdevGridLayout?>
+<?import com.xdev.ui.XdevLabel?>
+<?import com.xdev.ui.XdevView?>
+<XdevView xmlns:x="http://xml.xdev-software.com/xdevuiml" x:name="ShowPrivateKeyView">
+    <x:constraints width="640px" zpos="0" height="200px" />
+    <XdevGridLayout x:name="gridLayout">
+        <x:constraints zpos="0" width="100%" height="100%" />
+        <XdevLabel x:name="labelMessage" value="Message" contentMode="com.vaadin.shared.ui.label.ContentMode.HTML">
+            <x:constraints gridx="1" gridy="1" weighty="0.0" weightx="0.0" />
+        </XdevLabel>
+    </XdevGridLayout>
+</XdevView>
+
