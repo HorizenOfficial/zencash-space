@@ -5,21 +5,31 @@
 <?template BROWSER_VGA?>
 <?import com.xdev.ui.XdevButton?>
 <?import com.xdev.ui.XdevGridLayout?>
+<?import com.xdev.ui.XdevImage?>
 <?import com.xdev.ui.XdevLabel?>
 <?import com.xdev.ui.XdevView?>
 <XdevView xmlns:x="http://xml.xdev-software.com/xdevuiml" caption="Private key information" x:name="ShowPrivateKeyView">
-    <x:constraints zpos="0" width="640px" height="270px" />
+    <x:constraints zpos="0" width="640px" height="480px" />
     <XdevGridLayout x:name="gridLayout">
         <x:constraints zpos="0" width="100%" height="100%" />
-        <XdevLabel caption="Z (Private) or T (Transparent) address:" x:name="labelSelectedAddress" value="selected address">
-            <x:constraints gridx="1" gridy="1" weighty="0.0" weightx="0.1" />
-        </XdevLabel>
-        <XdevLabel caption="has private key:" x:name="labelPrivateKey" value="private key">
-            <x:constraints gridx="1" gridy="2" weighty="0.0" weightx="0.1" />
-        </XdevLabel>
-        <XdevButton caption="Copy to clipboard" x:name="buttonCopyToClipboard">
-            <x:constraints gridx="1" gridy="3" weighty="0.0" weightx="0.1" alignment="TOP_RIGHT" />
+        <XdevButton icon="WebContent/WEB-INF/resources/images/clipboard-2-24.png" description="Copy the address to clipboard" x:name="buttonCopyAddresseToClipboard">
+            <x:constraints gridx="1" gridy="1" top="49px" left="-1px" weighty="0.0" weightx="0.0" alignment="MIDDLE_RIGHT" />
         </XdevButton>
+        <XdevLabel caption="Z (Private) or T (Transparent) address:" x:name="labelAddress" value="address" contentMode="com.vaadin.shared.ui.label.ContentMode.PREFORMATTED">
+            <x:constraints gridx="2" gridy="1" weighty="0.0" weightx="0.1" width="100%" gridWidth="2" />
+        </XdevLabel>
+        <XdevButton icon="WebContent/WEB-INF/resources/images/clipboard-2-24.png" description="Copy the private key to clipboard" x:name="buttonCopyPrivateKeyToClipboard">
+            <x:constraints gridx="1" gridy="2" weighty="0.0" weightx="0.0" alignment="MIDDLE_RIGHT" />
+        </XdevButton>
+        <XdevLabel caption="has private key:" x:name="labelPrivateKey" value="private key" contentMode="com.vaadin.shared.ui.label.ContentMode.PREFORMATTED">
+            <x:constraints gridx="2" gridy="2" weighty="0.0" weightx="0.1" width="100%" gridWidth="2" />
+        </XdevLabel>
+        <XdevImage caption="Address:" x:name="imageQRCodeAddress">
+            <x:constraints gridx="2" gridy="3" weighty="0.0" weightx="0.1" width="140px" height="140px" />
+        </XdevImage>
+        <XdevImage caption="Private key:" x:name="imageQRCodePrivateKey">
+            <x:constraints gridx="3" gridy="3" weighty="0.0" weightx="0.1" width="140px" height="140px" />
+        </XdevImage>
     </XdevGridLayout>
 </XdevView>
 

@@ -6,7 +6,7 @@
 	<artifactId>zencashvaadinwalletui4cpp</artifactId>
 	<packaging>war</packaging>
 	<name>ZENCashVaadinWalletUI4CPP</name>
-	<version>0.1.10-SNAPSHOT</version>
+	<version>0.1.11-SNAPSHOT</version>
 	<build>
 		<resources>
 			<resource>
@@ -99,11 +99,21 @@
 			<artifactId>jsclipboard</artifactId>
 			<version>1.0.12</version>
 		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.vaadin.addons</groupId> -->
+<!-- 			<artifactId>qrcode</artifactId> -->
+<!-- 			<version>2.1</version> -->
+<!-- 		</dependency> -->
 		<dependency>
-			<groupId>org.vaadin.addons</groupId>
-			<artifactId>qrcode</artifactId>
-			<version>2.1</version>
-			</dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>core</artifactId>
+			<version>3.3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>javase</artifactId>
+			<version>3.3.1</version>
+		</dependency>
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>

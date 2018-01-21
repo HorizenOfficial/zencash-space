@@ -2,43 +2,62 @@ package net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop;
 
 import com.vaadin.jsclipboard.JSClipboard;
 import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.server.StreamResource;
+import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.Notification;
+import com.xdev.res.ApplicationResource;
 import com.xdev.ui.XdevButton;
 import com.xdev.ui.XdevGridLayout;
+import com.xdev.ui.XdevImage;
 import com.xdev.ui.XdevLabel;
 import com.xdev.ui.XdevView;
 
-public class ShowPrivateKeyView extends XdevView {
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.IConfig;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.QRCodeSource;
 
+public class ShowPrivateKeyView extends XdevView implements IConfig {
+	
+	private static final int MAX_ADDRESS_LENGTH = 50;
+	
 	/**
 	 * 
 	 */
-	public ShowPrivateKeyView(final boolean isZAddress,final String selectedAddress, final String privateKey) {
+	public ShowPrivateKeyView(final boolean isZAddress, final String address, final String privateKey) {
 		super();
 		this.initUI();
 		
-		this.labelSelectedAddress.setCaption((isZAddress ? "Z (Private)" : "T (Transparent)") + " address:");
-		this.labelSelectedAddress.setValue(selectedAddress);
+		this.labelAddress.setCaption((isZAddress ? "Z (Private)" : "T (Transparent)") + " address:");
+		if (address.length() < MAX_ADDRESS_LENGTH) {
+			this.labelAddress.setValue(address);
+		}
+		else {
+			this.labelAddress.setValue(address.substring(0, MAX_ADDRESS_LENGTH - 1) + "\n"
+					+ address.substring(MAX_ADDRESS_LENGTH, address.length()));
+		}
 		this.labelPrivateKey.setValue(privateKey);
 		
-		final JSClipboard clipboard = new JSClipboard();
-		clipboard.apply(this.buttonCopyToClipboard, this.labelPrivateKey);
-		clipboard.addSuccessListener(new JSClipboard.SuccessListener() {
+		final JSClipboard.ErrorListener clipboardErrorListener = () -> Notification.show("Copy to clipboard unsuccessful", Notification.Type.ERROR_MESSAGE);
+		final JSClipboard clipboardAddress = new JSClipboard();
+		clipboardAddress.setText(address);
+		clipboardAddress.apply(this.buttonCopyAddresseToClipboard, this.buttonCopyAddresseToClipboard);
+		clipboardAddress.addSuccessListener(() -> Notification.show("The address has been copied to the clipboard"));
+		clipboardAddress.addErrorListener(clipboardErrorListener);
+		final JSClipboard clipboardPrivateKey = new JSClipboard();
+		clipboardPrivateKey.apply(this.buttonCopyPrivateKeyToClipboard, this.labelPrivateKey);
+		clipboardPrivateKey.addSuccessListener(() -> Notification.show("The private key has been copied to the clipboard"));
+		clipboardPrivateKey.addErrorListener(clipboardErrorListener);
+		
+//		final QRCode code = new QRCode();
+//		code.setValue(selectedAddress);
+//		code.setSizeFull();
+//		this.panelQRCodeAddress.setContent(code);
 
-			@Override
-			public void onSuccess() {
-				Notification.show("The private key has been copied to the clipboard");
-			}
-		});
-		clipboard.addErrorListener(new JSClipboard.ErrorListener() {
-
-			@Override
-			public void onError() {
-				Notification.show("Copy to clipboard unsuccessful", Notification.Type.ERROR_MESSAGE);
-			}
-		});
+		this.imageQRCodeAddress.setSource(new StreamResource(new QRCodeSource(address,
+				(int) this.imageQRCodeAddress.getWidth(), (int) this.imageQRCodeAddress.getHeight()), "qrcode." + address + ".png"));
+		this.imageQRCodePrivateKey.setSource(new StreamResource(new QRCodeSource(privateKey,
+				(int) this.imageQRCodePrivateKey.getWidth(), (int) this.imageQRCodePrivateKey.getHeight()), "qrcode." + privateKey + ".png"));
 	}
 	
 
@@ -46,7 +65,7 @@ public class ShowPrivateKeyView extends XdevView {
 	public void enter(final ViewChangeListener.ViewChangeEvent event) {
 		super.enter(event);
 		
-		this.buttonCopyToClipboard.click();
+//		this.buttonCopyToClipboard.click();
 	}
 
 
@@ -57,40 +76,65 @@ public class ShowPrivateKeyView extends XdevView {
 	// <generated-code name="initUI">
 	private void initUI() {
 		this.gridLayout = new XdevGridLayout();
-		this.labelSelectedAddress = new XdevLabel();
+		this.buttonCopyAddresseToClipboard = new XdevButton();
+		this.labelAddress = new XdevLabel();
+		this.buttonCopyPrivateKeyToClipboard = new XdevButton();
 		this.labelPrivateKey = new XdevLabel();
-		this.buttonCopyToClipboard = new XdevButton();
+		this.imageQRCodeAddress = new XdevImage();
+		this.imageQRCodePrivateKey = new XdevImage();
 	
 		this.setCaption("Private key information");
-		this.labelSelectedAddress.setCaption("Z (Private) or T (Transparent) address:");
-		this.labelSelectedAddress.setValue("selected address");
+		this.buttonCopyAddresseToClipboard.setIcon(
+				new ApplicationResource(this.getClass(), "WebContent/WEB-INF/resources/images/clipboard-2-24.png"));
+		this.buttonCopyAddresseToClipboard.setDescription("Copy the address to clipboard");
+		this.labelAddress.setCaption("Z (Private) or T (Transparent) address:");
+		this.labelAddress.setValue("address");
+		this.labelAddress.setContentMode(ContentMode.PREFORMATTED);
+		this.buttonCopyPrivateKeyToClipboard.setIcon(
+				new ApplicationResource(this.getClass(), "WebContent/WEB-INF/resources/images/clipboard-2-24.png"));
+		this.buttonCopyPrivateKeyToClipboard.setDescription("Copy the private key to clipboard");
 		this.labelPrivateKey.setCaption("has private key:");
 		this.labelPrivateKey.setValue("private key");
-		this.buttonCopyToClipboard.setCaption("Copy to clipboard");
+		this.labelPrivateKey.setContentMode(ContentMode.PREFORMATTED);
+		this.imageQRCodeAddress.setCaption("Address:");
+		this.imageQRCodePrivateKey.setCaption("Private key:");
 	
-		this.gridLayout.setColumns(1);
+		this.gridLayout.setColumns(3);
 		this.gridLayout.setRows(4);
-		this.labelSelectedAddress.setSizeUndefined();
-		this.gridLayout.addComponent(this.labelSelectedAddress, 0, 0);
-		this.labelPrivateKey.setSizeUndefined();
-		this.gridLayout.addComponent(this.labelPrivateKey, 0, 1);
-		this.buttonCopyToClipboard.setSizeUndefined();
-		this.gridLayout.addComponent(this.buttonCopyToClipboard, 0, 2);
-		this.gridLayout.setComponentAlignment(this.buttonCopyToClipboard, Alignment.TOP_RIGHT);
-		this.gridLayout.setColumnExpandRatio(0, 10.0F);
+		this.buttonCopyAddresseToClipboard.setSizeUndefined();
+		this.gridLayout.addComponent(this.buttonCopyAddresseToClipboard, 0, 0);
+		this.gridLayout.setComponentAlignment(this.buttonCopyAddresseToClipboard, Alignment.MIDDLE_RIGHT);
+		this.labelAddress.setWidth(100, Unit.PERCENTAGE);
+		this.labelAddress.setHeight(-1, Unit.PIXELS);
+		this.gridLayout.addComponent(this.labelAddress, 1, 0, 2, 0);
+		this.buttonCopyPrivateKeyToClipboard.setSizeUndefined();
+		this.gridLayout.addComponent(this.buttonCopyPrivateKeyToClipboard, 0, 1);
+		this.gridLayout.setComponentAlignment(this.buttonCopyPrivateKeyToClipboard, Alignment.MIDDLE_RIGHT);
+		this.labelPrivateKey.setWidth(100, Unit.PERCENTAGE);
+		this.labelPrivateKey.setHeight(-1, Unit.PIXELS);
+		this.gridLayout.addComponent(this.labelPrivateKey, 1, 1, 2, 1);
+		this.imageQRCodeAddress.setWidth(140, Unit.PIXELS);
+		this.imageQRCodeAddress.setHeight(140, Unit.PIXELS);
+		this.gridLayout.addComponent(this.imageQRCodeAddress, 1, 2);
+		this.imageQRCodePrivateKey.setWidth(140, Unit.PIXELS);
+		this.imageQRCodePrivateKey.setHeight(140, Unit.PIXELS);
+		this.gridLayout.addComponent(this.imageQRCodePrivateKey, 2, 2);
+		this.gridLayout.setColumnExpandRatio(1, 10.0F);
+		this.gridLayout.setColumnExpandRatio(2, 10.0F);
 		final CustomComponent gridLayout_vSpacer = new CustomComponent();
 		gridLayout_vSpacer.setSizeFull();
-		this.gridLayout.addComponent(gridLayout_vSpacer, 0, 3, 0, 3);
+		this.gridLayout.addComponent(gridLayout_vSpacer, 0, 3, 2, 3);
 		this.gridLayout.setRowExpandRatio(3, 1.0F);
 		this.gridLayout.setSizeFull();
 		this.setContent(this.gridLayout);
 		this.setWidth(640, Unit.PIXELS);
-		this.setHeight(270, Unit.PIXELS);
+		this.setHeight(480, Unit.PIXELS);
 	} // </generated-code>
 
 	// <generated-code name="variables">
-	private XdevLabel labelSelectedAddress, labelPrivateKey;
-	private XdevButton buttonCopyToClipboard;
+	private XdevButton buttonCopyAddresseToClipboard, buttonCopyPrivateKeyToClipboard;
+	private XdevLabel labelAddress, labelPrivateKey;
+	private XdevImage imageQRCodeAddress, imageQRCodePrivateKey;
 	private XdevGridLayout gridLayout;
 	// </generated-code>
 
