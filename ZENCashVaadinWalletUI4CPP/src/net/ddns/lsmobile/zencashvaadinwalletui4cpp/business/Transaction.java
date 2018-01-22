@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.util.Date;
 
 import net.ddns.lsmobile.zencashvaadinwalletui4cpp.business.OSUtil.OS_TYPE;
+import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.Servlet;
 
 public class Transaction implements IConfig {
 
@@ -144,13 +145,10 @@ public class Transaction implements IConfig {
 	}
 
 	public void setAmount(final String rawAmount) {
-		try
-		{
-			this.amount = BigDecimal.valueOf(Math.abs(usNumberFormat.parse(rawAmount).doubleValue()));
-		} catch (final ParseException nfe)
-		{
-			log.error("Error occurred while formatting amount: " + rawAmount +
-					           " - " + nfe.getMessage() + "!");
+		try {
+			this.amount = BigDecimal.valueOf(Math.abs(Servlet.usNumberFormat.parse(rawAmount).doubleValue()));
+		} catch (final ParseException nfe) {
+			log.error("Error occurred while formatting amount: " + rawAmount + " - " + nfe.getMessage() + "!");
 			this.amount = null;
 		}
 	}

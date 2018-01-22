@@ -2,6 +2,7 @@
 package net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop;
 
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,22 +67,23 @@ public class MainView extends XdevView implements IWallet {
 
 	private DataGatheringThread<Set<Transaction>> transactionGatheringThread = null;
 	
+	final NumberFormat localeNumberFormat;
+	
 	public MainView() {
 		super();
 		this.initUI();
+		
+		this.localeNumberFormat = NumberFormat.getNumberInstance();
+		this.localeNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
 	}
 	
 	@Override
 	public void enter(final ViewChangeListener.ViewChangeEvent event) {
 		super.enter(event);
-	
-		this.session = getSession();
-		this.zenNode = ((Servlet) Servlet.getCurrent()).zenNode;
-		defaultNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
-		usNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
-
 		try {
-
+			this.session = getSession();
+			this.zenNode = ((Servlet) Servlet.getCurrent()).zenNode;
+			
 //			if (MainView.this.walletIsEncrypted == null)
 //			{
 //				MainView.this.walletIsEncrypted = MainView.this.zenNode.clientCaller.isWalletEncrypted();
@@ -106,19 +108,7 @@ public class MainView extends XdevView implements IWallet {
 							if (lastData == null || data.size() > lastData.size()) {
 								ui.access(()->{
 									try {
-										updateWalletTransactionsTable(data);
-										ui.push();
-										List<AddressWithBalance> addressesWithBalance = MainView.this.zenNode.clientCaller.getAddressBalanceDataFromWallet(MainView.this.session);
-										if (addressesWithBalance.size() == 0) {
-											MainView.this.zenNode.clientCaller.createNewAddress(false, MainView.this.session);
-											addressesWithBalance = MainView.this.zenNode.clientCaller.getAddressBalanceDataFromWallet(MainView.this.session);
-										}
-										updateWalletStatusLabel(MainView.this.zenNode.clientCaller.getWalletInfo(addressesWithBalance));
-										ui.push();
-										updateWalletAddressBalanceTable(addressesWithBalance);
-										ui.push();
-										updateWalletAddressPositiveBalanceComboBox(addressesWithBalance);
-										ui.push();
+										updateUIOnNewTransaction (ui, data);
 									} catch (final Exception e) {
 										log.error(e, e);
 									}
@@ -130,7 +120,7 @@ public class MainView extends XdevView implements IWallet {
 						return null;
 					}
 				},
-				20000, true);
+				10000, true);
 			threads.add(this.transactionGatheringThread);
 
 						
@@ -139,7 +129,7 @@ public class MainView extends XdevView implements IWallet {
 			//SendCashPanel
 						
 			//TODO LS
-			this.textFieldTransactionFee.setValue(defaultFee);
+			this.textFieldTransactionFee.setValue(this.localeNumberFormat.format(Double.valueOf(DEFAULT_FEE)));
 //
 //						// Add a popup menu to the destination address field - for convenience
 //						final JMenuItem paste = new JMenuItem("Paste address");
@@ -196,18 +186,35 @@ public class MainView extends XdevView implements IWallet {
 			log.error(e, e);
 		}
 	}
+	
+	
+	private void updateUIOnNewTransaction (final UI ui, final Set<Transaction> data) throws WalletCallException, IOException, InterruptedException {
+		updateWalletTransactionsTable(data);
+		ui.push();
+		List<AddressWithBalance> addressesWithBalance = MainView.this.zenNode.clientCaller.getAddressBalanceDataFromWallet(MainView.this.session);
+		if (addressesWithBalance.size() == 0) {
+			MainView.this.zenNode.clientCaller.createNewAddress(false, MainView.this.session);
+			addressesWithBalance = MainView.this.zenNode.clientCaller.getAddressBalanceDataFromWallet(MainView.this.session);
+		}
+		updateWalletStatusLabel(MainView.this.zenNode.clientCaller.getWalletInfo(addressesWithBalance));
+		ui.push();
+		updateWalletAddressBalanceTable(addressesWithBalance);
+		ui.push();
+		updateWalletAddressPositiveBalanceComboBox(addressesWithBalance);
+		ui.push();
+	}
 
 	
 	private void updateWalletStatusLabel(final WalletBalance balance)
 			throws WalletCallException, IOException, InterruptedException
 		{
-			final String transparentBalance = defaultNumberFormat.format(balance.transparentBalance) + " ZEN";
-			final String privateBalance = defaultNumberFormat.format(balance.privateBalance) + " ZEN";
-			final String totalBalance = defaultNumberFormat.format(balance.getTotalBalance()) + " ZEN";
+			final String transparentBalance = this.localeNumberFormat.format(balance.transparentBalance) + " ZEN";
+			final String privateBalance = this.localeNumberFormat.format(balance.privateBalance) + " ZEN";
+			final String totalBalance = this.localeNumberFormat.format(balance.getTotalBalance()) + " ZEN";
 			
-			final String transparentUCBalance = defaultNumberFormat.format(balance.transparentUnconfirmedBalance) + " ZEN";
-			final String privateUCBalance = defaultNumberFormat.format(balance.privateUnconfirmedBalance) + " ZEN";
-			final String totalUCBalance = defaultNumberFormat.format(balance.getTotalUnconfirmedBalance()) + " ZEN";
+			final String transparentUCBalance = this.localeNumberFormat.format(balance.transparentUnconfirmedBalance) + " ZEN";
+			final String privateUCBalance = this.localeNumberFormat.format(balance.privateUnconfirmedBalance) + " ZEN";
+			final String totalUCBalance = this.localeNumberFormat.format(balance.getTotalUnconfirmedBalance()) + " ZEN";
 
 			String toolTip = null;
 			if ((transparentBalance.equals(transparentUCBalance)) &&
@@ -282,7 +289,7 @@ public class MainView extends XdevView implements IWallet {
 		for (final Transaction transactionsRow : newTransactionsData) {
 			gridTransactions.addRow(transactionsRow.getTypeAsString(), transactionsRow.getDirectionAsString(),
 					transactionsRow.getIsConfirmedAsString(),
-					defaultNumberFormat.format(transactionsRow.getAmount()), transactionsRow.getDateAsString(),
+					this.localeNumberFormat.format(transactionsRow.getAmount()), transactionsRow.getDateAsString(),
 					transactionsRow.getDestinationAddressAsString(), transactionsRow.getTransactionAsString());
 		}
 
@@ -400,7 +407,7 @@ public class MainView extends XdevView implements IWallet {
 		for (final AddressWithBalance addressWithBalance : addressesWithBalance) {
 			final Object[] row = new Object[]
 			{
-					defaultNumberFormat.format(addressWithBalance.isConfirmed() ? addressWithBalance.confirmedBalance : addressWithBalance.unconfirmedBalance),
+					this.localeNumberFormat.format(addressWithBalance.isConfirmed() ? addressWithBalance.confirmedBalance : addressWithBalance.unconfirmedBalance),
 					addressWithBalance.isConfirmed() ? ("Yes " + confirmed) : ("No  " + notConfirmed),
 					addressWithBalance.address
 			};
@@ -512,7 +519,7 @@ public class MainView extends XdevView implements IWallet {
 				final double d = Double.valueOf(amount);
 			} catch (final Exception nfe) {
 				try {
-					amount = usNumberFormat.format(defaultNumberFormat.parse(amount));
+					amount = Servlet.usNumberFormat.format(this.localeNumberFormat.parse(amount));
 					final double d = Double.valueOf(amount);
 				} catch (final ParseException e) {
 					errorMessage = "Amount to send is invalid; it is not a number.";
@@ -527,7 +534,7 @@ public class MainView extends XdevView implements IWallet {
 				final double d = Double.valueOf(fee);
 			} catch (final Exception nfe) {
 				try {
-					fee = usNumberFormat.format(defaultNumberFormat.parse(fee));
+					fee = Servlet.usNumberFormat.format(this.localeNumberFormat.parse(fee));
 					final double d = Double.valueOf(fee);
 				} catch (final ParseException e) {
 					errorMessage = "Transaction fee is invalid; it is not a number.";
@@ -634,6 +641,8 @@ public class MainView extends XdevView implements IWallet {
 								MainView.this.operationStatusCounter = 0;
 								MainView.this.operationStatusID = null;
 								MainView.this.prohgressBarOperationStatus.setValue(0F);
+								
+								updateUIOnNewTransaction (ui, MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet(MainView.this.session));
 
 								MainView.this.buttonSend.setEnabled(true);
 								MainView.this.comboBoxBalanceAddress.setEnabled(true);
@@ -691,6 +700,7 @@ public class MainView extends XdevView implements IWallet {
 		final List<AddressWithBalance> data = new ArrayList<>();
 		for (final AddressWithBalance addressWithBalance : addressesWithBalance) {
 			if (addressWithBalance.confirmedBalance.doubleValue() > 0) {
+				addressWithBalance.setOutputFormat(x -> (this.localeNumberFormat.format(x.confirmedBalance)  + " - " + x.address));
 				data.add(addressWithBalance);
 			}
 		}
@@ -1099,7 +1109,7 @@ public class MainView extends XdevView implements IWallet {
 		this.tabSheet.addTab(this.tabAddressBook, "Address book", null);
 		this.tabMessaging.setSizeFull();
 		this.tabSheet.addTab(this.tabMessaging, "Messaging", null);
-		this.tabSheet.setSelectedTab(this.tabOverview);
+		this.tabSheet.setSelectedTab(this.tabSendCash);
 		this.gridLayout.setColumns(1);
 		this.gridLayout.setRows(2);
 		this.menuBar.setWidth(100, Unit.PERCENTAGE);

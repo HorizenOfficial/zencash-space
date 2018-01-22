@@ -6,6 +6,7 @@ import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.Notification;
+import com.xdev.res.ApplicationResource;
 import com.xdev.security.authentication.CredentialsUsernamePassword;
 import com.xdev.security.authentication.ui.Authentication;
 import com.xdev.ui.XdevButton;
@@ -88,6 +89,7 @@ public class LoginView extends XdevView implements com.xdev.security.authenticat
 		this.linkSign = new XdevButton();
 		this.cmdLogin = new XdevButton();
 	
+		this.setIcon(new ApplicationResource(this.getClass(), "WebContent/WEB-INF/resources/images/zenicon128.png"));
 		this.panel.setCaption("Login");
 		this.panel.setTabIndex(0);
 		this.txtUsername.setCaption("Username");

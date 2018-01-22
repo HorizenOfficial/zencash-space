@@ -9,7 +9,7 @@
 <?import com.xdev.ui.XdevPasswordField?>
 <?import com.xdev.ui.XdevTextField?>
 <?import com.xdev.ui.XdevView?>
-<XdevView xmlns:x="http://xml.xdev-software.com/xdevuiml" x:name="LoginView">
+<XdevView xmlns:x="http://xml.xdev-software.com/xdevuiml" icon="WebContent/WEB-INF/resources/images/zenicon128.png" x:name="LoginView">
     <x:constraints zpos="0" width="100%" height="100%" />
     <XdevGridLayout x:name="gridLayout">
         <x:constraints zpos="0" width="100%" height="100%" />

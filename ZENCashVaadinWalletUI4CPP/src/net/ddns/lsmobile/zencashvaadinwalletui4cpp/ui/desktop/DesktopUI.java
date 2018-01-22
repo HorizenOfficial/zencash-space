@@ -6,6 +6,7 @@ import com.vaadin.annotations.Theme;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.communication.PushMode;
 import com.vaadin.shared.ui.ui.Transport;
+import com.xdev.res.ApplicationResource;
 import com.xdev.security.authentication.ui.XdevAuthenticationNavigator;
 import com.xdev.ui.XdevUI;
 
@@ -32,6 +33,7 @@ public class DesktopUI extends XdevUI {
 	private void initUI() {
 		this.navigator = new XdevAuthenticationNavigator(this, this);
 	
+		this.setIcon(new ApplicationResource(this.getClass(), "WebContent/WEB-INF/resources/images/zenicon.png"));
 		this.setTabIndex(0);
 		this.navigator.setRedirectViewName("home");
 		this.navigator.addView("", LoginView.class);

@@ -1,6 +1,9 @@
 
 package net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui;
 
+import java.text.NumberFormat;
+import java.util.Locale;
+
 import javax.servlet.annotation.WebServlet;
 
 import com.vaadin.server.SessionInitEvent;
@@ -15,6 +18,12 @@ import net.ddns.lsmobile.zencashvaadinwalletui4cpp.ui.desktop.DesktopUI;
 
 @WebServlet(value = "/*", asyncSupported = true)
 public class Servlet extends XdevServlet implements IConfig {
+
+	public static final NumberFormat usNumberFormat = java.text.NumberFormat.getNumberInstance(Locale.US);
+	
+	static {
+		usNumberFormat.setMaximumFractionDigits(MAXIMUM_FRACTION_DIGITS);
+	}
 
 	public ZenNode zenNode = new ZenNode ();
 

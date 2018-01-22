@@ -85,6 +85,7 @@ public class ZCashClientCaller implements IConfig
 		public BigDecimal confirmedBalance = BigDecimal.ZERO;
 		public BigDecimal unconfirmedBalance = BigDecimal.ZERO;
 		public boolean isPrivate = false;
+		public OutputFormat<AddressWithBalance> outputFormat;
 		
 		public AddressWithBalance(final String address, final boolean isPrivate) throws WalletCallException, IOException, InterruptedException {
 			super();
@@ -107,11 +108,17 @@ public class ZCashClientCaller implements IConfig
 	        		&& ((AddressWithBalance)obj).confirmedBalance.equals(this.confirmedBalance)
 	        		&& ((AddressWithBalance)obj).unconfirmedBalance.equals(this.unconfirmedBalance));
 	    }
+	    
+	    public void setOutputFormat (final OutputFormat<AddressWithBalance> outputFormat) {
+			this.outputFormat = outputFormat;
+	    }
 
 	    @Override
 		public String toString() {
-	    	return defaultNumberFormat.format(this.confirmedBalance)  +
-					" - " + this.address;
+	    	if (this.outputFormat != null) {
+	    		return this.outputFormat.format(this);
+	    	}
+	    	return super.toString();
 	    }
 	}
 

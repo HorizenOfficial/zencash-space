@@ -1,8 +1,5 @@
 package net.ddns.lsmobile.zencashvaadinwalletui4cpp.business;
 
-import java.text.NumberFormat;
-import java.util.Locale;
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -23,10 +20,7 @@ public interface IConfig {
 	public final static String ADDRESSES_COLUMN_CONFIRMED = "Confirmed?";
 	public final static String ADDRESSES_COLUMN_ADDRESS = "Address";
 
-	public final NumberFormat defaultNumberFormat = NumberFormat.getNumberInstance();
-	public final NumberFormat usNumberFormat = java.text.NumberFormat.getNumberInstance(Locale.US);
-	
-	public final static String defaultFee = defaultNumberFormat.format(Double.valueOf(0.0001));
+	public final static Double DEFAULT_FEE = 0.0001;
 	public final static int MAXIMUM_FRACTION_DIGITS = 8;
 
 	public final AddressDAO addressDAO = new AddressDAO ();
