@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -104,8 +105,8 @@ public class MainView extends XdevView implements IWallet {
 							final Set<Transaction> data = MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet(MainView.this.session);
 							final long end = System.currentTimeMillis();
 							log.info("Gathering of dashboard wallet transactions table data done in " + (end - start) + "ms." );
-
-							if (lastData == null || data.size() > lastData.size()) {
+							
+							if (Util.contentsAreDifferent(data, lastData, new HashSet<Transaction>())) {
 								ui.access(()->{
 									try {
 										updateUIOnNewTransaction (ui, data);
@@ -640,7 +641,8 @@ public class MainView extends XdevView implements IWallet {
 								// Restore controls etc.
 								MainView.this.operationStatusCounter = 0;
 								MainView.this.operationStatusID = null;
-								MainView.this.prohgressBarOperationStatus.setValue(0F);
+								MainView.this.prohgressBarOperationStatus.setVisible(false);
+//								MainView.this.prohgressBarOperationStatus.setValue(0F);
 								
 								updateUIOnNewTransaction (ui, MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet(MainView.this.session));
 
@@ -671,6 +673,7 @@ public class MainView extends XdevView implements IWallet {
 								// Server Push to update in the ProgressBar
 								// in the
 								// Browser
+								MainView.this.prohgressBarOperationStatus.setVisible(true);
 								MainView.this.prohgressBarOperationStatus.setValue(progress);
 							} catch (final Exception e) {
 								log.error("Unexpected error: ", e);
@@ -985,6 +988,7 @@ public class MainView extends XdevView implements IWallet {
 		this.label4.setValue("ZEN");
 		this.buttonSend.setCaption("Send");
 		this.prohgressBarOperationStatus.setCaption("Progress:");
+		this.prohgressBarOperationStatus.setVisible(false);
 		this.labelOperationStatus.setCaption("Last operation status: ");
 		this.labelOperationStatus.setValue("N/A");
 		this.labelOperationStatus.setContentMode(ContentMode.HTML);

@@ -209,4 +209,16 @@ public class Transaction implements IConfig {
 	public void setTransaction(final String transaction) {
 		this.transaction = transaction;
 	}
+	
+    @Override
+    public boolean equals(final Object obj) {
+        return (obj instanceof Transaction
+        		&& ((Transaction)obj).transaction.equals(this.transaction)
+        		&& ((Transaction)obj).isConfirmed.equals(this.isConfirmed));
+    }
+    
+    @Override
+    public int hashCode() {
+        return (this.transaction + this.isConfirmed).hashCode();
+    }
 }

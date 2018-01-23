@@ -109,6 +109,11 @@ public class ZCashClientCaller implements IConfig
 	        		&& ((AddressWithBalance)obj).unconfirmedBalance.equals(this.unconfirmedBalance));
 	    }
 	    
+	    @Override
+	    public int hashCode() {
+	        return (this.address + this.confirmedBalance.doubleValue() + this.unconfirmedBalance.doubleValue()).hashCode();
+	    }
+	    
 	    public void setOutputFormat (final OutputFormat<AddressWithBalance> outputFormat) {
 			this.outputFormat = outputFormat;
 	    }

@@ -39,6 +39,7 @@ import java.lang.reflect.Method;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.List;
 
 import com.eclipsesource.json.Json;
@@ -155,6 +156,25 @@ public class Util
 		}
 		
 		return false;
+	}
+	
+	
+	public static <C extends Collection<T>, T> boolean contentsAreDifferent(final C collection1, final C collection2, final C difference) throws InstantiationException, IllegalAccessException
+	{
+		if (collection1 == null && collection2 != null || collection1 != null && collection2 == null) {
+			return true;
+		}
+		if (collection1 == null && collection2 == null) {
+			return false;
+		}
+		if (collection1.size() != collection2.size()) {
+			return true;
+		}
+//		final C difference = clazz.newInstance();
+		difference.clear();
+		difference.addAll(collection1);
+		difference.removeAll(collection2);
+		return !difference.isEmpty();
 	}
 	
 	

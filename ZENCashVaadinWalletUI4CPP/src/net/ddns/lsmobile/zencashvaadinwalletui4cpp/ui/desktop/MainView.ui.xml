@@ -150,7 +150,7 @@
                     <x:constraints gridx="1" gridy="7" weighty="0.0" weightx="0.2" width="100%" gridWidth="2" />
                     <x:event>click.buttonClick</x:event>
                 </XdevButton>
-                <XdevProgressBar caption="Progress:" x:name="prohgressBarOperationStatus">
+                <XdevProgressBar caption="Progress:" x:name="prohgressBarOperationStatus" visible="false">
                     <x:constraints gridx="3" gridy="7" weighty="0.0" weightx="0.1" width="100%" />
                 </XdevProgressBar>
                 <XdevLabel caption="Last operation status: " x:name="labelOperationStatus" value="N/A" contentMode="com.vaadin.shared.ui.label.ContentMode.HTML">
