@@ -489,21 +489,17 @@ public class MainView extends XdevView implements IWallet {
 			return;
 		}
 
-		final String sourceAddress = ((AddressWithBalance) this.comboBoxBalanceAddress.getValue()).address;
-		final String destinationAddress = this.textFieldDestinationAddress.getValue();
-		final String memo = this.textFieldDestinationMemo.getValue();
-		String amount = this.textFieldDestinationAmount.getValue();
-		String fee = this.textFieldTransactionFee.getValue();
-
 		// Verify general correctness.
 		String errorMessage = null;
 
+		final String sourceAddress = ((AddressWithBalance) this.comboBoxBalanceAddress.getValue()).address;
 		if ((sourceAddress == null) || (sourceAddress.trim().length() <= 20)) {
 			errorMessage = "Source address is invalid; it is too short or missing.";
 		} else if (sourceAddress.length() > 512) {
 			errorMessage = "Source address is invalid; it is too long.";
 		}
 
+		final String destinationAddress = this.textFieldDestinationAddress.getValue();
 		// TODO: full address validation
 		if ((destinationAddress == null) || (destinationAddress.trim().length() <= 0)) {
 			errorMessage = "Destination address is invalid; it is missing.";
@@ -513,30 +509,36 @@ public class MainView extends XdevView implements IWallet {
 			errorMessage = "Destination address is invalid; it is too long.";
 		}
 
-		if ((amount == null) || (amount.trim().length() <= 0)) {
+		final String memo = this.textFieldDestinationMemo.getValue();
+
+		Double amount = 0D;
+		String amountAsString = this.textFieldDestinationAmount.getValue();
+		if ((amountAsString == null) || (amountAsString.trim().length() <= 0)) {
 			errorMessage = "Amount to send is invalid; it is missing.";
 		} else {
 			try {
-				final double d = Double.valueOf(amount);
+				amount = Double.valueOf(amountAsString);
 			} catch (final Exception nfe) {
 				try {
-					amount = Servlet.usNumberFormat.format(this.localeNumberFormat.parse(amount));
-					final double d = Double.valueOf(amount);
+					amountAsString = Servlet.usNumberFormat.format(this.localeNumberFormat.parse(amountAsString));
+					amount = Double.valueOf(amountAsString);
 				} catch (final ParseException e) {
 					errorMessage = "Amount to send is invalid; it is not a number.";
 				}
 			}
 		}
 
-		if ((fee == null) || (fee.trim().length() <= 0)) {
+		Double fee = 0D;
+		String feeAsString = this.textFieldTransactionFee.getValue();
+		if ((feeAsString == null) || (feeAsString.trim().length() <= 0)) {
 			errorMessage = "Transaction fee is invalid; it is missing.";
 		} else {
 			try {
-				final double d = Double.valueOf(fee);
+				fee = Double.valueOf(feeAsString);
 			} catch (final Exception nfe) {
 				try {
-					fee = Servlet.usNumberFormat.format(this.localeNumberFormat.parse(fee));
-					final double d = Double.valueOf(fee);
+					feeAsString = Servlet.usNumberFormat.format(this.localeNumberFormat.parse(feeAsString));
+					fee = Double.valueOf(feeAsString);
 				} catch (final ParseException e) {
 					errorMessage = "Transaction fee is invalid; it is not a number.";
 				}
@@ -559,11 +561,15 @@ public class MainView extends XdevView implements IWallet {
 		 * 
 		 * this.servlet.clientCaller.unlockWallet(pd.getPassword()); }
 		 */
+		
+		final Double startBalance = this.zenNode.clientCaller.getBalanceForAddress(sourceAddress).doubleValue();
 
 		// Call the wallet send method
 		this.operationStatusID = this.zenNode.clientCaller.sendCash(sourceAddress, destinationAddress, amount, memo,
 				fee);
 
+//		transactionGatheringThread
+		
 		// Disable controls after send
 		this.buttonSend.setEnabled(false);
 		this.comboBoxBalanceAddress.setEnabled(false);
@@ -594,7 +600,8 @@ public class MainView extends XdevView implements IWallet {
 		// Start a new thread on the serverside to update the progress of the
 		// operation
 		this.operationStatusCounter = 0;
-		final String amountFinal = amount;
+		final Double sendedAmount = amount;
+		final Double usedFee = fee;
 		final UI ui = getUI();
 		new Thread(new RunnableAccessWrapper(() -> {
 			try {
@@ -616,7 +623,7 @@ public class MainView extends XdevView implements IWallet {
 									MainView.this.labelOperationStatus
 											.setValue("<span style=\"color:green;font-weight:bold\">SUCCESSFUL</span>");
 									Notification.show("Cash sent successfully",
-											"Succesfully sent " + amountFinal + " ZEN from address: \n" + sourceAddress
+											"Succesfully sent " + this.localeNumberFormat.format(sendedAmount) + " ZEN from address: \n" + sourceAddress
 													+ "\n" + "to address: \n" + destinationAddress,
 											Type.HUMANIZED_MESSAGE);
 								} else {
@@ -641,22 +648,24 @@ public class MainView extends XdevView implements IWallet {
 								// Restore controls etc.
 								MainView.this.operationStatusCounter = 0;
 								MainView.this.operationStatusID = null;
+								
+								this.zenNode.clientCaller.findNewAddressAfterSendCash (this.session, sourceAddress, startBalance, sendedAmount, usedFee);
+								
+//								updateUIOnNewTransaction (ui, MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet(MainView.this.session));
+
 								MainView.this.prohgressBarOperationStatus.setVisible(false);
 //								MainView.this.prohgressBarOperationStatus.setValue(0F);
-								
-								updateUIOnNewTransaction (ui, MainView.this.zenNode.clientCaller.getTransactionsDataFromWallet(MainView.this.session));
-
 								MainView.this.buttonSend.setEnabled(true);
 								MainView.this.comboBoxBalanceAddress.setEnabled(true);
 								MainView.this.textFieldDestinationAddress.setEnabled(true);
 								MainView.this.textFieldDestinationAmount.setEnabled(true);
 								MainView.this.textFieldTransactionFee.setEnabled(true);
 								MainView.this.textFieldDestinationMemo.setEnabled(true);
+								ui.push();
 							} catch (final Exception e) {
 								log.error("Unexpected error: ", e);
 							}
 						});
-						ui.push();
 					} else {
 						ui.access(() -> {
 							try {
@@ -675,13 +684,12 @@ public class MainView extends XdevView implements IWallet {
 								// Browser
 								MainView.this.prohgressBarOperationStatus.setVisible(true);
 								MainView.this.prohgressBarOperationStatus.setValue(progress);
+								ui.push();
 							} catch (final Exception e) {
 								log.error("Unexpected error: ", e);
 							}
 						});
-						ui.push();
 					}
-					// SendCashPanel.this.repaint();
 
 					Thread.sleep(2000);
 				}
@@ -931,7 +939,11 @@ public class MainView extends XdevView implements IWallet {
 		this.labelOperationStatus = new XdevLabel();
 		this.label5 = new XdevLabel();
 		this.tabAddressBook = new XdevGridLayout();
+		this.label6 = new XdevLabel();
 		this.tabMessaging = new XdevGridLayout();
+		this.label7 = new XdevLabel();
+		this.tabTimeStamp = new XdevGridLayout();
+		this.label8 = new XdevLabel();
 	
 		this.gridLayout.setMargin(new MarginInfo(false));
 		this.menuItemAbout.setEnabled(false);
@@ -998,8 +1010,13 @@ public class MainView extends XdevView implements IWallet {
 		this.label5.setContentMode(ContentMode.HTML);
 		this.tabAddressBook.setEnabled(false);
 		this.tabAddressBook.setVisible(false);
+		this.label6.setValue("Coming soon...");
 		this.tabMessaging.setEnabled(false);
 		this.tabMessaging.setVisible(false);
+		this.label7.setValue("Coming soon...");
+		this.tabTimeStamp.setEnabled(false);
+		this.tabTimeStamp.setVisible(false);
+		this.label8.setValue("Coming soon...");
 	
 		this.labelPleaseWait1.setSizeUndefined();
 		this.verticalLayout.addComponent(this.labelPleaseWait1);
@@ -1103,6 +1120,27 @@ public class MainView extends XdevView implements IWallet {
 		tabSendCash_vSpacer.setSizeFull();
 		this.tabSendCash.addComponent(tabSendCash_vSpacer, 0, 8, 3, 8);
 		this.tabSendCash.setRowExpandRatio(8, 1.0F);
+		this.tabAddressBook.setColumns(1);
+		this.tabAddressBook.setRows(1);
+		this.label6.setSizeUndefined();
+		this.tabAddressBook.addComponent(this.label6, 0, 0);
+		this.tabAddressBook.setComponentAlignment(this.label6, Alignment.MIDDLE_CENTER);
+		this.tabAddressBook.setColumnExpandRatio(0, 10.0F);
+		this.tabAddressBook.setRowExpandRatio(0, 10.0F);
+		this.tabMessaging.setColumns(1);
+		this.tabMessaging.setRows(3);
+		this.label7.setSizeUndefined();
+		this.tabMessaging.addComponent(this.label7, 0, 2);
+		this.tabMessaging.setComponentAlignment(this.label7, Alignment.MIDDLE_CENTER);
+		this.tabMessaging.setColumnExpandRatio(0, 10.0F);
+		this.tabMessaging.setRowExpandRatio(2, 10.0F);
+		this.tabTimeStamp.setColumns(1);
+		this.tabTimeStamp.setRows(4);
+		this.label8.setSizeUndefined();
+		this.tabTimeStamp.addComponent(this.label8, 0, 3);
+		this.tabTimeStamp.setComponentAlignment(this.label8, Alignment.MIDDLE_CENTER);
+		this.tabTimeStamp.setColumnExpandRatio(0, 10.0F);
+		this.tabTimeStamp.setRowExpandRatio(3, 10.0F);
 		this.tabOverview.setSizeFull();
 		this.tabSheet.addTab(this.tabOverview, "Overview", null);
 		this.tabOwnAddresses.setSizeFull();
@@ -1113,7 +1151,9 @@ public class MainView extends XdevView implements IWallet {
 		this.tabSheet.addTab(this.tabAddressBook, "Address book", null);
 		this.tabMessaging.setSizeFull();
 		this.tabSheet.addTab(this.tabMessaging, "Messaging", null);
-		this.tabSheet.setSelectedTab(this.tabSendCash);
+		this.tabTimeStamp.setSizeFull();
+		this.tabSheet.addTab(this.tabTimeStamp, "Time stamp", null);
+		this.tabSheet.setSelectedTab(this.tabOverview);
 		this.gridLayout.setColumns(1);
 		this.gridLayout.setRows(2);
 		this.menuBar.setWidth(100, Unit.PERCENTAGE);
@@ -1130,16 +1170,16 @@ public class MainView extends XdevView implements IWallet {
 		this.addDetachListener(event -> this.this_detach(event));
 		this.menuItemLogOut.setCommand(selectedItem -> this.menuItemLogOut_menuSelected(selectedItem));
 		this.menuItemShowPrivateKey.setCommand(selectedItem -> this.menuItemShowPrivateKey_menuSelected(selectedItem));
-		this.buttonNewTAddress.addClickListener(event -> this.buttonNewTAddress_buttonClick(event));
-		this.buttonNewZAddress.addClickListener(event -> this.buttonNewZAddress_buttonClick(event));
-		this.buttonSend.addClickListener(event -> this.buttonSend_buttonClick(event));
+		this.buttonNewTAddress.addClickListener((Button.ClickListener) event -> this.buttonNewTAddress_buttonClick(event));
+		this.buttonNewZAddress.addClickListener((Button.ClickListener) event -> this.buttonNewZAddress_buttonClick(event));
+		this.buttonSend.addClickListener((Button.ClickListener) event -> this.buttonSend_buttonClick(event));
 	} // </generated-code>
 
 
 	// <generated-code name="variables">
 	private XdevLabel labelTransparentBalanceCaption, labelTransparentBalance, labelPrivateBalanceCaption,
 			labelPrivateBalance, labelTotalBalanceCaption, labelTotalBalance, labelPleaseWait1, labelPleaseWait2, label,
-			label2, label3, label4, labelOperationStatus, label5;
+			label2, label3, label4, labelOperationStatus, label5, label6, label7, label8;
 	private XdevButton buttonNewTAddress, buttonNewZAddress, buttonSend;
 	private XdevMenuBar menuBar;
 	private XdevImage image, image2;
@@ -1151,7 +1191,8 @@ public class MainView extends XdevView implements IWallet {
 	private XdevProgressBar prohgressBarOperationStatus;
 	private XdevTabSheet tabSheet;
 	private XdevPanel panelGridTransactions, panelGridOwnAddresses;
-	private XdevGridLayout gridLayout, tabOverview, tabOwnAddresses, tabSendCash, tabAddressBook, tabMessaging;
+	private XdevGridLayout gridLayout, tabOverview, tabOwnAddresses, tabSendCash, tabAddressBook, tabMessaging,
+			tabTimeStamp;
 	private XdevTextField textFieldDestinationAddress, textFieldDestinationMemo, textFieldDestinationAmount,
 			textFieldTransactionFee;
 	private XdevVerticalLayout verticalLayout, verticalLayout2;

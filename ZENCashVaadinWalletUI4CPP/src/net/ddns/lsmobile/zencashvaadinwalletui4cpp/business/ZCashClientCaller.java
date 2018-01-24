@@ -575,7 +575,7 @@ public class ZCashClientCaller implements IConfig
 
 
 	// Returns OPID
-	public synchronized String sendCash(final String from, final String to, final String amount, final String memo, String transactionFee)
+	public synchronized String sendCash(final String from, final String to, final Double amount, final String memo, final Double transactionFee)
 		throws WalletCallException, IOException, InterruptedException
 	{
 		final StringBuilder hexMemo = new StringBuilder();
@@ -615,23 +615,23 @@ public class ZCashClientCaller implements IConfig
 		}
 
 		final DecimalFormatSymbols decSymbols = new DecimalFormatSymbols(Locale.ROOT);
-		
-		// Properly format teh transaction fee as a number
-		if ((transactionFee == null) || (transactionFee.trim().length() <= 0))
-		{
-			transactionFee = "0.0001"; // Default value
-		} else
-		{
-			transactionFee = new DecimalFormat(
-				"########0.00######", decSymbols).format(Double.valueOf(transactionFee));
-		}
 
 	    // This replacement is a hack to make sure the JSON object amount has double format 0.00 etc.
 	    // TODO: find a better way to format the amount
 		final String toManyArrayStr =	toMany.toString().replace(
 		    amountPattern,
-			"\"amount\":" + new DecimalFormat("########0.00######", decSymbols).format(Double.valueOf(amount)));
+			"\"amount\":" + new DecimalFormat("########0.00######", decSymbols).format(amount));
 		
+		String transactionFeeAsString;
+		// Properly format teh transaction fee as a number
+		if ((transactionFee == null) || transactionFee <= 0)
+		{
+			transactionFeeAsString = "0.0001"; // Default value
+		} else
+		{
+			transactionFeeAsString = new DecimalFormat(
+				"########0.00######", decSymbols).format(transactionFee);
+		}
 		final String[] sendCashParameters = new String[]
 	    {
 		    zcashcli.getCanonicalPath(), "z_sendmany", wrapStringParameter(from),
@@ -639,7 +639,7 @@ public class ZCashClientCaller implements IConfig
 		    // Default min confirmations for the input transactions is 1
 		    "1",
 		    // transaction fee
-		    transactionFee
+		    transactionFeeAsString
 		};
 		
 		// Safeguard to make sure the monetary amount does not differ after formatting
@@ -676,6 +676,23 @@ public class ZCashClientCaller implements IConfig
                 " Got result: [" + strResponse + "]");
 
 		return strResponse.trim();
+	}
+	
+	
+	public void findNewAddressAfterSendCash (final VaadinSession session, final String sourceAddress, final Double startBalance, final Double sendedAmount, final Double fee) throws WalletCallException, IOException, InterruptedException {
+		final Double endBalance = getBalanceForAddress(sourceAddress).doubleValue();
+		final Double needBalance = startBalance - sendedAmount - fee;
+		if (endBalance < needBalance) {
+			final List<Address> addresses = addressDAO.findOrphanedAddresses();
+			for (final Address address : addresses) {
+				if (needBalance == getBalanceForAddress(address.getAddress()).doubleValue()) {
+					address.setUser1((User) session.getAttribute(AUTHENTICATION_RESULT));
+					addressDAO.save(address);
+					addressDAO.commit();
+					return;
+				}
+			}
+		}
 	}
 	
 	
